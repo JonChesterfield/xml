@@ -51,3 +51,19 @@ xmllint --relaxng relaxng.rng relaxng.rng --noout
 # Second sanity check, is the xslt schema an instance of the relaxng schema?
 xmllint --relaxng relaxng.rng xslt.rng --noout
 
+# Generate compact forms for reference
+trang relaxng.rng relaxng.rnc
+trang xslt.rng xslt.rnc
+
+# First pass at workflow. Write the compact synax and convert to xml syntax
+trang example.rnc example.rng
+
+# Check the schema is an instance of relaxng
+xmllint --relaxng relaxng.rng example.rng --noout
+
+# That's not sufficient to ensure that the schema works, running it against
+# an xml file can remit "parse-error, reference has no mathcing definition"
+# and similar
+
+# See whether example.xml validates, had some misfires on case sensitivity
+xmllint --relaxng example.rng example.xml --noout
