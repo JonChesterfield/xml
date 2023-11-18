@@ -94,6 +94,12 @@ validate:	$(RAW_RNG) $(DERIVED_RNG) | relaxng.rng
 	@xmllint --relaxng relaxng.rng $^ --noout
 
 
+rebuild:
+	rm -rf *.$(DERIVED_SUFFIX) *.$(SECONDARY_SUFFIX)
+	$(MAKE)
+	rm -rf *.$(DERIVED_SUFFIX) *.$(PRIMARY_SUFFIX)
+	$(MAKE)
+	rm -rf *.$(DERIVED_SUFFIX)
 
 clean::
 	rm -f *.$(DERIVED_SUFFIX)

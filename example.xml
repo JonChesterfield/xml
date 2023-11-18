@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Example>
-    <First>
-        thing
-    </First>
-    <Second>
-        wot
-    </Second>
+  <First>
+    thing
+  </First>
+  <Second>
+    wot
+  </Second>
 </Example>

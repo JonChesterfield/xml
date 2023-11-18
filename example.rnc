@@ -1,6 +1,4 @@
 start = Example
-Example = element Example {First, Second}
-
-First = element First {text}
-
-Second = element Second {text}
+Example = element Example { First, Second }
+First = element First { text }
+Second = element Second { text }
