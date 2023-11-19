@@ -79,12 +79,15 @@ $(DERIVED_SOURCE):: %.$(DERIVED_SUFFIX) :
 #	Not totally sure this is worth the bother relative to writing to $@ directly
 	@$(eval tmp=$(shell mktemp -t $@.XXXXXX))
 
-	$(if $(from_primary), cp $(primary) $(tmp))
-	$(if $(from_secondary), $(call primary_from_secondary,$(tmp),$(secondary)))
+	$(if $(from_primary), \
+		cp $(primary) $(tmp), \
+		$(if $(from_secondary), $(call primary_from_secondary,$(tmp),$(secondary))))
 
 #	If this was updated by either file, update the other from it
-	$(if $(from_secondary), cp $(tmp) $(primary))
-	$(if $(from_primary), $(call secondary_from_primary,$(secondary),$(tmp)))
+	$(if $(from_primary), \
+		$(call secondary_from_primary,$(secondary),$(tmp)), \
+		$(if $(from_secondary), cp $(tmp) $(primary)))
+
 
 #	Fix up the timestamp so current target still looks newer than those it just rebuilt
 	$(if $(or $(from_primary), $(from_secondary)), touch $(tmp) && mv $(tmp) $@, @rm $(tmp))
