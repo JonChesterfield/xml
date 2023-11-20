@@ -47,7 +47,7 @@ insert = $(call below_index, $1, $3) $2 $(call above_index, $1, $3)
 XSD_FILES := $(filter-out xslt.xsd, $(PREFERRED_SOURCE:.pref=.xsd))
 
 
-all::	$(PREFERRED_SOURCE) $(DERIVED_RNC) $(DERIVED_RNG)
+all::	$(DERIVED_SOURCE) $(DERIVED_SECONDARY) $(DERIVED_PRIMARY)
 
 # Only got one of the files, can build the other from it
 $(DERIVED_SECONDARY):	%.$(SECONDARY_SUFFIX):	%.$(PRIMARY_SUFFIX)
@@ -79,23 +79,23 @@ $(DERIVED_SOURCE):: %.$(DERIVED_SUFFIX) :
 	$(eval from_secondary=$(findstring $(secondary), $(word $(index),$(SECONDARY_NEWER))))
 
 #	Not totally sure this is worth the bother relative to writing to $@ directly
-	@$(eval tmp=$(shell mktemp -t $@.XXXXXX))
+#	@$(eval tmp=$(shell mktemp -t $@.XXXXXX))
 
 	$(if $(from_primary), \
-		cp $(primary) $(tmp), \
-		$(if $(from_secondary), $(call primary_from_secondary,$(tmp),$(secondary))))
+		cp $(primary) $@, \
+		$(if $(from_secondary), $(call primary_from_secondary,$@,$(secondary))))
 
 #	If this was updated by either file, update the other from it
 	$(if $(from_primary), \
-		$(call secondary_from_primary,$(secondary),$(tmp)), \
-		$(if $(from_secondary), cp $(tmp) $(primary)))
+		$(call secondary_from_primary,$(secondary),$@), \
+		$(if $(from_secondary), cp $@ $(primary)))
+
+#	Fix up the timestamp so current target still looks newer than those it just rebuilt
+	$(if $(or $(from_primary), $(from_secondary)), touch $@, @rm $@)
 
 xsd_from_rng = trang -Irng -Oxsd $2 $1
 $(XSD_FILES):	%.xsd:	%.rng
 	$(call xsd_from_rng,$@,$^)
-
-#	Fix up the timestamp so current target still looks newer than those it just rebuilt
-	$(if $(or $(from_primary), $(from_secondary)), touch $(tmp) && mv $(tmp) $@, @rm $(tmp))
 
 
 validate:	$(RAW_PRIMARY) $(DERIVED_PRIMARY) | relaxng.rng

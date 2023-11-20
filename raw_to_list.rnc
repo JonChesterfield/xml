@@ -1,2 +1,2 @@
 start = RawText
-RawText = element RawText {text}
+RawText = element RawText { text }
