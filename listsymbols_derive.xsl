@@ -11,10 +11,30 @@
 <xsl:strip-space elements="*"/>
 
 <xsl:template match="/">
+  
   <Derived>
     <Symbols>
-      <!-- Sorting these probably involves ext:node-set -->
-      <xsl:apply-templates select="node()|@*" mode="extract"/>
+      <!-- Sorting these probably involves ext:node-set, not clear what
+           is deleting the symbol annotation so currently recreating it
+      -->
+      
+      <xsl:variable name="Symbols">
+        <xsl:apply-templates select="node()|@*" mode="extract"/>
+      </xsl:variable>
+
+      <xsl:variable name="SortedSymbols">
+        <xsl:for-each select="ext:node-set($Symbols)/*" >
+          <xsl:sort/>
+          <Symbol><xsl:value-of select="." /></Symbol>
+        </xsl:for-each>
+      </xsl:variable>
+
+      <!-- not preceding seems to be OK here, distinct-values is a xlst 2 thing -->
+      <xsl:for-each select="ext:node-set($SortedSymbols)/*[not(.=preceding::*)]" >
+        <Symbol><xsl:value-of select="." /></Symbol>
+      </xsl:for-each>
+      
+      <!-- <xsl:apply-templates select="node()|@*" mode="extract"/> -->
     </Symbols>
     <Textual>
       <xsl:apply-templates select="node()|@*" mode="Textual"/>
@@ -46,6 +66,12 @@
   <xsl:apply-templates select="node()|@*" mode="extract"/>
 </xsl:template>
 
+<xsl:template match="Symbol" mode="extract">
+  <Symbol>
+    <xsl:value-of select="." />
+  </Symbol>
+</xsl:template>
+
 
 <xsl:template match="node()|@*" mode="Textual">
      <xsl:copy>
@@ -60,6 +86,7 @@
 <xsl:template match="List" mode="Textual">
 (<xsl:apply-templates select="node()|@*" mode="Textual"/>)
 </xsl:template>
+
 <xsl:template match="Symbol" mode="Textual">
   <xsl:value-of select="." />
 </xsl:template>
