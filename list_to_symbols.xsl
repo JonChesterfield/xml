@@ -4,8 +4,7 @@
                xmlns:str="http://exslt.org/strings"
                xmlns:ext="http://exslt.org/common"
                extension-element-prefixes="str ext"
-               
->
+               >
 
 <xsl:output method="xml" indent="yes"/>
 <xsl:strip-space elements="*"/>

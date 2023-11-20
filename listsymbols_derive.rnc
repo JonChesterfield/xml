@@ -1,0 +1,8 @@
+
+start = Derived
+Symbol = element Symbol {text}
+Symbols = element Symbols {Symbol*}
+
+Textual = element Textual {text*}
+
+Derived = element Derived {Symbols, Textual, external "list_to_symbols.rnc"}
