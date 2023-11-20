@@ -51,7 +51,6 @@
 </xsl:template>
 
 
-
 <xsl:template match="node()|@*" mode="extract">
      <xsl:copy>
        <xsl:apply-templates select="node()|@*" mode="extract"/>
@@ -84,10 +83,25 @@
 </xsl:template>
 
 <xsl:template match="List" mode="Textual">
-(<xsl:apply-templates select="node()|@*" mode="Textual"/>)
+<xsl:variable name="depth" select="count(ancestor::*) - 1" />
+<L>
+  <xsl:attribute name="depth">    
+    <xsl:value-of select="$depth"/>
+  </xsl:attribute>
+</L>
+<xsl:apply-templates select="node()" mode="Textual"/>
+<xsl:apply-templates select="@*" mode="Textual"/>
+<R>
+  <xsl:attribute name="depth">    
+    <xsl:value-of select="$depth"/>
+  </xsl:attribute>
+</R>
 </xsl:template>
 
 <xsl:template match="Symbol" mode="Textual">
+  <xsl:if test="position()>1" >
+    <S/>
+  </xsl:if>
   <xsl:value-of select="." />
 </xsl:template>
 

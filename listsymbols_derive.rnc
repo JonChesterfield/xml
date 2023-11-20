@@ -1,8 +1,11 @@
 start = Derived
+L = element L { attribute depth {xsd:integer} | empty }
+R = element R { attribute depth {xsd:integer} | empty }
+S = element S { empty }
+
 Symbol = element Symbol { text }
 Symbols = element Symbols { Symbol* }
-Textual = element Textual { text* }
+Textual = element Textual { L* & R* & S* & text* }
+
 Derived =
-  element Derived {
-    Symbols, Textual, external "list_to_symbols.rnc"
-  }
+  element Derived { Symbols, Textual, external "list_to_symbols.rnc" }
