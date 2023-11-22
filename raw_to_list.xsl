@@ -5,7 +5,6 @@
                xmlns:ext="http://exslt.org/common"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                extension-element-prefixes="str ext"
-               
 >
 
 <!-- Takes a root RawText and hacks with the parens, emitting text -->
