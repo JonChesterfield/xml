@@ -57,7 +57,7 @@ LispXML:
 
 XMLTmpDir := .tmpxml
 MkdirXMLTmpDir: | LispXML
-	mkdir -p LispXML/$(XMLTmpDir)
+	@mkdir -p LispXML/$(XMLTmpDir)
 
 
 TemporaryFiles := $(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.raw.xml) \
@@ -65,37 +65,31 @@ TemporaryFiles := $(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.raw.xml) \
 	$(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.symbols.xml) \
 	$(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.derived.xml)
 
+define XML_Transform_Template
+# arguments from, to
+LispXML/$(XMLTmpDir)/%.$2.xml:	LispXML/$(XMLTmpDir)/%.$1.xml | MkdirXMLTmpDir $1.rng $1_to_$2.xsl $2.rng
+	@xmllint --relaxng $1.rng $$< --noout --quiet
+	@xsltproc --output $$@ $1_to_$2.xsl $$^
+	@xmllint --relaxng $2.rng $$@ --noout --quiet
+endef
+
+$(eval $(call XML_Transform_Template,raw,list))
+$(eval $(call XML_Transform_Template,list,symbols))
+$(eval $(call XML_Transform_Template,symbols,derived))
 
 LispXML/$(XMLTmpDir)/%.raw.xml:	Lisp/%.scm | MkdirXMLTmpDir raw.rng
-	echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
-	echo '<RawText xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' >> $@
-	echo '<![CDATA[' >> $@
-	cat $< >> $@
-	echo ']]></RawText>' >> $@
-	xmllint --relaxng raw.rng $@ --noout
-
-LispXML/$(XMLTmpDir)/%.list.xml:	LispXML/$(XMLTmpDir)/%.raw.xml | MkdirXMLTmpDir raw.rng raw_to_list.xsl list.rng 
-	xmllint --relaxng raw.rng $< --noout
-	xsltproc --output $@ raw_to_list.xsl $^
-	xmllint --relaxng list.rng $@ --noout
-
-LispXML/$(XMLTmpDir)/%.symbols.xml:	LispXML/$(XMLTmpDir)/%.list.xml | MkdirXMLTmpDir list.rng list_to_symbols.xsl symbols.rng 
-	xmllint --relaxng list.rng $< --noout
-	xsltproc --output $@ list_to_symbols.xsl $^
-	xmllint --relaxng symbols.rng $@ --noout
-
-LispXML/$(XMLTmpDir)/%.derived.xml:	LispXML/$(XMLTmpDir)/%.symbols.xml | MkdirXMLTmpDir symbols.rng symbols_to_derived.xsl derived.rng 
-	xmllint --relaxng symbols.rng $< --noout
-	xsltproc --output $@ symbols_to_derived.xsl $^
-	xmllint --relaxng derived.rng $@ --noout
-
+	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
+	@echo '<RawText xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' >> $@
+	@echo '<![CDATA[' >> $@
+	@cat $< >> $@
+	@echo ']]></RawText>' >> $@
+	@xmllint --relaxng raw.rng $@ --noout --quiet
 
 $(MOD_XML):	LispXML/%.xml:	LispXML/$(XMLTmpDir)/%.derived.xml | LispXML $(TemporaryFiles)
 	@cp $< $@
 
 
 all::	$(MOD_XML)
-	@echo "end"
 
 # Only got one of the files, can build the other from it
 $(DERIVED_SECONDARY):	%.$(SECONDARY_SUFFIX):	%.$(PRIMARY_SUFFIX)
@@ -152,7 +146,7 @@ validate:	$(RAW_PRIMARY) $(DERIVED_PRIMARY) | relaxng.rng
 
 clean::
 	@rm -f *.$(DERIVED_SUFFIX)
-	rm -rf LispXML
+	rm -rf LispXML LispXML/$(XMLTmpDir)
 
 # good if files are all well formed
 hazardous_rebuild:
