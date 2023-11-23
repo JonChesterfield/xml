@@ -3,7 +3,6 @@
                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                xmlns:str="http://exslt.org/strings"
                xmlns:ext="http://exslt.org/common"
-               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                extension-element-prefixes="str ext"
 >
 

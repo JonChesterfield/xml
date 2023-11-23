@@ -63,6 +63,7 @@ MkdirXMLTmpDir: | LispXML
 TemporaryFiles := $(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.raw.xml) \
 	$(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.list.xml) \
 	$(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.symbols.xml) \
+	$(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.expressions.xml) \
 	$(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.derived.xml)
 
 define XML_Transform_Template
@@ -76,6 +77,7 @@ endef
 $(eval $(call XML_Transform_Template,raw,list))
 $(eval $(call XML_Transform_Template,list,symbols))
 $(eval $(call XML_Transform_Template,symbols,derived))
+$(eval $(call XML_Transform_Template,symbols,expressions))
 
 LispXML/$(XMLTmpDir)/%.raw.xml:	Lisp/%.scm | MkdirXMLTmpDir raw.rng
 	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $@

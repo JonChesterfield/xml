@@ -1,0 +1,6 @@
+start = Expressions
+Expressions = element Expressions { anyElement* }
+anyElement =
+  element * {
+    mixed { anyElement* }
+  }
