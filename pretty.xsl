@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-
 <!--
 
 https://www.xml.com/pub/a/2006/11/29/xslt-xml-pretty-printer.html
@@ -62,12 +61,13 @@ www.artlogic.com
       <xsl:variable name="adjacentComplexElement" select="count($previous/*) &gt; 0 or count(*) &gt; 0"/>
       <xsl:variable name="adjacentDifferentType" select="not(($previous/self::comment() and self::comment()) or ($previous/self::* and self::*))"/>
 
-      <xsl:if test="$isFirstNode or ($previous and ($adjacentComplexElement or $adjacentDifferentType))">
+      <!-- Disable newline insertion
+<xsl:if test="$isFirstNode or ($previous and ($adjacentComplexElement or $adjacentDifferentType))">
          <xsl:text>&#xA;</xsl:text>
       </xsl:if>
+-->
 
       <!-- Start a new line. -->
-
       <xsl:text>&#xA;</xsl:text>
 
       <xsl:call-template name="indent">
