@@ -10,7 +10,6 @@
 <xsl:strip-space elements="*"/>
 
 <xsl:template match="/">
-  
   <Derived>
     <Symbols>
       <!-- Sorting these probably involves ext:node-set, not clear what

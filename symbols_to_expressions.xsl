@@ -5,8 +5,6 @@
                xmlns:ext="http://exslt.org/common"
                extension-element-prefixes="str ext"
                >
-<!-- <xsl:output method="xml" indent="yes"/> -->
-
 
 <xsl:template match="node()|@*">
      <xsl:copy>
@@ -21,12 +19,11 @@
 </xsl:template>
   
 <xsl:template match="List[not(*)]">
-  <NilList />
+  <Reserved value="()" />
 </xsl:template>
 
 <xsl:template match="List[(*)]">
   <xsl:variable name="car" select="*[1]" />
-
   <xsl:element name="{$car}">
     <xsl:apply-templates select="*[position() > 1]" />
 </xsl:element>
