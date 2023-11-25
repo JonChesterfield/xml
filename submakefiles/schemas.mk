@@ -10,12 +10,6 @@
 # under a subdirectory. Will only find schema under this root.
 $(if $(MAKEFILE_DIR),,$(error require definition for makefile_dir))
 
-
-#
-#
-#
-
-
 # Go in search of files that look like schema in .rnc or .rng format
 # Using $(SCHEMA_HIDDEN_DIR) as a working directory, the exported function
 # returns names of targets under said working directory and clean deletes it
