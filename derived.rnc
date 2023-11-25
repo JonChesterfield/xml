@@ -13,5 +13,8 @@ S = element S { empty }
 Symbol = element Symbol { text }
 Symbols = element Symbols { Symbol* }
 Textual = element Textual { L* & R* & S* & text* }
-Derived =
-  element Derived { Symbols, Textual, external "symbols.rnc" }
+
+List = element List { List* & Symbol* }
+ListSymbols = element ListSymbols { List* & Symbol* }
+
+Derived = element Derived { Symbols, Textual, ListSymbols }

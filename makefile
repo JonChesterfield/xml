@@ -1,13 +1,16 @@
 
 .SUFFIXES:
-.EXTRA_PREREQS:= $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFLAGS += -r
 .SECONDARY:
 # .DELETE_ON_ERROR:
 
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+MAKEFILE_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 all::
+
+include submakefiles/schemas.mk
+
 
 # Slightly messy. The main user of the schema files in this context
 # is xmllint, which wants the xml syntax .rng file.
@@ -100,19 +103,13 @@ $(eval $(call XML_Transform_Template,.regen,symbols,.regen,derived))
 # The rnc/rng conversions aren't properly wired up yet
 define XML_Pipeline_Template
 
-$1/$3.rng:	$1/$3.rnc
-	trang -Irnc -Orng $$< $$@
-
-$1/$4.rng:	$1/$4.rnc
-	trang -Irnc -Orng $$< $$@
-
-$2/%.$4.xml:	$2/%.$3.xml | $1/$3.rng $1/$3_to_$4.xsl $1/$4.rng
-	mkdir -p $2 # todo, call mkdir less often
-	xmllint --relaxng $1/$3.rng $$< --noout --quiet
+$2/%.$4.xml:	$2/%.$3.xml | $(call get_schema_name, %$1/$3.rng) $1/$3_to_$4.xsl $(call get_schema_name, %$1/$4.rng)
+	@mkdir -p $2
+	@xmllint --relaxng $(call get_schema_name, %$1/$3.rng) $$< --noout --quiet
 	xsltproc --output $$@ $1/$3_to_$4.xsl $$^
-	xmllint --relaxng $1/$4.rng $$@ --noout --quiet
-	xsltproc --output $$@ --maxdepth 40000 pretty.xsl $$@
-	xmllint --relaxng $1/$4.rng $$@ --noout --quiet
+	@xmllint --relaxng $(call get_schema_name, %$1/$4.rng) $$@ --noout --quiet
+	@xsltproc --output $$@ --maxdepth 40000 pretty.xsl $$@
+	@xmllint --relaxng $(call get_schema_name, %$1/$4.rng) $$@ --noout --quiet
 endef
 
 
@@ -138,6 +135,7 @@ LispWIP/%.xml:	$(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.expressions.xml
 	@mkdir -p LispWIP
 	cp $< $@
 
+
 LispXML/$(XMLTmpDir)/%.raw.xml:	Lisp/%.scm | MkdirXMLTmpDir raw.rng
 	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
 	@echo '<RawText xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' >> $@
@@ -150,7 +148,7 @@ $(MOD_XML):	LispXML/%.xml:	LispXML/$(XMLTmpDir)/%.derived.xml | LispXML
 	@cp $< $@
 
 
-all::	$(RAW_SCHEME:Lisp/%.scm=LispWIP/%.xml)
+all::	$(RAW_SCHEME:Lisp/%.scm=LispWIP/%.xml) .schema/rng/raw_sexpr_to_expressions/list.rng
 
 # Only got one of the files, can build the other from it
 $(DERIVED_SECONDARY):	%.$(SECONDARY_SUFFIX):	%.$(PRIMARY_SUFFIX)
@@ -218,3 +216,6 @@ hazardous_rebuild:
 	$(MAKE)
 	rm -rf *.$(DERIVED_SUFFIX)
 
+
+# At the end to depend on the included makefiles as well as this one
+.EXTRA_PREREQS+=$(foreach mk, ${MAKEFILE_LIST},$(abspath ${mk}))
