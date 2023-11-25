@@ -14,4 +14,4 @@ Symbol = element Symbol { text }
 Symbols = element Symbols { Symbol* }
 Textual = element Textual { L* & R* & S* & text* }
 Derived =
-  element Derived { Symbols, Textual, external "list_to_symbols.rnc" }
+  element Derived { Symbols, Textual, external "symbols.rnc" }

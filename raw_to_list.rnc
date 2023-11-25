@@ -1,2 +1,0 @@
-start = RawText
-RawText = element RawText { text }
