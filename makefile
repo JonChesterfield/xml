@@ -2,6 +2,8 @@
 .SUFFIXES:
 .EXTRA_PREREQS:= $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFLAGS += -r
+.SECONDARY:
+.DELETE_ON_ERROR:
 
 all::
 
@@ -60,24 +62,24 @@ MkdirXMLTmpDir: | LispXML
 	@mkdir -p LispXML/$(XMLTmpDir)
 
 
-TemporaryFiles := $(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.raw.xml) \
-	$(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.list.xml) \
-	$(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.symbols.xml) \
-	$(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.expressions.xml) \
-	$(RAW_SCHEME:Lisp/%.scm=LispXML/$(XMLTmpDir)/%.derived.xml)
-
 define XML_Transform_Template
-# arguments from, to
-LispXML/$(XMLTmpDir)/%.$2.xml:	LispXML/$(XMLTmpDir)/%.$1.xml | MkdirXMLTmpDir $1.rng $1_to_$2.xsl $2.rng
-	@xmllint --relaxng $1.rng $$< --noout --quiet
-	@xsltproc --output $$@ $1_to_$2.xsl $$^
-	@xmllint --relaxng $2.rng $$@ --noout --quiet
+# arguments from 1, to 2
+# arguments fromdir 1, from 2, todir 3, to 4
+LispXML/$3/%.$4.xml:	LispXML/$1/%.$2.xml | MkdirXMLTmpDir $2.rng $2_to_$4.xsl $4.rng
+	@mkdir -p LispXML/$3
+	@xmllint --relaxng $2.rng $$< --noout --quiet
+	@xsltproc --output $$@ $2_to_$4.xsl $$^
+	@xmllint --relaxng $4.rng $$@ --noout --quiet
+	@xsltproc --output $$@ --maxdepth 40000 pretty.xsl $$@
 endef
 
-$(eval $(call XML_Transform_Template,raw,list))
-$(eval $(call XML_Transform_Template,list,symbols))
-$(eval $(call XML_Transform_Template,symbols,derived))
-$(eval $(call XML_Transform_Template,symbols,expressions))
+
+$(eval $(call XML_Transform_Template,$(XMLTmpDir),raw,$(XMLTmpDir),list))
+$(eval $(call XML_Transform_Template,$(XMLTmpDir),list,$(XMLTmpDir),symbols))
+$(eval $(call XML_Transform_Template,$(XMLTmpDir),symbols,$(XMLTmpDir),derived))
+$(eval $(call XML_Transform_Template,$(XMLTmpDir),symbols,$(XMLTmpDir),expressions))
+$(eval $(call XML_Transform_Template,$(XMLTmpDir),expressions,.regen,symbols))
+$(eval $(call XML_Transform_Template,.regen,symbols,.regen,derived))
 
 LispXML/$(XMLTmpDir)/%.raw.xml:	Lisp/%.scm | MkdirXMLTmpDir raw.rng
 	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
@@ -87,11 +89,11 @@ LispXML/$(XMLTmpDir)/%.raw.xml:	Lisp/%.scm | MkdirXMLTmpDir raw.rng
 	@echo ']]></RawText>' >> $@
 	@xmllint --relaxng raw.rng $@ --noout --quiet
 
-$(MOD_XML):	LispXML/%.xml:	LispXML/$(XMLTmpDir)/%.derived.xml | LispXML $(TemporaryFiles)
+$(MOD_XML):	LispXML/%.xml:	LispXML/$(XMLTmpDir)/%.derived.xml | LispXML
 	@cp $< $@
 
 
-all::	$(MOD_XML)
+all::	$(MOD_XML) $(RAW_SCHEME:Lisp/%.scm=LispXML/.regen/%.derived.xml)
 
 # Only got one of the files, can build the other from it
 $(DERIVED_SECONDARY):	%.$(SECONDARY_SUFFIX):	%.$(PRIMARY_SUFFIX)
