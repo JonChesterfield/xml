@@ -1,0 +1,4 @@
+start = ListSymbols
+Symbol = element Symbol { text }
+List = element List { List* & Symbol* }
+ListSymbols = element ListSymbols { List* & Symbol* }

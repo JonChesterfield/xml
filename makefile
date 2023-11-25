@@ -99,7 +99,9 @@ clean::
 	rm -rf LispExpressions $(XMLPipelineWorkDir)
 
 
-all::	$(RAW_SCHEME:Lisp/car.scm=LispChecked/car.xml) # $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) 
+all::	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/car.raw_sexpr.xml
+
+all::	$(RAW_SCHEME:Lisp/car.scm=LispChecked/car.xml) $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) 
 
 
 # At the end to depend on the included makefiles as well as this one

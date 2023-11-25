@@ -42,6 +42,4 @@
   </xsl:if>
 </xsl:template>
 
-
-
 </xsl:transform>
