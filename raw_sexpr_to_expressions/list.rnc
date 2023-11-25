@@ -1,0 +1,3 @@
+start = ListText
+List = element List { List* & text* }
+ListText = element ListText { List* }

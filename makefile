@@ -3,13 +3,21 @@
 .EXTRA_PREREQS:= $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFLAGS += -r
 .SECONDARY:
-.DELETE_ON_ERROR:
+# .DELETE_ON_ERROR:
+
+SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
 all::
 
+# Slightly messy. The main user of the schema files in this context
+# is xmllint, which wants the xml syntax .rng file.
+# If the rng is edited directly, that tends to mess up the timestamp
+# tracking in make. Therefore going to have schema.xml and schema.rnc as
+# the pair of synchronised files, derive schema.rng from whichever is newer
+# in a fashion that updates the other, then use the .rng output for linting
 PRIMARY_SUFFIX=rng
 SECONDARY_SUFFIX=rnc
-DERIVED_SUFFIX=pref
+DERIVED_SUFFIX=xml
 
 secondary_from_primary = trang -Irng -Ornc $2 $1
 primary_from_secondary = trang -Irnc -Orng $2 $1
@@ -63,15 +71,16 @@ MkdirXMLTmpDir: | LispXML
 
 
 define XML_Transform_Template
-# arguments from 1, to 2
 # arguments fromdir 1, from 2, todir 3, to 4
-LispXML/$3/%.$4.xml:	LispXML/$1/%.$2.xml | MkdirXMLTmpDir $2.rng $2_to_$4.xsl $4.rng
+LispXML/$3/%.$4.xml:	LispXML/$1/%.$2.xml | $2.rng $2_to_$4.xsl $4.rng
 	@mkdir -p LispXML/$3
 	@xmllint --relaxng $2.rng $$< --noout --quiet
 	@xsltproc --output $$@ $2_to_$4.xsl $$^
-	@xmllint --relaxng $4.rng $$@ --noout --quiet
+#	@xmllint --relaxng $4.rng $$@ --noout --quiet
 	@xsltproc --output $$@ --maxdepth 40000 pretty.xsl $$@
+	@xmllint --relaxng $4.rng $$@ --noout --quiet
 endef
+
 
 
 $(eval $(call XML_Transform_Template,$(XMLTmpDir),raw,$(XMLTmpDir),list))
@@ -80,6 +89,54 @@ $(eval $(call XML_Transform_Template,$(XMLTmpDir),symbols,$(XMLTmpDir),derived))
 $(eval $(call XML_Transform_Template,$(XMLTmpDir),symbols,$(XMLTmpDir),expressions))
 $(eval $(call XML_Transform_Template,$(XMLTmpDir),expressions,.regen,symbols))
 $(eval $(call XML_Transform_Template,.regen,symbols,.regen,derived))
+
+
+# arguments
+# $1 name of current pipeine, source directory
+# $2 name of directory to write files into to
+# $3 from format, requires $(from).rng in source directory
+# $4 to format, requires $(to).rng in source directory
+# transform will run $3_to_$4.xsl
+# The rnc/rng conversions aren't properly wired up yet
+define XML_Pipeline_Template
+
+$1/$3.rng:	$1/$3.rnc
+	trang -Irnc -Orng $$< $$@
+
+$1/$4.rng:	$1/$4.rnc
+	trang -Irnc -Orng $$< $$@
+
+$2/%.$4.xml:	$2/%.$3.xml | $1/$3.rng $1/$3_to_$4.xsl $1/$4.rng
+	mkdir -p $2 # todo, call mkdir less often
+	xmllint --relaxng $1/$3.rng $$< --noout --quiet
+	xsltproc --output $$@ $1/$3_to_$4.xsl $$^
+	xmllint --relaxng $1/$4.rng $$@ --noout --quiet
+	xsltproc --output $$@ --maxdepth 40000 pretty.xsl $$@
+	xmllint --relaxng $1/$4.rng $$@ --noout --quiet
+endef
+
+
+XMLPipelineWorkDir := pipeline
+
+
+# Creates target: $(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.expressions.xml
+# from source:    $(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.raw_sexpr.xml
+# Directory contains schema and transforms implementing that
+include $(SELF_DIR)raw_sexpr_to_expressions/raw_sexpr_to_expressions.mk
+
+# Create the input file
+$(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.raw_sexpr.xml: Lisp/%.scm
+	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
+	@echo '<RawText xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' >> $@
+	@echo '<![CDATA[' >> $@
+	@cat $< >> $@
+	@echo ']]></RawText>' >> $@
+	@xmllint --relaxng raw.rng $@ --noout --quiet
+
+# Copy the output file out
+LispWIP/%.xml:	$(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.expressions.xml
+	@mkdir -p LispWIP
+	cp $< $@
 
 LispXML/$(XMLTmpDir)/%.raw.xml:	Lisp/%.scm | MkdirXMLTmpDir raw.rng
 	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
@@ -93,7 +150,7 @@ $(MOD_XML):	LispXML/%.xml:	LispXML/$(XMLTmpDir)/%.derived.xml | LispXML
 	@cp $< $@
 
 
-all::	$(MOD_XML) $(RAW_SCHEME:Lisp/%.scm=LispXML/.regen/%.derived.xml)
+all::	$(RAW_SCHEME:Lisp/%.scm=LispWIP/%.xml)
 
 # Only got one of the files, can build the other from it
 $(DERIVED_SECONDARY):	%.$(SECONDARY_SUFFIX):	%.$(PRIMARY_SUFFIX)
