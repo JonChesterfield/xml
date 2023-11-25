@@ -19,15 +19,13 @@ SCHEMA_RNG_DIR := $(SCHEMA_HIDDEN_DIR)rng/
 SCHEMA_RNC_DIR := $(SCHEMA_HIDDEN_DIR)rnc/
 
 clean::
-	@rm -rf $(SCHEMA_HIDDEN_DIR)
-
+	rm -rf $(SCHEMA_HIDDEN_DIR)
 
 SCHEMA_RWILDCARD = $(foreach d,$(wildcard $(1)*),$(call SCHEMA_RWILDCARD,$(d)/,$(2)) $(filter $(subst *,%,$(2)),$(d)))
 
 # Ignore any under the codegen dir so running repeatedly doesn't accumulate more
 SCHEMA_RAW_RNC_SOURCE := $(filter-out $(MAKEFILE_DIR)/$(SCHEMA_HIDDEN_DIR)%, $(call SCHEMA_RWILDCARD,$(MAKEFILE_DIR)/,*.rnc))
 SCHEMA_RAW_RNG_SOURCE := $(filter-out $(MAKEFILE_DIR)/$(SCHEMA_HIDDEN_DIR)%, $(call SCHEMA_RWILDCARD,$(MAKEFILE_DIR)/,*.rng))
-
 
 # Derive names under XML_DIR
 SCHEMA_CHDIR =	$(subst $(MAKEFILE_DIR)/, $(SCHEMA_XML_DIR), $1)
@@ -50,6 +48,7 @@ SCHEMA_DERIVED_RNC := $(patsubst %.rng, %.rnc, $(subst $(SCHEMA_XML_DIR), $(SCHE
 
 $(SCHEMA_UPDATED_RNG):: $(SCHEMA_XML_DIR)%.rng:	%.rng
 #	@echo "Updating $@ from $<"
+	@if ! test -s $< ; then trang -Irnc -Orng $(<:.rng=.rnc) $< ; fi
 	@mkdir -p $(dir $@)
 	@cp $< $@
 	@$(if $(filter $@, $(SCHEMA_UPDATED_RNG)), @trang -Irng -Ornc $@ $(<:.rng=.rnc))
@@ -57,6 +56,7 @@ $(SCHEMA_UPDATED_RNG):: $(SCHEMA_XML_DIR)%.rng:	%.rng
 
 $(SCHEMA_UPDATED_RNC):: $(SCHEMA_XML_DIR)%.rng:	%.rnc
 #	@echo "Updating $@ from $<"
+	@if ! test -s $< ; then trang -Irng -Ornc $(<:.rnc=.rng) $< ; fi
 	@mkdir -p $(dir $@)
 	@trang -Irnc -Orng $< $@
 	@$(if $(filter $@, $(SCHEMA_UPDATED_RNG)), cp $@ $(<:.rnc=.rng))
