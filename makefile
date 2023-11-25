@@ -50,7 +50,7 @@ validateC/$7:	$7
 	@xmllint --relaxng relaxng.rng $$< --noout --quiet
 
 $2/%.$4.xml:	$2/%.$3.xml | validateA/$5 validateB/$6 validateC/$7
-	@mkdir -p $(dir $$@)
+	@mkdir -p $$(dir $$@)
 	@xmllint --relaxng $5 $$< --noout --quiet
 	@xsltproc --output $$@ $6 $$^
 	@xmllint --relaxng $7 $$@ --noout --quiet
@@ -85,10 +85,21 @@ LispExpressions/%.xml:	$(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.expressi
 	@mkdir -p $(dir $@)
 	@cp $< $@
 
+include $(SELF_DIR)expressions_to_raw_sexpr/expressions_to_raw_sexpr.mk
+
+$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.expressions.xml: LispExpressions/%.xml
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+LispChecked/%.xml:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml
+	@mkdir -p $(dir $@)
+	cp $< $@
+
 clean::
 	rm -rf LispExpressions $(XMLPipelineWorkDir)
 
-all::	$(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml)
+
+all::	$(RAW_SCHEME:Lisp/car.scm=LispChecked/car.xml) # $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) 
 
 
 # At the end to depend on the included makefiles as well as this one

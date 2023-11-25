@@ -1,0 +1,11 @@
+start = Expressions
+Expressions = element Expressions { anyElement* }
+Reserved =
+  element Reserved {
+    attribute value { text }
+  }
+anyElement =
+  element Reserved {
+    attribute value { text }
+  }
+  | element * { text & anyElement* }
