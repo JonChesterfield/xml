@@ -96,21 +96,16 @@ $(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.expressions.xml: LispExpression
 .PHONY: validate/raw_sexpr_to_sexpr.xsl
 validate/raw_sexpr_to_sexpr.xsl:	raw_sexpr_to_sexpr.xsl
 	@echo "validate $@"
-	xmllint --relaxng xslt.rng $< --noout --quiet
+	@xmllint --relaxng xslt.rng $< --noout --quiet
 
 LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml raw_sexpr_to_sexpr.xsl | validate/raw_sexpr_to_sexpr.xsl
-	@echo "Build $@"
 	@mkdir -p $(dir $@)
 	@xmllint --relaxng raw.rng $< --noout --quiet
-	xsltproc --output $@ raw_sexpr_to_sexpr.xsl $<
+	@xsltproc --output $@ raw_sexpr_to_sexpr.xsl $<
 
 clean::
-	rm -rf LispExpressions $(XMLPipelineWorkDir)
+	rm -rf LispExpressions $(XMLPipelineWorkDir) LispChecked
 
-
-# all::	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/car.raw_sexpr.xml
-
-all::	LispChecked/car.scm
 
 all::	$(RAW_SCHEME:Lisp/%.scm=LispChecked/%.scm) $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) 
 

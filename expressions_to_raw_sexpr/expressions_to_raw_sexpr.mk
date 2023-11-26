@@ -5,4 +5,6 @@ ExpressionsToRawSExprXMLWorkDir := $(XMLPipelineWorkDir)/$(ExpressionsToRawSExpr
 
 $(eval $(call XML_Pipeline_Template,$(ExpressionsToRawSExprSrcDir),$(ExpressionsToRawSExprXMLWorkDir),expressions,symbols))
 
-$(eval $(call XML_Pipeline_Template,$(ExpressionsToRawSExprSrcDir),$(ExpressionsToRawSExprXMLWorkDir),symbols,raw_sexpr))
+$(eval $(call XML_Pipeline_Template,$(ExpressionsToRawSExprSrcDir),$(ExpressionsToRawSExprXMLWorkDir),symbols,indented_sexpr))
+
+$(eval $(call XML_Pipeline_Template,$(ExpressionsToRawSExprSrcDir),$(ExpressionsToRawSExprXMLWorkDir),indented_sexpr,raw_sexpr))

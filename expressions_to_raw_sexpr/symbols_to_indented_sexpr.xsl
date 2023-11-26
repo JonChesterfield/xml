@@ -12,46 +12,33 @@
 <xsl:preserve-space elements="xsl:text"/>
 
 <xsl:template match="/ListSymbols">
-  <RawText>
+  <IndentedSexpr>
     <xsl:apply-templates select="node()|@*"/>
-  </RawText>
+  </IndentedSexpr>
 </xsl:template>
 
-<!-- Default to copying everything -->
 <xsl:template match="node()|@*">
      <xsl:copy>
        <xsl:apply-templates select="node()|@*"/>
      </xsl:copy>
 </xsl:template>
 
-
 <xsl:template match="List">
-  <xsl:text>(</xsl:text>
-       <xsl:apply-templates select="node()|@*"/>
-     <xsl:text>)</xsl:text>
+  <List>
+    <xsl:apply-templates select="node()|@*"/>
+  </List>
 </xsl:template>
 
 <xsl:template match="Symbol">
   <xsl:variable name="depth" select="count(ancestor::*) - 1" />
   <xsl:if test="position()>1" >
-    <xsl:text>&#xA;</xsl:text>
-    <xsl:call-template name="spaces">
-      <xsl:with-param name="n" select="2 * $depth"/>
-    </xsl:call-template>
+    <Newline/>
+    <Spaces value="{2 * $depth}" />
   </xsl:if>
-  <xsl:value-of select="." />
+  <Symbol>
+    <xsl:value-of select="." />
+  </Symbol>
 </xsl:template>
-
-<xsl:template name="spaces">
-  <xsl:param name="n"/>
-  <xsl:if test="$n > 0">
-    <xsl:call-template name="spaces">
-      <xsl:with-param name="n" select="$n - 1"/>
-    </xsl:call-template>
-    <xsl:text> </xsl:text>
-  </xsl:if>
-</xsl:template>
-
 
 </xsl:transform>
 

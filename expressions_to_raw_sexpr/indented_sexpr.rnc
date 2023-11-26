@@ -1,0 +1,9 @@
+start = IndentedSexpr
+
+Symbol = element Symbol { text }
+Newline = element Newline {empty}
+Spaces = element Spaces {attribute value {xsd:integer}}
+
+List = element List { List* & Symbol* & Newline * & Spaces*}
+
+IndentedSexpr = element IndentedSexpr { List* & Symbol* & Newline* & Spaces* }
