@@ -10,7 +10,10 @@ Parameters = element Parameters { Parameter* }
 
 ReturnType = element ReturnType {text}
 
-Block = element Block { text }
+Statement = element Statement {text}
+ReturnStatement = element ReturnStatement {text}
+
+Block = element Block { Statement* & ReturnStatement*}
 
 Declaration = element Declaration { text }
 Function = element Function { ReturnType, Name?, Parameters, Block }

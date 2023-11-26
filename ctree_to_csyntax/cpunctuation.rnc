@@ -1,0 +1,21 @@
+start = CPunctuation
+CPunctuation = element CPunctuation { Type* & Declaration* & Function* }
+
+Type = element Type { text }
+
+Name = element Name { text}
+
+Punctuator = element Punctuator { attribute value {text}}
+
+Parameter = element Parameter { element ParameterType {text}, Punctuator?, element ParameterName {text}?}
+Parameters = element Parameters { Punctuator* & Parameter* }
+
+ReturnType = element ReturnType {text}
+
+Statement = element Statement {text}
+ReturnStatement = element ReturnStatement {text}
+
+Block = element Block { text* & Punctuator* & ReturnStatement* & Statement*}
+
+Declaration = element Declaration { text }
+Function = element Function { ReturnType, Punctuator, Name, Parameters, Block }

@@ -3,6 +3,9 @@
   <uri pattern="*.ctree.xml" typeId="CTree"/>
   <typeId id="CTree" uri="ctree.rnc"/>
 
+  <uri pattern="*.cpunctuation.xml" typeId="CPunctuation"/>
+  <typeId id="CPunctuation" uri="cpunctuation.rnc"/>
+
   <uri pattern="*.csyntax.xml" typeId="CSyntax"/>
   <typeId id="CSyntax" uri="csyntax.rnc"/>
 

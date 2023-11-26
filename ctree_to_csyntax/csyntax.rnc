@@ -1,18 +1,2 @@
 start = CSyntax
-CSyntax = element CSyntax { Type* & Declaration* & Function* }
-
-Type = element Type { text }
-
-Name = element Name { text}
-
-Punctuator = element Punctuator { attribute value {text}}
-
-Parameter = element Parameter { element ParameterType {text}, element ParameterName {text}?}
-Parameters = element Parameters { Punctuator* & Parameter* }
-
-ReturnType = element ReturnType {text}
-
-Block = element Block { Punctuator, text, Punctuator }
-
-Declaration = element Declaration { text }
-Function = element Function { ReturnType, Name, Parameters, Block }
+CSyntax = element CSyntax { text }

@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
-<CTree>
-    
+<CTree>    
   <Function>
     <ReturnType>double</ReturnType>
     <Name>f__v__middle</Name>
@@ -18,12 +17,11 @@
       </Parameter>
     </Parameters>
     <Block>
-  va_list va;
-  __builtin_va_start(va, 0);
-  A x = va_arg(va, A);
-  va_end(va);
-  return x;
+      <Statement>va_list va</Statement>        
+      <Statement>__builtin_va_start(va, 0)</Statement>
+      <Statement>A x = va_arg(va, A)</Statement>
+      <Statement>va_end(va)</Statement>
+      <ReturnStatement>x</ReturnStatement> 
     </Block>
   </Function>
-
 </CTree>
