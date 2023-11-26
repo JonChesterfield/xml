@@ -8,6 +8,9 @@
 
 <xsl:output method="xml" indent="yes"/>
 
+<xsl:strip-space elements="*"/>
+<xsl:preserve-space elements="xsl:text"/>
+
 <xsl:template match="/ListSymbols">
   <RawText>
     <xsl:apply-templates select="node()|@*"/>

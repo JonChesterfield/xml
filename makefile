@@ -49,13 +49,14 @@ validateB/$6:	$6
 validateC/$7:	$7
 	@xmllint --relaxng relaxng.rng $$< --noout --quiet
 
-$2/%.$4.xml:	$2/%.$3.xml | validateA/$5 validateB/$6 validateC/$7
+# Formatting the xml messes up raw_sexpr handling
+$2/%.$4.xml:	$2/%.$3.xml $5 $6 $7 | validateA/$5 validateB/$6 validateC/$7
 	@mkdir -p $$(dir $$@)
 	@xmllint --relaxng $5 $$< --noout --quiet
-	@xsltproc --output $$@ $6 $$^
+	@xsltproc --output $$@ $6 $$<
 	@xmllint --relaxng $7 $$@ --noout --quiet
-	@xsltproc --output $$@ --maxdepth 40000 pretty.xsl $$@
-	@xmllint --relaxng $7 $$@ --noout --quiet
+#	@xsltproc --output $$@ --maxdepth 40000 pretty.xsl $$@
+#	@xmllint --relaxng $7 $$@ --noout --quiet
 
 endef
 
@@ -87,21 +88,31 @@ LispExpressions/%.xml:	$(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.expressi
 
 include $(SELF_DIR)expressions_to_raw_sexpr/expressions_to_raw_sexpr.mk
 
+# Copy the expressions in
 $(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.expressions.xml: LispExpressions/%.xml
 	@mkdir -p $(dir $@)
-	cp $< $@
+	@cp $< $@
 
-LispChecked/%.xml:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml
+.PHONY: validate/raw_sexpr_to_sexpr.xsl
+validate/raw_sexpr_to_sexpr.xsl:	raw_sexpr_to_sexpr.xsl
+	@echo "validate $@"
+	xmllint --relaxng xslt.rng $< --noout --quiet
+
+LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml raw_sexpr_to_sexpr.xsl | validate/raw_sexpr_to_sexpr.xsl
+	@echo "Build $@"
 	@mkdir -p $(dir $@)
-	cp $< $@
+	@xmllint --relaxng raw.rng $< --noout --quiet
+	xsltproc --output $@ raw_sexpr_to_sexpr.xsl $<
 
 clean::
 	rm -rf LispExpressions $(XMLPipelineWorkDir)
 
 
-all::	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/car.raw_sexpr.xml
+# all::	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/car.raw_sexpr.xml
 
-all::	$(RAW_SCHEME:Lisp/car.scm=LispChecked/car.xml) $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) 
+all::	LispChecked/car.scm
+
+all::	$(RAW_SCHEME:Lisp/%.scm=LispChecked/%.scm) $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) 
 
 
 # At the end to depend on the included makefiles as well as this one

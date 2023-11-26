@@ -10,7 +10,7 @@
 
 <xsl:output method="text"/>
 
-<xsl:template match="RawText">
+<xsl:template match="/RawText">
     
 <text>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;ListText&gt;</text>
@@ -51,5 +51,3 @@
 </xsl:template>
 
 </xsl:transform>
-  
-  
