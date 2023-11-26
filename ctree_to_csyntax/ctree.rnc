@@ -1,11 +1,16 @@
 start = CTree
 CTree = element CTree { Type* & Declaration* & Function* }
+
 Type = element Type { text }
 
-Parameter = element Parameter { text }
+Name = element Name { text}
+
+Parameter = element Parameter { element ParameterType {text}, element ParameterName {text}?}
 Parameters = element Parameters { Parameter* }
+
+ReturnType = element ReturnType {text}
 
 Block = element Block { text }
 
 Declaration = element Declaration { text }
-Function = element Function { Parameters, Block }
+Function = element Function { ReturnType, Name?, Parameters, Block }

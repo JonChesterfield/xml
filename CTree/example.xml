@@ -1,14 +1,29 @@
 <?xml version="1.0"?>
 <CTree>
     
-
   <Function>
-    <Parameters>        
+    <ReturnType>double</ReturnType>
+    <Name>f__v__middle</Name>
+    <Parameters>
       <Parameter>
-        thing
+          <ParameterType>int</ParameterType>
+      </Parameter>
+      <Parameter>
+          <ParameterType>float</ParameterType>
+          <ParameterName>y</ParameterName>
+      </Parameter>
+      <Parameter>
+          <ParameterType>double</ParameterType>
+          <ParameterName>z</ParameterName>
       </Parameter>
     </Parameters>
     <Block>
+  va_list va;
+  __builtin_va_start(va, 0);
+  A x = va_arg(va, A);
+  va_end(va);
+  return x;
     </Block>
   </Function>
+
 </CTree>

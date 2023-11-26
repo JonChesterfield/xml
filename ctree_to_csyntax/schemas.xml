@@ -1,0 +1,9 @@
+<locatingRules xmlns="http://thaiopensource.com/ns/locating-rules/1.0">
+  <transformURI fromPattern="*.xml" toPattern="*.rnc"/>
+  <uri pattern="*.ctree.xml" typeId="CTree"/>
+  <typeId id="CTree" uri="ctree.rnc"/>
+
+  <uri pattern="*.csyntax.xml" typeId="CSyntax"/>
+  <typeId id="CSyntax" uri="csyntax.rnc"/>
+
+</locatingRules>

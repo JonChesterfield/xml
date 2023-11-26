@@ -105,13 +105,18 @@ LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xm
 
 
 include $(SELF_DIR)ctree_to_csyntax/ctree_to_csyntax.mk
-RAW_CTREE := $(call rwildcard,CTree/,*.xml)
+RAW_CTREE := $(filter-out CTree/schemas.xml,$(call rwildcard,CTree/,*.xml))
 CSYNTAX := $(subst CTree,CSyntax,$(RAW_CTREE:.xml=.c))
 
-$(info $(RAW_CTREE))
-$(info $(CSYNTAX))
+EXTRAS := schemas.xml ctree.rnc csyntax.rnc
 
-$(XMLPipelineWorkDir)/ctree_to_csyntax/%.ctree.xml: CTree/%.xml
+
+$(XMLPipelineWorkDir)/ctree_to_csyntax/%: ctree_to_csyntax/%
+	@mkdir -p $(dir $@)
+	@cp $< $@
+
+
+$(XMLPipelineWorkDir)/ctree_to_csyntax/%.ctree.xml: CTree/%.xml $(foreach f,$(EXTRAS),$(XMLPipelineWorkDir)/ctree_to_csyntax/$(f))
 	@mkdir -p $(dir $@)
 	@cp $< $@
 
