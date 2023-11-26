@@ -1,0 +1,11 @@
+start = CTree
+CTree = element CTree { Type* & Declaration* & Function* }
+Type = element Type { text }
+
+Parameter = element Parameter { text }
+Parameters = element Parameters { Parameter* }
+
+Block = element Block { text }
+
+Declaration = element Declaration { text }
+Function = element Function { Parameters, Block }

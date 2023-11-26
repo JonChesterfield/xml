@@ -1,0 +1,5 @@
+start = CSyntax
+CSyntax = element CSyntax { Type* & Declaration* & Function* }
+Type = element Type {text}
+Declaration = element Declaration {text}
+Function = element Function {text}

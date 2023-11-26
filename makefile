@@ -93,9 +93,9 @@ $(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.expressions.xml: LispExpression
 	@mkdir -p $(dir $@)
 	@cp $< $@
 
+# Extract the sexpr
 .PHONY: validate/raw_sexpr_to_sexpr.xsl
 validate/raw_sexpr_to_sexpr.xsl:	raw_sexpr_to_sexpr.xsl
-	@echo "validate $@"
 	@xmllint --relaxng xslt.rng $< --noout --quiet
 
 LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml raw_sexpr_to_sexpr.xsl | validate/raw_sexpr_to_sexpr.xsl
@@ -103,11 +103,30 @@ LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xm
 	@xmllint --relaxng raw.rng $< --noout --quiet
 	@xsltproc --output $@ raw_sexpr_to_sexpr.xsl $<
 
+
+include $(SELF_DIR)ctree_to_csyntax/ctree_to_csyntax.mk
+RAW_CTREE := $(call rwildcard,CTree/,*.xml)
+CSYNTAX := $(subst CTree,CSyntax,$(RAW_CTREE:.xml=.c))
+
+$(info $(RAW_CTREE))
+$(info $(CSYNTAX))
+
+$(XMLPipelineWorkDir)/ctree_to_csyntax/%.ctree.xml: CTree/%.xml
+	@mkdir -p $(dir $@)
+	@cp $< $@
+
+$(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml
+	@mkdir -p $(dir $@)
+	@cp $< $@
+
+clean:: CSyntax
+
 clean::
 	rm -rf LispExpressions $(XMLPipelineWorkDir) LispChecked
 
+all::	$(CSYNTAX)
 
-all::	$(RAW_SCHEME:Lisp/%.scm=LispChecked/%.scm) $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) 
+# all::	$(RAW_SCHEME:Lisp/%.scm=LispChecked/%.scm) $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) $(CSYNTAX)
 
 
 # At the end to depend on the included makefiles as well as this one
