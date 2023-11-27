@@ -11,7 +11,6 @@ all::
 
 include submakefiles/schemas.mk
 
-
 # Slightly messy. The main user of the schema files in this context
 # is xmllint, which wants the xml syntax .rng file.
 # If the rng is edited directly, that tends to mess up the timestamp
@@ -19,11 +18,9 @@ include submakefiles/schemas.mk
 # the pair of synchronised files, derive schema.rng from whichever is newer
 # in a fashion that updates the other, then use the .rng output for linting
 
-
 rwildcard = $(foreach d,$(wildcard $(1)*),$(call rwildcard,$(d)/,$(2)) $(filter $(subst *,%,$(2)),$(d)))
 
 RAW_SCHEME := $(call rwildcard,Lisp/,*.scm)
-
 
 # arguments
 # $1 name of current pipeine, source directory
@@ -94,14 +91,14 @@ $(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.expressions.xml: LispExpression
 	@cp $< $@
 
 # Extract the sexpr
-.PHONY: validate/raw_sexpr_to_sexpr.xsl
-validate/raw_sexpr_to_sexpr.xsl:	raw_sexpr_to_sexpr.xsl
+.PHONY: validate/drop_outer_element.xsl
+validate/drop_outer_element.xsl:	drop_outer_element.xsl
 	@xmllint --relaxng xslt.rng $< --noout --quiet
 
-LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml raw_sexpr_to_sexpr.xsl | validate/raw_sexpr_to_sexpr.xsl
+LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml drop_outer_element.xsl | validate/drop_outer_element.xsl
 	@mkdir -p $(dir $@)
 	@xmllint --relaxng raw.rng $< --noout --quiet
-	@xsltproc --output $@ raw_sexpr_to_sexpr.xsl $<
+	@xsltproc --output $@ drop_outer_element.xsl $<
 
 
 include $(SELF_DIR)ctree_to_csyntax/ctree_to_csyntax.mk
@@ -115,14 +112,14 @@ $(XMLPipelineWorkDir)/ctree_to_csyntax/%: ctree_to_csyntax/%
 	@mkdir -p $(dir $@)
 	@cp $< $@
 
-
 $(XMLPipelineWorkDir)/ctree_to_csyntax/%.ctree.xml: CTree/%.xml $(foreach f,$(EXTRAS),$(XMLPipelineWorkDir)/ctree_to_csyntax/$(f))
 	@mkdir -p $(dir $@)
 	@cp $< $@
 
-$(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml
+$(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml drop_outer_element.xsl | validate/drop_outer_element.xsl
 	@mkdir -p $(dir $@)
-	@cp $< $@
+	@xmllint --relaxng $(call get_schema_name, %ctree_to_csyntax/csyntax.rng) $< --noout --quiet
+	@xsltproc --output $@ drop_outer_element.xsl $<
 
 clean:: CSyntax
 
@@ -131,7 +128,7 @@ clean::
 
 all::	$(CSYNTAX)
 
-# all::	$(RAW_SCHEME:Lisp/%.scm=LispChecked/%.scm) $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) $(CSYNTAX)
+all::	$(RAW_SCHEME:Lisp/%.scm=LispChecked/%.scm) $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) $(CSYNTAX)
 
 
 # At the end to depend on the included makefiles as well as this one
