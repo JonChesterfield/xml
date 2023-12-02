@@ -45,7 +45,10 @@
 
 <xsl:template match="Symbol">
 
-  <xsl:variable name="esc4" select="str:replace(., '_2D','-')" />
+  <xsl:variable name="escN" select="." />
+
+  <xsl:variable name="esc5" select="str:replace($escN, '_3F','?')" />
+  <xsl:variable name="esc4" select="str:replace($esc5, '_2D','-')" />
   <xsl:variable name="esc3" select="str:replace($esc4, '_26','&amp;')" />
   <xsl:variable name="esc2" select="str:replace($esc3, '_3E','&gt;')" />
   <xsl:variable name="esc1" select="str:replace($esc2, '_3C','&lt;')" />
