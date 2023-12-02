@@ -21,7 +21,8 @@
 <xsl:variable name="esc3" select="str:replace($esc2, '&amp;', '_26')" />
 <xsl:variable name="esc4" select="str:replace($esc3, '-', '_2D')" />
 <xsl:variable name="esc5" select="str:replace($esc4, '?', '_3F')" />
-<xsl:variable name="escN" select="$esc5" />
+<xsl:variable name="esc6" select="str:replace($esc5, '=', '_3D')" />
+<xsl:variable name="escN" select="$esc6" />
 
 <xsl:variable name="lp" select="str:replace($escN, '(', '&lt;List&gt;' )" />
 <xsl:variable name="rp" select="str:replace($lp, ')', '&lt;/List&gt;' )" />
