@@ -11,6 +11,9 @@ all::
 
 include submakefiles/schemas.mk
 
+XMLLINTOPTS := --huge --noout
+XSLTPROCOPTS := --huge
+
 # Slightly messy. The main user of the schema files in this context
 # is xmllint, which wants the xml syntax .rng file.
 # If the rng is edited directly, that tends to mess up the timestamp
@@ -36,24 +39,24 @@ define XML_Pipeline_Template_Lemma
 
 .PHONY: validateA/$5
 validateA/$5:	$5
-	@xmllint --relaxng relaxng.rng "$$<" --noout --quiet
+	@xmllint --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
 
 .PHONY: validateB/$6
 validateB/$6:	$6
-	@xmllint --relaxng xslt.rng "$$<" --noout --quiet
+	@xmllint --relaxng xslt.rng "$$<" $(XMLLINTOPTS) --quiet
 
 .PHONY: validateC/$7
 validateC/$7:	$7
-	@xmllint --relaxng relaxng.rng "$$<" --noout --quiet
+	@xmllint --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
 
 # Formatting the xml messes up raw_sexpr handling
 $2/%.$4.xml:	$2/%.$3.xml $5 $6 $7 | validateA/$5 validateB/$6 validateC/$7
 	@mkdir -p "$$(dir $$@)"
-	@xmllint --relaxng $5 "$$<" --noout --quiet
-	@xsltproc --output "$$@" $6 "$$<"
-	@xmllint --relaxng $7 "$$@" --noout --quiet
-#	@xsltproc --output $$@ --maxdepth 40000 subtransforms/pretty.xsl $$@
-#	@xmllint --relaxng $7 $$@ --noout --quiet
+	@xmllint --relaxng $5 "$$<" $(XMLLINTOPTS) --quiet
+	@xsltproc $(XSLTPROCOPTS) --output "$$@" $6 "$$<"
+	@xmllint --relaxng $7 "$$@" $(XMLLINTOPTS) --quiet
+#	@xsltproc $(XSLTPROCOPTS) --output $$@ --maxdepth 40000 subtransforms/pretty.xsl $$@
+#	@xmllint --relaxng $7 $$@ $(XMLLINTOPTS) --quiet
 
 endef
 
@@ -76,7 +79,7 @@ $(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.raw_sexpr.xml: Lisp/%.scm
 	@echo '<![CDATA[' >> "$@"
 	@cat "$<" >> "$@"
 	@echo ']]></RawText>' >> "$@"
-	@xmllint --relaxng $(call get_schema_name, %raw_sexpr_to_expressions/raw_sexpr.rng) "$@" --noout --quiet
+	@xmllint --relaxng $(call get_schema_name, %raw_sexpr_to_expressions/raw_sexpr.rng) "$@" $(XMLLINTOPTS) --quiet
 
 
 # Copy the output file out
@@ -94,12 +97,12 @@ $(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.expressions.xml: LispExpression
 # Extract the sexpr
 .PHONY: validate/subtransforms/drop_outer_element.xsl
 validate/subtransforms/drop_outer_element.xsl:	subtransforms/drop_outer_element.xsl
-	@xmllint --relaxng xslt.rng "$<" --noout --quiet
+	@xmllint --relaxng xslt.rng "$<" $(XMLLINTOPTS) --quiet
 
 LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml subtransforms/drop_outer_element.xsl | validate/subtransforms/drop_outer_element.xsl
 	@mkdir -p "$(dir $@)"
-	@xmllint --relaxng $(call get_schema_name, %expressions_to_raw_sexpr/raw_sexpr.rng) "$<" --noout --quiet
-	@xsltproc --output "$@" subtransforms/drop_outer_element.xsl "$<"
+	@xmllint --relaxng $(call get_schema_name, %expressions_to_raw_sexpr/raw_sexpr.rng) "$<" $(XMLLINTOPTS) --quiet
+	@xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
 
 
 include $(SELF_DIR)ctree_to_csyntax/ctree_to_csyntax.mk
@@ -119,8 +122,8 @@ $(XMLPipelineWorkDir)/ctree_to_csyntax/%.ctree.xml: CTree/%.xml $(foreach f,$(EX
 
 $(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml subtransforms/drop_outer_element.xsl | validate/subtransforms/drop_outer_element.xsl
 	@mkdir -p "$(dir $@)"
-	@xmllint --relaxng $(call get_schema_name, %ctree_to_csyntax/csyntax.rng) "$<" --noout --quiet
-	@xsltproc --output "$@" subtransforms/drop_outer_element.xsl "$<"
+	@xmllint --relaxng $(call get_schema_name, %ctree_to_csyntax/csyntax.rng) "$<" $(XMLLINTOPTS) --quiet
+	@xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
 
 clean::
 	rm -rf CSyntax
