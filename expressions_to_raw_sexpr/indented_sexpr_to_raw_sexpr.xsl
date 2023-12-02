@@ -47,9 +47,14 @@
 
   <xsl:variable name="escN" select="." />
 
-  <xsl:variable name="esc6" select="str:replace($escN, '_3D','=')" />
-  <xsl:variable name="esc5" select="str:replace($esc6, '_3F','?')" />
+  <xsl:variable name="esc9" select="str:replace($escN, '_3D','=')" />
+  <xsl:variable name="esc8" select="str:replace($esc9, '_3F','?')" />
+
+  <xsl:variable name="esc7" select="str:replace($esc8, '_2A','*')" />
+  <xsl:variable name="esc6" select="str:replace($esc7, '_2B','+')" />
+  <xsl:variable name="esc5" select="str:replace($esc6, '_2C',',')" />
   <xsl:variable name="esc4" select="str:replace($esc5, '_2D','-')" />
+
   <xsl:variable name="esc3" select="str:replace($esc4, '_26','&amp;')" />
   <xsl:variable name="esc2" select="str:replace($esc3, '_3E','&gt;')" />
   <xsl:variable name="esc1" select="str:replace($esc2, '_3C','&lt;')" />

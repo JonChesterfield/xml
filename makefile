@@ -89,12 +89,12 @@ include $(SELF_DIR)expressions_to_raw_sexpr/expressions_to_raw_sexpr.mk
 # Copy the expressions in
 $(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.expressions.xml: LispExpressions/%.xml
 	@mkdir -p "$(dir $@)"
-	@cp $< $@
+	@cp "$<" "$@"
 
 # Extract the sexpr
 .PHONY: validate/subtransforms/drop_outer_element.xsl
 validate/subtransforms/drop_outer_element.xsl:	subtransforms/drop_outer_element.xsl
-	@xmllint --relaxng xslt.rng $< --noout --quiet
+	@xmllint --relaxng xslt.rng "$<" --noout --quiet
 
 LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml subtransforms/drop_outer_element.xsl | validate/subtransforms/drop_outer_element.xsl
 	@mkdir -p "$(dir $@)"
