@@ -52,7 +52,7 @@ $2/%.$4.xml:	$2/%.$3.xml $5 $6 $7 | validateA/$5 validateB/$6 validateC/$7
 	@xmllint --relaxng $5 $$< --noout --quiet
 	@xsltproc --output $$@ $6 $$<
 	@xmllint --relaxng $7 $$@ --noout --quiet
-#	@xsltproc --output $$@ --maxdepth 40000 pretty.xsl $$@
+#	@xsltproc --output $$@ --maxdepth 40000 subtransforms/pretty.xsl $$@
 #	@xmllint --relaxng $7 $$@ --noout --quiet
 
 endef
@@ -76,7 +76,8 @@ $(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.raw_sexpr.xml: Lisp/%.scm
 	@echo '<![CDATA[' >> $@
 	@cat $< >> $@
 	@echo ']]></RawText>' >> $@
-	@xmllint --relaxng raw.rng $@ --noout --quiet
+	@xmllint --relaxng $(call get_schema_name, %raw_sexpr_to_expressions/raw_sexpr.rng) $@ --noout --quiet
+
 
 # Copy the output file out
 LispExpressions/%.xml:	$(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.expressions.xml
@@ -91,14 +92,14 @@ $(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.expressions.xml: LispExpression
 	@cp $< $@
 
 # Extract the sexpr
-.PHONY: validate/drop_outer_element.xsl
-validate/drop_outer_element.xsl:	drop_outer_element.xsl
+.PHONY: validate/subtransforms/drop_outer_element.xsl
+validate/subtransforms/drop_outer_element.xsl:	subtransforms/drop_outer_element.xsl
 	@xmllint --relaxng xslt.rng $< --noout --quiet
 
-LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml drop_outer_element.xsl | validate/drop_outer_element.xsl
+LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml subtransforms/drop_outer_element.xsl | validate/subtransforms/drop_outer_element.xsl
 	@mkdir -p $(dir $@)
-	@xmllint --relaxng raw.rng $< --noout --quiet
-	@xsltproc --output $@ drop_outer_element.xsl $<
+	@xmllint --relaxng $(call get_schema_name, %expressions_to_raw_sexpr/raw_sexpr.rng) $< --noout --quiet
+	@xsltproc --output $@ subtransforms/drop_outer_element.xsl $<
 
 
 include $(SELF_DIR)ctree_to_csyntax/ctree_to_csyntax.mk
@@ -116,12 +117,13 @@ $(XMLPipelineWorkDir)/ctree_to_csyntax/%.ctree.xml: CTree/%.xml $(foreach f,$(EX
 	@mkdir -p $(dir $@)
 	@cp $< $@
 
-$(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml drop_outer_element.xsl | validate/drop_outer_element.xsl
+$(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml subtransforms/drop_outer_element.xsl | validate/subtransforms/drop_outer_element.xsl
 	@mkdir -p $(dir $@)
 	@xmllint --relaxng $(call get_schema_name, %ctree_to_csyntax/csyntax.rng) $< --noout --quiet
-	@xsltproc --output $@ drop_outer_element.xsl $<
+	@xsltproc --output $@ subtransforms/drop_outer_element.xsl $<
 
-clean:: CSyntax
+clean::
+	rm -rf CSyntax
 
 clean::
 	rm -rf LispExpressions $(XMLPipelineWorkDir) LispChecked
