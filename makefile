@@ -26,9 +26,20 @@ rwildcard = $(foreach d,$(wildcard $(1)*),$(call rwildcard,$(d)/,$(2)) $(filter 
 RAW_SCHEME := $(call rwildcard,Lisp/,*.scm)
 
 
-.PHONY: validate/subtransforms/drop_outer_element.xsl
-validate/subtransforms/drop_outer_element.xsl:	subtransforms/drop_outer_element.xsl
-	@xmllint --relaxng xslt.rng "$<" $(XMLLINTOPTS) --quiet
+# Misc xstl helper scripts are accumulating under subtransforms
+# Check they're valid xslt, exposed under a top level validate/subtransforms target
+SUBTRANSFORMS := $(wildcard subtransforms/*.xsl)
+define subtransform_template
+.PHONY: validate/$1
+validate/$1:	$1
+	@xmllint --relaxng xslt.rng "$$<" $$(XMLLINTOPTS) --quiet
+endef
+$(foreach t,$(SUBTRANSFORMS), $(eval $(call subtransform_template,$(t))))
+.PHONY: validate/subtransforms
+validate/subtransforms:	$(foreach t,$(SUBTRANSFORMS), validate/$(t))
+
+all::	validate/subtransforms
+
 
 
 # arguments
@@ -103,7 +114,7 @@ $(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.expressions.xml: LispExpression
 	@cp "$<" "$@"
 
 # Extract the sexpr
-LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml subtransforms/drop_outer_element.xsl | validate/subtransforms/drop_outer_element.xsl
+LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml validate/subtransforms
 	@mkdir -p "$(dir $@)"
 	@xmllint --relaxng $(call get_schema_name, %expressions_to_raw_sexpr/raw_sexpr.rng) "$<" $(XMLLINTOPTS) --quiet
 	@xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
@@ -123,7 +134,7 @@ $(XMLPipelineWorkDir)/ctree_to_csyntax/%.ctree.xml: CTree/%.xml $(foreach f,$(EX
 	@mkdir -p "$(dir $@)"
 	@cp "$<" "$@"
 
-$(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml subtransforms/drop_outer_element.xsl | validate/subtransforms/drop_outer_element.xsl
+$(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml validate/subtransforms
 	@mkdir -p "$(dir $@)"
 	@xmllint --relaxng $(call get_schema_name, %ctree_to_csyntax/csyntax.rng) "$<" $(XMLLINTOPTS) --quiet
 	@xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
