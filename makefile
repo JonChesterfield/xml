@@ -26,6 +26,43 @@ rwildcard = $(foreach d,$(wildcard $(1)*),$(call rwildcard,$(d)/,$(2)) $(filter 
 RAW_SCHEME := $(call rwildcard,Lisp/,*.scm)
 
 
+# Pretty hacky. "make create_subproject foo bar" will create a directory
+# foo_to_bar with some initial boilerplate files in it.
+# TODO, some error checking, e.g. that two arguments are passed
+ifeq (create_subproject,$(firstword $(MAKECMDGOALS)))
+  # use the rest as arguments for "create_subproject"
+  CREATE_SUBPROJECT_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(CREATE_SUBPROJECT_ARGS):;@:)
+endif
+create_subproject:
+	$(eval SRC := $(word 1,$(CREATE_SUBPROJECT_ARGS)))
+	$(eval DST := $(word 2,$(CREATE_SUBPROJECT_ARGS)))
+	$(eval TAG := $(SRC)_to_$(DST))
+	$(eval MK := $(TAG)/$(TAG).mk)
+	@echo "Create subproject $(SRC) $(DST)"
+	@rm -f $(TAG)/*
+	@mkdir -p $(TAG)
+	@cp subtransforms/identity.xsl $(TAG)/$(TAG).xsl
+	@echo "start = $(SRC)" > $(TAG)/$(SRC).rnc
+	@echo "$(SRC) = element $(SRC) {text}" >> $(TAG)/$(SRC).rnc
+	@echo "start = $(DST)" > $(TAG)/$(DST).rnc
+	@echo "$(DST) = element $(DST) {text}" >> $(TAG)/$(DST).rnc
+
+	@echo '# Expects the input file $$(XMLPipelineWorkDir)/$(TAG)/whatever.$(SRC).xml' > $(MK)
+	@echo '# and the output file $$(XMLPipelineWorkDir)/$(TAG)/whatever.$(DST).xml' >> $(MK)
+
+	@echo "" >> $(MK)
+	@echo '$$(if $$(XML_Pipeline_Template),,$$(error makefile requires XML_Pipeline_Template))' >> $(MK)
+
+	@echo "" >> $(MK)
+	@echo '$(SRC)To$(DST)SrcDir := $(TAG)' >> $(MK)
+	@echo '$(SRC)To$(DST)ToXMLWorkDir := $$(XMLPipelineWorkDir)/$$($(SRC)To$(DST)SrcDir)' >> $(MK)
+
+	@echo "" >> $(MK)
+	@echo '$$(eval $$(call XML_Pipeline_Template,$$($(SRC)To$(DST)SrcDir),$$($(SRC)To$(DST)ToXMLWorkDir),$(SRC),$(DST)))' >> $(MK)
+
+
+
 # Misc xstl helper scripts are accumulating under subtransforms
 # Check they're valid xslt, exposed under a top level validate/subtransforms target
 SUBTRANSFORMS := $(wildcard subtransforms/*.xsl)
