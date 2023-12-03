@@ -63,7 +63,7 @@ SCHEMA_DERIVED_RNC := $(patsubst %.rng, %.rnc, $(subst $(SCHEMA_XML_DIR), $(SCHE
 $(SCHEMA_UPDATED_RNG):: $(SCHEMA_XML_DIR)%.rng:	%.rng
 	@mkdir -p $(dir $@)
 #	@echo "Updating $@ from $<"
-	@if ! test -s $< ; then trang -Irnc -Orng $(<:.rng=.rnc) $< ; fi
+	@$(if $(filter $@, $(SCHEMA_UPDATED_RNG)), @if ! test -s $< ; then trang -Irnc -Orng $(<:.rng=.rnc) $< ; fi)
 	@cp $< $@
 	@$(if $(filter $@, $(SCHEMA_UPDATED_RNG)), @trang -Irng -Ornc $@ $(<:.rng=.rnc))
 	@touch $@
@@ -71,7 +71,7 @@ $(SCHEMA_UPDATED_RNG):: $(SCHEMA_XML_DIR)%.rng:	%.rng
 $(SCHEMA_UPDATED_RNC):: $(SCHEMA_XML_DIR)%.rng:	%.rnc
 	@mkdir -p $(dir $@)
 #	@echo "Updating $@ from $<"
-	@if ! test -s $< ; then trang -Irng -Ornc $(<:.rnc=.rng) $< ; fi
+	@$(if $(filter $@, $(SCHEMA_UPDATED_RNG)), @if ! test -s $< ; then trang -Irng -Ornc $(<:.rnc=.rng) $< ; fi)
 	@trang -Irnc -Orng $< $@
 	@$(if $(filter $@, $(SCHEMA_UPDATED_RNG)), cp $@ $(<:.rnc=.rng))
 	@touch $@
@@ -86,7 +86,6 @@ $(SCHEMA_DERIVED_RNG): $(SCHEMA_RNG_DIR)%.rng:	$(SCHEMA_XML_DIR)%.rng
 $(SCHEMA_DERIVED_RNC): $(SCHEMA_RNC_DIR)%.rnc:	$(SCHEMA_XML_DIR)%.rng
 	@mkdir -p $(dir $@)
 	@trang -Irng -Ornc $< $@
-
 
 # Final result of all this, an accessor for a name of an up to date schema file
 # in either format
