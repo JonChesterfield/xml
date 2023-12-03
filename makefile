@@ -25,6 +25,12 @@ rwildcard = $(foreach d,$(wildcard $(1)*),$(call rwildcard,$(d)/,$(2)) $(filter 
 
 RAW_SCHEME := $(call rwildcard,Lisp/,*.scm)
 
+
+.PHONY: validate/subtransforms/drop_outer_element.xsl
+validate/subtransforms/drop_outer_element.xsl:	subtransforms/drop_outer_element.xsl
+	@xmllint --relaxng xslt.rng "$<" $(XMLLINTOPTS) --quiet
+
+
 # arguments
 # $1 name of current pipeine, source directory
 # $2 name of directory to write files into to
@@ -87,6 +93,8 @@ LispExpressions/%.xml:	$(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.expressi
 	@mkdir -p "$(dir $@)"
 	@cp "$<" "$@"
 
+
+# Expressions -> raw sexpr
 include $(SELF_DIR)expressions_to_raw_sexpr/expressions_to_raw_sexpr.mk
 
 # Copy the expressions in
@@ -95,10 +103,6 @@ $(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.expressions.xml: LispExpression
 	@cp "$<" "$@"
 
 # Extract the sexpr
-.PHONY: validate/subtransforms/drop_outer_element.xsl
-validate/subtransforms/drop_outer_element.xsl:	subtransforms/drop_outer_element.xsl
-	@xmllint --relaxng xslt.rng "$<" $(XMLLINTOPTS) --quiet
-
 LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml subtransforms/drop_outer_element.xsl | validate/subtransforms/drop_outer_element.xsl
 	@mkdir -p "$(dir $@)"
 	@xmllint --relaxng $(call get_schema_name, %expressions_to_raw_sexpr/raw_sexpr.rng) "$<" $(XMLLINTOPTS) --quiet
@@ -110,7 +114,6 @@ RAW_CTREE := $(filter-out CTree/schemas.xml,$(call rwildcard,CTree/,*.xml))
 CSYNTAX := $(subst CTree,CSyntax,$(RAW_CTREE:.xml=.c))
 
 EXTRAS := schemas.xml ctree.rnc csyntax.rnc
-
 
 $(XMLPipelineWorkDir)/ctree_to_csyntax/%: ctree_to_csyntax/%
 	@mkdir -p "$(dir $@)"
@@ -124,6 +127,7 @@ $(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml su
 	@mkdir -p "$(dir $@)"
 	@xmllint --relaxng $(call get_schema_name, %ctree_to_csyntax/csyntax.rng) "$<" $(XMLLINTOPTS) --quiet
 	@xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
+
 
 clean::
 	rm -rf CSyntax
