@@ -1,6 +1,7 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
+#include <stdio.h>
 #include <stdlib.h>
 
 struct SToken
@@ -9,8 +10,12 @@ struct SToken
     const char* token;
 };
 
-extern void *ParseAlloc(void *(*)(size_t));
-extern void Parse(void *, int, struct SToken*);
-extern void ParseFree(void *, void (*)(void*));
+
+// Shows up in the prototype
+#ifndef YYMALLOCARGTYPE
+# define YYMALLOCARGTYPE size_t
+#endif
+
+#include "parse.h"
 
 #endif
