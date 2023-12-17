@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Language>
   <!-- Current thinking is write tokens with regex and build a scanner from those -->
+  <!-- There's probably an argument for token listed earlier in tokens wins over later ones -->
+  <!-- flex takes lines like: "|" {return PIPE;} -->
+  <!-- re2c tends towards: "*" { return TIMES; } -->
+  <!-- flex can discard with [ \n] {}, re2c is likely to have a goto -->
+  
     <Tokens>
         <Token name="DO" regex="do" />
         <Token name="WHILE" regex="while" />
@@ -29,6 +34,16 @@
         <Token name="FALSE" regex="false" />
         <Token name="TRUE" regex="true" />
         <Token name="ELLIPSIS" regex="\.\.\." />
+
+        <!-- this one would need to store the specific value -->
+        <!-- whereas FALSE etc do not, so this is one where regex capture is helpful -->
+        <!-- it will still be a string, so that it parses as an integer is stored in the tag -->
+        <Token name="INTEGER" regex="(0|-*[1-9]+[0-9]*)" />
+
+        <!-- Leaning towards explicitly reifying whitespace in the lexer -->
+        <!-- Has the interesting effect that lexing within comments probably works -->
+        <Token name="WHITESPACE" regex="[ \t\n\r\v]+" />
+
     </Tokens>
 
 </Language>
