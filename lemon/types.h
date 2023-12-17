@@ -11,6 +11,6 @@ struct SToken
 
 extern void *ParseAlloc(void *(*)(size_t));
 extern void Parse(void *, int, struct SToken*);
-void ParseFree(void *, void (*)(void*));
+extern void ParseFree(void *, void (*)(void*));
 
 #endif

@@ -6,11 +6,16 @@
 
 #include "assert.h"
 }
+
 %syntax_error { fprintf(stderr, "Syntax error\n"); }
+
 %token_type { struct SToken* }
+
 %type expr { int }
+
 %left PLUS MINUS.
 %left TIMES DIVIDE.
+
 program ::= expr(A). { printf("Result = %d\n", A); }
 expr(A) ::= expr(B) PLUS expr(C). {A = B + C; }
 expr(A) ::= expr(B) MINUS expr(C). {A = B - C; }
