@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Language>
+  <!-- Current thinking is write tokens with regex and build a scanner from those -->
+    <Tokens>
+        <Token name="DO" regex="do" />
+        <Token name="WHILE" regex="while" />
+        <Token name="REPEAT" regex="repeat" />
+        <Token name="FOR" regex="for" />
+        <Token name="UNTIL" regex="until" />
+        <Token name="END" regex="end" />
+        <Token name="IF" regex="if" />
+        <Token name="THEN" regex="then" />
+        <Token name="ELSEIF" regex="elseif" />
+        <Token name="ELSE" regex="else" />
+
+        <Token name="ASSIGN" regex="=" />
+        <Token name="COMMA" regex="," />
+        <Token name="IN" regex="in" />
+        <Token name="FUNCTION" regex="function" />
+        <Token name="LOCAL" regex="local" />
+        <Token name="BREAK" regex="break" />
+        <Token name="RETURN" regex="return" />
+
+        <Token name="PLUS" regex="\+" />
+        <Token name="MINUS-or-NEGATE" regex="\-" />
+        <Token name="MULTIPLY" regex="\*" />
+
+        <Token name="NIL" regex="nil" />
+        <Token name="FALSE" regex="false" />
+        <Token name="TRUE" regex="true" />
+        <Token name="ELLIPSIS" regex="\.\.\." />
+    </Tokens>
+
+</Language>
