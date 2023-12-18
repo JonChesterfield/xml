@@ -11,6 +11,12 @@
 
 %token_type { struct SToken* }
 
+%token_prefix    TOKEN_ID_
+%token PLUS MINUS TIMES DIVIDE.
+%token LPAR RPAR INTEGER.
+
+%token WHITESPACE.
+
 %type expr { int }
 
 %left PLUS MINUS.
