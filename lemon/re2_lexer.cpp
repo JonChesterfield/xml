@@ -2,6 +2,7 @@
 #include <re2/re2.h>
 #include <re2/set.h>
 #include <vector>
+#include <cstdlib>
 
 // lemon will let one add tokens that aren't used
 // by the parser, and specify a prefix, but changing it
@@ -17,6 +18,9 @@
 
 // Lemon's assigned integers start at 1, can control the order
 #define TOKEN_ID_MAX TOKEN_ID_WHITESPACE
+
+// the tables are relatively easily conjured from XML definitions
+// the lexer can be templated on said tables
 
 enum { TOKEN_ID_UNKNOWN = 0 };
 
@@ -36,13 +40,13 @@ enum { token_names_size = sizeof(token_names) / sizeof(token_names[0]) };
 const char *regexes[] = {
     [TOKEN_ID_UNKNOWN] = ".",
     [TOKEN_ID_PLUS] = R"([+])",
-    [TOKEN_ID_MINUS] = R"(-)",
+    [TOKEN_ID_MINUS] = R"([-])",
     [TOKEN_ID_TIMES] = R"([*])",
-    [TOKEN_ID_DIVIDE] = R"([\/])",
+    [TOKEN_ID_DIVIDE] = R"([/])",
     [TOKEN_ID_LPAR] = R"(\()",
     [TOKEN_ID_RPAR] = R"(\))",
-    [TOKEN_ID_INTEGER] = R"((0|-*[1-9]+[0-9]*))",
-    [TOKEN_ID_WHITESPACE] = R"(([ \n\t\r\v])+)",
+    [TOKEN_ID_INTEGER] = R"(0|-*[1-9]+[0-9]*)",
+    [TOKEN_ID_WHITESPACE] = R"([ \n\t\r\v]+)",
 };
 enum { regexes_size = sizeof(regexes) / sizeof(regexes[0]) };
 
@@ -55,13 +59,9 @@ struct token {
   std::string value;
 };
 
-int main() {
-  const bool verbose = false;
-  const char *example = " 10 + 2 * (4 /\t2)    - 1 ";
-  re2::StringPiece cursor(example);
-
-  std::vector<token> vector_tokens;
-
+template <size_t regexes_size>
+RE2::Set set_from_regex_table(const char* (&regexes)[regexes_size])
+{
   RE2::Options opts;
   opts.set_dot_nl(true);
   opts.set_log_errors(false);
@@ -75,7 +75,7 @@ int main() {
       if (rc == -1) {
         fprintf(stderr, "Cannot parse regex[%zu] \"%s\": %s\n", i, regexes[i],
                 err.c_str());
-        return 1;
+        exit(1);
       }
       assert(rc == i);
     }
@@ -83,8 +83,21 @@ int main() {
 
   if (!set.Compile()) {
     fprintf(stderr, "Out of memory on Set::Compile\n");
-    return 1;
+    exit(1);
   }
+
+  return set;
+}
+
+int main() {
+  const bool verbose = false;
+  const char *example = " 10 + 2 * (4 /\t2)    - 1 ";
+  re2::StringPiece cursor(example);
+
+  std::vector<token> vector_tokens;
+
+
+  RE2::Set set = set_from_regex_table(regexes);
 
   std::vector<int> matches;
 
@@ -93,6 +106,7 @@ int main() {
       printf("\nConsume [%s]\n", cursor.as_string().c_str());
 
     {
+      matches.clear();
       RE2::Set::ErrorInfo err;
       if (!set.Match(cursor, &matches)) {
         fprintf(stderr, "Match failed (%u)\n", err.kind);

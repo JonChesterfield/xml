@@ -42,6 +42,14 @@ re2cdemo.o:	re2cdemo.cpp
 re2cdemo:	re2cdemo.o
 	g++ $^ -o $@
 
+
+arith.flex.xml:	lang_to_flex.xsl arith.lang.xml
+	xsltproc --output $@ $^
+
+arith.flex.cpp: arith.flex.xml parse.h
+	xsltproc --output $@ ../subtransforms/drop_outer_element.xsl $<
+	clang-format -i $@
+
 # apt install libre2-dev
 #include <re2/re2.h>
 retest:	retest.o
