@@ -26,7 +26,7 @@
 // This is whatever object the lexer thinks a token should be
 // I don't think the parser is likely to want to mutate it
 
-%token_type { token* }
+%token_type { token }
 
 %token_prefix    TOKEN_ID_
 %token PLUS MINUS TIMES DIVIDE.
@@ -64,8 +64,8 @@ expr(A) ::= INTEGER(B).
   // B is a token
   // A is a int
   // printf("IntegerA on %s\n", B->value_start);
-  const char* value_start = B->value_start;
-  const char* value_end = B->value_end;
+  const char* value_start = B.value_start;
+  const char* value_end = B.value_end;
   size_t N = value_end - value_start;
   enum {limit = 10+1};
   char buf[limit] = {'\0'};

@@ -3,6 +3,7 @@
 
 #include <stddef.h> // size_t
 #include <stdbool.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,6 +24,18 @@ typedef struct {
   const char *value_end;
 } token;
 
+static inline token token_create(token_index name, const char * start, const char * end)
+{
+  return (token) {.name = name, .value_start = start, .value_end = end, };
+}
+
+static inline token token_create_novalue(token_index name)
+{
+  static const char empty[1] = {'\0'};
+  return token_create(name, empty, empty);
+}
+
+  
 static inline size_t token_width(token s) {
   return s.value_end - s.value_start;
 }

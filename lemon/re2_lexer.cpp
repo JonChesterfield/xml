@@ -56,9 +56,6 @@ enum { regexes_size = sizeof(regexes) / sizeof(regexes[0]) };
 
 static_assert((size_t)regexes_size == (size_t)token_names_size, "");
 
-
-
-
 struct kill {
     kill(lexer_state &s) : s(s) {}
     lexer_state & s;
@@ -68,7 +65,7 @@ struct kill {
 int main() {
   const bool verbose = false;
   const char *example = " 10 + 2 * (4 /\t2)    - 1 ";
-  example = "5 + 7";
+
   re2::StringPiece cursor(example);
 
   lexer_state state = lexer_create(regexes_size, token_names, regexes);
@@ -86,7 +83,6 @@ int main() {
   const char *sep = "";
   while (!cursor.empty()) {
     token tok = lexer_next(state, cursor.data(), cursor.data() + cursor.size());
-    // token_dump(tok);
     assert(!token_empty(tok));
     cursor.remove_prefix(token_width(tok));
     
@@ -98,15 +94,15 @@ int main() {
     if (tok.name == TOKEN_ID_INTEGER) {
       // lexer no longer does int->num, that's the parsers problem
       // printf("re2: integer "); token_dump(tok);
-      Parse(pParser, tok.name, &tok);
+      Parse(pParser, tok.name, tok);
       continue;
     }
 
     // printf("re2: other "); token_dump(tok);
-    Parse(pParser, tok.name, NULL);
+    Parse(pParser, tok.name, tok);
   }
 
-  Parse(pParser, 0, NULL);
+  Parse(pParser, 0, token_create_novalue(0));
   ParseFree(pParser, free);
 
   return 0;
