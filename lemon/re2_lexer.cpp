@@ -50,5 +50,7 @@ int main() {
   const bool verbose = false;
   const char *example = " (10 + 2 * (4 /\t2)    - 1 % 12)";
 
-  return lex_then_parse<LexerType>(example, strlen(example));
+  int rc = lex_then_parse<LexerType>(example, strlen(example));
+  if (rc != 0) { return rc; }
+
 }

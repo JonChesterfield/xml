@@ -10,7 +10,8 @@ extern "C" {
 #endif
 
 typedef struct {
-  void *data;
+  void *set_data;
+  void *inst_data;
   size_t N;
   const char **token_names;
   const char **regexes;

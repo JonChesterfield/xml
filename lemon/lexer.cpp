@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include <memory>
+#include <vector>
 #include <string>
 
 #include <re2/re2.h>
@@ -39,7 +40,9 @@ static std::unique_ptr<RE2::Set> set_from_regex_table(size_t regexes_size,
   return set;
 }
 
-bool lexer_success(lexer_state s) { return s.data != nullptr; }
+bool lexer_success(lexer_state s) { return s.set_data != nullptr; }
+
+using instance_type = std::vector<std::unique_ptr<re2::RE2>>;
 
 lexer_state lexer_create(size_t N, const char **token_names,
                          const char **regexes) {
@@ -47,8 +50,14 @@ lexer_state lexer_create(size_t N, const char **token_names,
   assert(regexes[0] == std::string("."));
   std::unique_ptr<RE2::Set> data = set_from_regex_table(N, regexes);
 
-  RE2::Set *ptr = data.release();
-  return (lexer_state){.data = static_cast<void *>(ptr),
+  auto instances = std::make_unique<instance_type>();
+  for (size_t i = 0; i < N; i++) {
+    instances->push_back(std::make_unique<re2::RE2>(regexes[i]));
+  }
+  
+  
+  return (lexer_state){.set_data = static_cast<void *>(data.release()),
+                       .inst_data = static_cast<void *>(instances.release()),
                        .N = N,
                        .token_names = token_names,
                        .regexes = regexes};
@@ -56,7 +65,7 @@ lexer_state lexer_create(size_t N, const char **token_names,
 
 void lexer_destroy(lexer_state s) {
   if (lexer_success(s)) {
-    std::unique_ptr<RE2::Set> data(static_cast<RE2::Set *>(s.data));
+    std::unique_ptr<RE2::Set> data(static_cast<RE2::Set *>(s.set_data));
   }
 }
 
@@ -67,7 +76,9 @@ token lexer_next(lexer_state s, const char *start, const char *end) {
   assert(lexer_success(s));
   constexpr const size_t TOKEN_ID_UNKNOWN = 0;
 
-  RE2::Set &set = *static_cast<RE2::Set *>(s.data);
+  RE2::Set &set = *static_cast<RE2::Set *>(s.set_data);
+  const instance_type & instances = *static_cast<instance_type*>(s.inst_data);
+  assert(instances.size() == s.N);
   std::vector<int> matches;
   re2::StringPiece cursor(start, end - start);
   RE2::Set::ErrorInfo err;
@@ -118,8 +129,18 @@ token lexer_next(lexer_state s, const char *start, const char *end) {
       token_length = var.size();
     }
   } else {
+    // TODO: This here is dubious. There are N regex strings and building a
+    // RE2 instance for one is probably expensive, should build the N RE2 instances
+    // in the constructor.
     re2::StringPiece submatch[1];
+    // Reproducibly quicker to reuse previously build regex instances instead of building
+    // from scratch, probably worth the complexity. Would be much simpler if the C interface
+    // is dropped, which is probably a reasonable improvement in itself.
+#if 0
     re2::RE2 tmp(s.regexes[winning]);
+#else
+    re2::RE2 const &tmp = *instances[winning];
+#endif
     C = tmp.Match(cursor, 0, cursor.size(), RE2::ANCHOR_START, submatch, 1);
     if (verbose)
       printf("Match ret %s\n", (C ? "true" : "false"));
