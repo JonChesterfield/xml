@@ -1,7 +1,7 @@
 #include <cassert>
 #include <cstdlib>
 
-#include "lexer_instance.hpp"
+#include "lex_then_parse.hpp"
 
 // lemon will let one add tokens that aren't used
 // by the parser, and specify a prefix, but changing it
@@ -44,35 +44,11 @@ enum { regexes_size = sizeof(regexes) / sizeof(regexes[0]) };
 
 static_assert((size_t)regexes_size == (size_t)token_names_size, "");
 
-int lex_then_parse(const char *input, size_t N) {
-
-  auto lexer = lexer_instance<regexes_size, token_names, regexes>(input, N);
-  if (!lexer) {
-    return 1;
-  }
-
-  void *pParser = (void *)ParseAlloc(malloc);
-
-  while (lexer) {
-    token tok = lexer.next();
-    if (token_empty(tok)) {
-      return 2;
-    }
-
-    // This is the plan for all tokens. Whitespace is dealt with in the parser.
-    Parse(pParser, tok.name, tok);
-  }
-
-  Parse(pParser, 0, token_create_novalue(0));
-
-  ParseFree(pParser, free);
-
-  return 0;
-}
+using LexerType = lexer_instance<regexes_size, token_names, regexes>;
 
 int main() {
   const bool verbose = false;
   const char *example = " (10 + 2 * (4 /\t2)    - 1 % 12)";
 
-  return lex_then_parse(example, strlen(example));
+  return lex_then_parse<LexerType>(example, strlen(example));
 }

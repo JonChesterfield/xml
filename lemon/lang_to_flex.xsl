@@ -22,7 +22,7 @@ extern "C" {
 #include "parse.h"
 }
 
-#include "lexer_instance.hpp"
+#include "lex_then_parse.hpp"
 ]]></xsl:text>
 
 <xsl:text>enum { TOKEN_ID_UNKNOWN = 0 };</xsl:text>
@@ -53,37 +53,13 @@ enum { regexes_size = sizeof(regexes) / sizeof(regexes[0]) };
 <xsl:text><![CDATA[
 static_assert((size_t)regexes_size == (size_t)token_names_size, "");
 
-int lex_then_parse(const char *input, size_t N) {
-
-  auto lexer = lexer_instance<regexes_size, token_names, regexes>(input, N);
-  if (!lexer) {
-    return 1;
-  }
-
-  void *pParser = (void *)ParseAlloc(malloc);
-
-  while (lexer) {
-    token tok = lexer.next();
-    if (token_empty(tok)) {
-      return 2;
-    }
-
-    // This is the plan for all tokens. Whitespace is dealt with in the parser.
-    Parse(pParser, tok.name, tok);
-  }
-
-  Parse(pParser, 0, token_create_novalue(0));
-
-  ParseFree(pParser, free);
-
-  return 0;
-}
-
 int main() {
   const bool verbose = false;
   const char *example = "( 10 + 2 * (4 /\t2)    - 1 ) % 8";
 
-  return lex_then_parse(example, strlen(example));
+  using LexerType = lexer_instance<regexes_size, token_names, regexes>;
+
+  return lex_then_parse<LexerType>(example, strlen(example));
 }
 
 ]]></xsl:text>
