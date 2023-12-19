@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+#include "token.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -22,21 +24,7 @@ lexer_state lexer_create(size_t N, const char **token_names,
                          const char **regexes);
 void lexer_destroy(lexer_state);
 
-typedef struct {
-  size_t name; // index into token_names
-  const char *value_start;
-  const char *value_end;
-} lexer_token;
-
-static inline size_t lexer_token_width(lexer_token s) {
-  return s.value_end - s.value_start;
-}
-
-static inline bool lexer_token_empty(lexer_token s) {
-  return lexer_token_width(s) == 0;
-}
-
-lexer_token lexer_next(lexer_state s, const char *start, const char *end);
+token lexer_next(lexer_state s, const char *start, const char *end);
 
 #ifdef __cplusplus
 }

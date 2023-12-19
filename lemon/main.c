@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 int main(int argc, char ** argv)
 {
@@ -30,7 +31,12 @@ int main(int argc, char ** argv)
                 for (value = 0; *c && *c >= '0' && *c <= '9'; c++)
                     value = value * 10 + (*c - '0');
                 v[i].value = value;
-                Parse(pParser, TOKEN_ID_INTEGER, &v[i]);
+                token tok =
+                  {.name = TOKEN_ID_INTEGER,
+                   .value_start = c,
+                   .value_end = c + strlen(c),
+                  };
+                Parse(pParser, TOKEN_ID_INTEGER, &tok);
                 break;
 
             case '+':

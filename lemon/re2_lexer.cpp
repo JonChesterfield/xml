@@ -4,15 +4,18 @@
 #include <vector>
 #include <cstdlib>
 
+#include "token.h"
 #include "lexer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "parse.h"
 
-// This is kind of a bug in makeheaders interacting with lemon
-#ifndef YYMALLOCARGTYPE
-# define YYMALLOCARGTYPE size_t
+#ifdef __cplusplus
+}
 #endif
 
-#include "types.h"
 
 // lemon will let one add tokens that aren't used
 // by the parser, and specify a prefix, but changing it
@@ -65,6 +68,7 @@ struct kill {
 int main() {
   const bool verbose = false;
   const char *example = " 10 + 2 * (4 /\t2)    - 1 ";
+  example = "5 + 7";
   re2::StringPiece cursor(example);
 
   lexer_state state = lexer_create(regexes_size, token_names, regexes);
@@ -75,43 +79,31 @@ int main() {
   void*    pParser = (void *) ParseAlloc(malloc);
   
 
-    if (verbose) {
-      printf("Input %s\n", example);
-      printf("Lexed {\n");
-    }
+  // ParseTrace(stdout, "");
+  
+  printf("Input %s\n", example);
 
   const char *sep = "";
   while (!cursor.empty()) {
-    lexer_token token = lexer_next(state, cursor.data(), cursor.data() + cursor.size());
-    assert(!lexer_token_empty(token));
-    cursor.remove_prefix (lexer_token_width(token));
+    token tok = lexer_next(state, cursor.data(), cursor.data() + cursor.size());
+    // token_dump(tok);
+    assert(!token_empty(tok));
+    cursor.remove_prefix(token_width(tok));
     
-    const char * tag = token_names[token.name];
-    std::string var(token.value_start, token.value_end);
-
-    if (token.name == TOKEN_ID_WHITESPACE) {
+    if (tok.name == TOKEN_ID_WHITESPACE) {
+      // printf("re2: whitespace\n");
       continue;
     }
 
-    if (token.name == TOKEN_ID_INTEGER) {
-      int value = 42;
-      SToken tok = {value, .token = var.c_str()};
-      Parse(pParser, (int)token.name, &tok);
+    if (tok.name == TOKEN_ID_INTEGER) {
+      // lexer no longer does int->num, that's the parsers problem
+      // printf("re2: integer "); token_dump(tok);
+      Parse(pParser, tok.name, &tok);
       continue;
     }
-    
-    if (verbose) {
-      printf("%s  {%-25s |%s| }", sep, tag, var.c_str());
-      sep = ",\n";
-    }
 
-    // The printing uses %s so this is less confusing
-
-    Parse(pParser, (int)token.name, NULL);
-  }
-
-  if (verbose) {
-    printf(",\n}\n");
+    // printf("re2: other "); token_dump(tok);
+    Parse(pParser, tok.name, NULL);
   }
 
   Parse(pParser, 0, NULL);

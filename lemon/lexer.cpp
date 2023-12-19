@@ -60,7 +60,7 @@ void lexer_destroy(lexer_state s) {
   }
 }
 
-lexer_token lexer_next(lexer_state s, const char *start, const char *end) {
+token lexer_next(lexer_state s, const char *start, const char *end) {
   assert(start != end);
   assert(start < end);
 
@@ -150,8 +150,8 @@ lexer_token lexer_next(lexer_state s, const char *start, const char *end) {
   }
 
   assert((start + token_length) <= end);
-  return (lexer_token){
-      .name = (size_t)winning,
+  return (token){
+      .name = winning,
       .value_start = start,
       .value_end = start + token_length,
   };
