@@ -30,31 +30,31 @@ int main(int argc, char ** argv)
                 for (value = 0; *c && *c >= '0' && *c <= '9'; c++)
                     value = value * 10 + (*c - '0');
                 v[i].value = value;
-                Parse(pParser, INTEGER, &v[i]);
+                Parse(pParser, TOKEN_ID_INTEGER, &v[i]);
                 break;
 
             case '+':
-                Parse(pParser, PLUS, NULL);
+                Parse(pParser, TOKEN_ID_PLUS, NULL);
                 break;
 
             case '-':
-                Parse(pParser, MINUS, NULL);
+                Parse(pParser, TOKEN_ID_MINUS, NULL);
                 break;
 
             case '*':
-                Parse(pParser, TIMES, NULL);
+                Parse(pParser, TOKEN_ID_TIMES, NULL);
                 break;
 
             case '/':
-                Parse(pParser, DIVIDE, NULL);
+                Parse(pParser, TOKEN_ID_DIVIDE, NULL);
                 break;
 
             case '(':
-                Parse(pParser, LPAR, NULL);
+                Parse(pParser, TOKEN_ID_LPAR, NULL);
                 break;
 
             case ')':
-                Parse(pParser, RPAR, NULL);
+                Parse(pParser, TOKEN_ID_RPAR, NULL);
                 break;
 
             default:

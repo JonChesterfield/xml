@@ -16,6 +16,11 @@ struct SToken
 # define YYMALLOCARGTYPE size_t
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "parse.h"
-
+#ifdef __cplusplus
+}
+#endif
 #endif

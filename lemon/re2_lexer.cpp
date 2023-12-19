@@ -4,20 +4,21 @@
 #include <vector>
 #include <cstdlib>
 
+#include "lexer.h"
+
+
+// This is kind of a bug in makeheaders interacting with lemon
+#ifndef YYMALLOCARGTYPE
+# define YYMALLOCARGTYPE size_t
+#endif
+
+#include "types.h"
+
 // lemon will let one add tokens that aren't used
 // by the parser, and specify a prefix, but changing it
 // to an enum trips up makeheader
-#define TOKEN_ID_PLUS 1
-#define TOKEN_ID_MINUS 2
-#define TOKEN_ID_TIMES 3
-#define TOKEN_ID_DIVIDE 4
-#define TOKEN_ID_LPAR 5
-#define TOKEN_ID_RPAR 6
-#define TOKEN_ID_INTEGER 7
-#define TOKEN_ID_WHITESPACE 8
 
 // Lemon's assigned integers start at 1, can control the order
-#define TOKEN_ID_MAX TOKEN_ID_WHITESPACE
 
 // the tables are relatively easily conjured from XML definitions
 // the lexer can be templated on said tables
@@ -52,147 +53,69 @@ enum { regexes_size = sizeof(regexes) / sizeof(regexes[0]) };
 
 static_assert((size_t)regexes_size == (size_t)token_names_size, "");
 
-static_assert(regexes_size == TOKEN_ID_MAX + 1, "");
 
-struct token {
-  const char *name;
-  std::string value;
+
+
+struct kill {
+    kill(lexer_state &s) : s(s) {}
+    lexer_state & s;
+    ~kill() {lexer_destroy(s);}
 };
-
-template <size_t regexes_size>
-RE2::Set set_from_regex_table(const char* (&regexes)[regexes_size])
-{
-  RE2::Options opts;
-  opts.set_dot_nl(true);
-  opts.set_log_errors(false);
-  // maybe never-capture for the set object
-  RE2::Set set(opts, RE2::ANCHOR_START);
-
-  {
-    std::string err;
-    for (size_t i = 0; i < regexes_size; i++) {
-      int rc = set.Add(regexes[i], &err);
-      if (rc == -1) {
-        fprintf(stderr, "Cannot parse regex[%zu] \"%s\": %s\n", i, regexes[i],
-                err.c_str());
-        exit(1);
-      }
-      assert(rc == i);
-    }
-  }
-
-  if (!set.Compile()) {
-    fprintf(stderr, "Out of memory on Set::Compile\n");
-    exit(1);
-  }
-
-  return set;
-}
 
 int main() {
   const bool verbose = false;
   const char *example = " 10 + 2 * (4 /\t2)    - 1 ";
   re2::StringPiece cursor(example);
 
-  std::vector<token> vector_tokens;
+  lexer_state state = lexer_create(regexes_size, token_names, regexes);
+  if (!lexer_success(state)) { return 1; }
+  kill k_(state);
 
 
-  RE2::Set set = set_from_regex_table(regexes);
-
-  std::vector<int> matches;
-
-  while (!cursor.empty()) {
-    if (verbose)
-      printf("\nConsume [%s]\n", cursor.as_string().c_str());
-
-    {
-      matches.clear();
-      RE2::Set::ErrorInfo err;
-      if (!set.Match(cursor, &matches)) {
-        fprintf(stderr, "Match failed (%u)\n", err.kind);
-        return 1;
-      }
-    }
-
-    // Unknown is always going to match and is token zero
-    std::sort(matches.begin(), matches.end());
-    assert(matches.size() > 0);
-    if (matches.size() == 1) {
-      assert(matches[0] == TOKEN_ID_UNKNOWN);
-      fprintf(stderr, "Only match was unknown fallback\n");
-      return 1;
-    }
-
-    assert(matches[0] == TOKEN_ID_UNKNOWN);
-    assert(matches.size() > 1);
-    int winning = matches[1];
-    if (verbose)
-      for (size_t i = 0; i < matches.size(); i++) {
-        printf("Regex %s |%s| matched\n", token_names[matches[i]],
-               regexes[matches[i]]);
-      }
-
-    size_t size_before = cursor.size();
-
-    if (verbose)
-      printf("Consume on [%s] using regex %d, %s\n", cursor.as_string().c_str(),
-             winning, token_names[winning]);
-
-    // Original game plan was:
-    // std::string var;
-    // bool C = RE2::Consume(&cursor, regexes[winning], &var);
-    // However that isn't working on escaped regexes, e.g. trying to match +
-    const constexpr bool consume_works = false;
-
-    std::string var;
-
-    bool C;
-    if (consume_works) {
-      C = RE2::Consume(&cursor, regexes[winning], &var);
-      if (verbose)
-        printf("Consume ret %s\n", (C ? "true" : "false"));
-    } else {
-      re2::StringPiece submatch[1];
-      re2::RE2 tmp(regexes[winning]);
-      C = tmp.Match(cursor, 0, cursor.size(), RE2::ANCHOR_START, submatch, 1);
-      if (verbose)
-        printf("Match ret %s\n", (C ? "true" : "false"));
-      var = submatch[0].as_string();
-      cursor.remove_prefix(submatch[0].size());
-    }
-
-    if (verbose && !C) {
-      printf("Consume returned false\n");
-    }
-
-    vector_tokens.push_back({token_names[winning], var});
+  void*    pParser = (void *) ParseAlloc(malloc);
+  
 
     if (verbose) {
-      printf("Result? |%s|\n", var.c_str());
-      printf("New cursor %s\n", cursor.as_string().c_str());
+      printf("Input %s\n", example);
+      printf("Lexed {\n");
     }
 
-    size_t size_after = cursor.size();
-
-    if (size_after >= size_before) {
-      fprintf(stderr, "Cursor size did not decrease, %zu -> %zu\n", size_before,
-              size_after);
-      return 1;
-    } else {
-      if (verbose)
-        printf("Cursor size decreased, %zu -> %zu\n", size_before, size_after);
-    }
-  }
-
-  printf("Input %s\n", example);
-  printf("Lexed {");
   const char *sep = "";
-  for (size_t i = 0; i < vector_tokens.size(); i++) {
-    printf("%s{%s: |%s|}", sep, vector_tokens[i].name,
-           vector_tokens[i].value.c_str());
-    sep = ", ";
+  while (!cursor.empty()) {
+    lexer_token token = lexer_next(state, cursor.data(), cursor.data() + cursor.size());
+    assert(!lexer_token_empty(token));
+    cursor.remove_prefix (lexer_token_width(token));
+    
+    const char * tag = token_names[token.name];
+    std::string var(token.value_start, token.value_end);
+
+    if (token.name == TOKEN_ID_WHITESPACE) {
+      continue;
+    }
+
+    if (token.name == TOKEN_ID_INTEGER) {
+      int value = 42;
+      SToken tok = {value, .token = var.c_str()};
+      Parse(pParser, (int)token.name, &tok);
+      continue;
+    }
+    
+    if (verbose) {
+      printf("%s  {%-25s |%s| }", sep, tag, var.c_str());
+      sep = ",\n";
+    }
+
+    // The printing uses %s so this is less confusing
+
+    Parse(pParser, (int)token.name, NULL);
   }
-  printf("}\n");
+
+  if (verbose) {
+    printf(",\n}\n");
+  }
+
+  Parse(pParser, 0, NULL);
+  ParseFree(pParser, free);
 
   return 0;
 }

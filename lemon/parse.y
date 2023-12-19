@@ -16,6 +16,7 @@
 %token LPAR RPAR INTEGER.
 
 %token WHITESPACE.
+// Maybe whitespace should have a parse rule for throw away
 
 %type expr { int }
 
