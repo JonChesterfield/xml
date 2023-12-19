@@ -66,14 +66,14 @@ int main(int argc, char **argv) {
       break;
     }
     case '(': {
-      token tok = token_create_novalue(TOKEN_ID_LPAR);
-      Parse(pParser, TOKEN_ID_LPAR, tok);
+      token tok = token_create_novalue(TOKEN_ID_LPAREN);
+      Parse(pParser, TOKEN_ID_LPAREN, tok);
       break;
     }
 
     case ')': {
-      token tok = token_create_novalue(TOKEN_ID_RPAR);
-      Parse(pParser, TOKEN_ID_RPAR, tok);
+      token tok = token_create_novalue(TOKEN_ID_RPAREN);
+      Parse(pParser, TOKEN_ID_RPAREN, tok);
       break;
     }
 

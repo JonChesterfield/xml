@@ -5,9 +5,10 @@
     <Token name="MINUS" regex="[-]" />
     <Token name="TIMES" regex="[*]" />
     <Token name="DIVIDE" regex="[/]" />
+    <Token name="MODULO" regex="[%]" />
     <Token name="LPAREN" regex="\(" />
     <Token name="RPAREN" regex="\)" />
-    <Token name="INTEGER" regex="(0|-*[1-9]+[0-9]*)" />
+    <Token name="INTEGER" regex="0|-*[1-9]+[0-9]*" />
     <Token name="WHITESPACE" regex="[ \t\n\r\v]+" />
   </Tokens>
 </Language>

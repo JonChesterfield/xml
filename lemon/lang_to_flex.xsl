@@ -15,12 +15,14 @@
 
 <xsl:template match="Tokens">
 <xsl:text><![CDATA[#include <cassert>
-#include <re2/re2.h>
-#include <re2/set.h>
-#include <vector>
+#include <cstdlib>
 
+#include "token.h"
+extern "C" {
 #include "parse.h"
+}
 
+#include "lexer_instance.hpp"
 ]]></xsl:text>
 
 <xsl:text>enum { TOKEN_ID_UNKNOWN = 0 };</xsl:text>
@@ -51,12 +53,38 @@ enum { regexes_size = sizeof(regexes) / sizeof(regexes[0]) };
 <xsl:text><![CDATA[
 static_assert((size_t)regexes_size == (size_t)token_names_size, "");
 
-static_assert(regexes_size == TOKEN_ID_MAX + 1, "");
+int lex_then_parse(const char *input, size_t N) {
 
-struct token {
-  const char *name;
-  std::string value;
-};
+  auto lexer = lexer_instance<regexes_size, token_names, regexes>(input, N);
+  if (!lexer) {
+    return 1;
+  }
+
+  void *pParser = (void *)ParseAlloc(malloc);
+
+  while (lexer) {
+    token tok = lexer.next();
+    if (token_empty(tok)) {
+      return 2;
+    }
+
+    // This is the plan for all tokens. Whitespace is dealt with in the parser.
+    Parse(pParser, tok.name, tok);
+  }
+
+  Parse(pParser, 0, token_create_novalue(0));
+
+  ParseFree(pParser, free);
+
+  return 0;
+}
+
+int main() {
+  const bool verbose = false;
+  const char *example = "( 10 + 2 * (4 /\t2)    - 1 ) % 8";
+
+  return lex_then_parse(example, strlen(example));
+}
 
 ]]></xsl:text>
 </xsl:template>
@@ -64,13 +92,13 @@ struct token {
 <xsl:template match="Token" mode="Regexes">
   <xsl:text>  [TOKEN_ID_</xsl:text><xsl:value-of select="@name" /><xsl:text>]</xsl:text>
   <xsl:text>=</xsl:text>
-  <xsl:text>"</xsl:text><xsl:value-of select="@regex" /><xsl:text>",</xsl:text>
+  <xsl:text>R"(</xsl:text><xsl:value-of select="@regex" /><xsl:text>)",</xsl:text>
 </xsl:template>
 
 <xsl:template match="Token" mode="Names">
   <xsl:text>  [TOKEN_ID_</xsl:text><xsl:value-of select="@name" /><xsl:text>]</xsl:text>
   <xsl:text>=</xsl:text>
-  <xsl:text>"</xsl:text><xsl:value-of select="@name" /><xsl:text>",</xsl:text>
+  <xsl:text>"TOKEN_ID_</xsl:text><xsl:value-of select="@name" /><xsl:text>",</xsl:text>
 </xsl:template>
 
 

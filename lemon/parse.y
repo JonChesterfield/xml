@@ -29,8 +29,8 @@
 %token_type { token }
 
 %token_prefix    TOKEN_ID_
-%token PLUS MINUS TIMES DIVIDE.
-%token LPAR RPAR INTEGER.
+%token PLUS MINUS TIMES DIVIDE MODULO.
+%token LPAREN RPAREN INTEGER.
 
 %token WHITESPACE.
 // Maybe whitespace should have a parse rule for throw away
@@ -38,7 +38,9 @@
 %type expr { int }
 
 %left PLUS MINUS.
-%left TIMES DIVIDE.
+%left TIMES DIVIDE MODULO.
+
+%nonassoc WHITESPACE.
 
 program ::= expr(A). { printf("Result = %d\n", A); }
 expr(A) ::= expr(B) PLUS expr(C). {A = B + C; printf("%d = %d + %d\n", A, B, C); }
@@ -57,7 +59,18 @@ expr(A) ::= expr(B) DIVIDE expr(C).
       A = 0;
     }
 }
-expr(A) ::= LPAR expr(B) RPAR. { A = B; printf("(%d = %d)\n", A, B); }
+expr(A) ::= expr(B) MODULO expr(C).
+  {
+    A = B % C;
+    printf("%d = %d %% %d\n", A, B, C);
+  }
+
+expr(A) ::= LPAREN expr(B) RPAREN. { A = B; printf("(%d = %d)\n", A, B); }
+
+
+// Fun. Can discard whitespace in the parse instead of in the lexer.
+expr(A) ::= WHITESPACE expr(B). { A = B; }
+expr(A) ::= expr(B) WHITESPACE. { A = B; }
 
 expr(A) ::= INTEGER(B).
 {
