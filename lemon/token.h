@@ -1,8 +1,8 @@
 #ifndef TOKEN_H_INCLUDED
 #define TOKEN_H_INCLUDED
 
-#include <stddef.h> // size_t
 #include <stdbool.h>
+#include <stddef.h> // size_t
 #include <stdio.h>
 
 #ifdef __cplusplus
@@ -24,35 +24,44 @@ typedef struct {
   const char *value_end;
 } token;
 
-static inline token token_create(token_index name, const char * start, const char * end)
-{
-  return (token) {.name = name, .value_start = start, .value_end = end, };
+static inline token token_create(token_index name, const char *start,
+                                 const char *end) {
+  return (token){
+      .name = name,
+      .value_start = start,
+      .value_end = end,
+  };
 }
 
-static inline token token_create_novalue(token_index name)
-{
+static inline token token_create_novalue(token_index name) {
   static const char empty[1] = {'\0'};
   return token_create(name, empty, empty);
 }
 
-  
 static inline size_t token_width(token s) {
   return s.value_end - s.value_start;
 }
 
-static inline bool token_empty(token s) {
-  return token_width(s) == 0;
-}
+static inline bool token_empty(token s) { return token_width(s) == 0; }
 
 static inline void token_dump(token s) {
-  printf("(token) { .name = %d, .value = \"", s.name);
-  const char * c = s.value_start;
+  printf("<Token name = %d value = \"", s.name);
+  const char *c = s.value_start;
   while (c != s.value_end) {
     printf("%c", *c++);
   }
-  printf("\"}\n");  
+  printf("\" />\n");
 }
-  
+
+static inline void token_named_dump(token s, const char **token_names) {
+  printf("<Token name = \"%s\" value = \"", token_names[s.name]);
+  const char *c = s.value_start;
+  while (c != s.value_end) {
+    printf("%c", *c++);
+  }
+  printf("\" />\n");
+}
+
 #ifdef __cplusplus
 }
 #endif

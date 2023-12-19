@@ -41,6 +41,9 @@ re2_lexer.o:	re2_lexer.cpp lexer.h parse.h token.h
 arith.flex.o:	arith.flex.cpp lexer.h parse.h token.h lexer_instance.hpp
 	g++ $(CXXFLAGS) -c $< -o $@
 
+lex_to_xml.o:	lex_to_xml.cpp parse.h token.h
+	g++ $(CXXFLAGS) -c $< -o $@
+
 re2cdemo.cpp:	re2cdemo.re
 	re2c $< -o $@
 
@@ -49,6 +52,7 @@ re2cdemo.o:	re2cdemo.cpp
 
 re2cdemo:	re2cdemo.o
 	g++ $(CXXFLAGS) $^ -o $@
+
 
 
 arith.flex.xml:	lang_to_flex.xsl arith.lang.xml
@@ -70,8 +74,11 @@ re2_lexer:	re2_lexer.o lexer.o parse.o
 arith.flex:	arith.flex.o lexer.o parse.o
 	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
 
+lex_to_xml:	lex_to_xml.o lexer.o parse.o
+	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
 
-all::	main retest re2cdemo re2_lexer arith.flex
+
+all::	main retest re2cdemo re2_lexer arith.flex lex_to_xml
 
 clean::
 	rm -f lemon main makeheaders retest re2cdemo re2_lexer arith.flex
