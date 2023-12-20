@@ -1,0 +1,3 @@
+start = TokenList
+Token = element * {attribute name {xsd:string}?, attribute value {xsd:string}}
+TokenList = element TokenList { Token* }

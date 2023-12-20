@@ -71,12 +71,20 @@ re2_lexer:	re2_lexer.o lexer.o parse.o
 arith.lexer:	arith.lexer.o lexer.o parse.o
 	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
 
+arith.xml:	arith.lexer
+	echo "1 + 2 / 1 * 7 % 2" | ./arith.lexer > $@
+
+arith.txt:	TokenList_to_bytes.xsl arith.xml
+	xsltproc --output $@ $^
 
 all::	main retest re2cdemo re2_lexer arith.lexer
 
 clean::
 	rm -f lemon main makeheaders retest re2cdemo re2_lexer arith.lexer
 	rm -f *.o
-	rm -f arith.lexer.xml
+	rm -f arith.lexer.xml arith.xml arith.txt
 	rm -f lemon parse.c parse.h parse.out
 	rm -f re2cdemo.cpp arith.lexer.cpp
+
+# At the end to depend on the included makefiles as well as this one
+.EXTRA_PREREQS+=$(foreach mk, ${MAKEFILE_LIST},$(abspath ${mk}))

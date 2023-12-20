@@ -20,6 +20,10 @@
 #include "token.h"
 
 #include "lexer_instance.hpp"
+
+#include <vector>
+#include <iostream>
+
 ]]></xsl:text>
 
 <xsl:text>// Enumeration&#xA;</xsl:text>
@@ -54,10 +58,18 @@ enum { regexes_size = sizeof(regexes) / sizeof(regexes[0]) };
 static_assert((size_t)regexes_size == (size_t)token_names_size, "");
 
 int main() {
-  const bool verbose = false;
-  const char *input = "( 10 + 2 * (4 /\t2)    - 1 ) % 8";
+
+    std::vector<char> all_stdin;
+    std::streamsize buffer_sz = 4 * 1024;
+    std::vector<char> buffer(buffer_sz);
+    all_stdin.reserve(buffer_sz);
+
+    auto rdbuf = std::cin.rdbuf();
+    while (auto cnt_char = rdbuf->sgetn(buffer.data(), buffer_sz))
+        all_stdin.insert(all_stdin.end(), buffer.data(), buffer.data() + cnt_char);
+
   using LexerType = lexer_instance<regexes_size, token_names, regexes>;
-  auto lexer = LexerType(input);
+  auto lexer = LexerType(all_stdin.data(), all_stdin.size());
   if (!lexer) {
     return 1;
   }
@@ -69,8 +81,13 @@ int main() {
     if (token_empty(tok)) {
       return 2;
     }
-    printf("  ");
-    token_named_dump(tok, token_names);
+
+    printf("  <%s value = \"", token_names[tok.name]);
+    const char *c = tok.value_start;
+    while (c != tok.value_end) {
+      printf("%c", *c++);
+    }
+    printf("\" />\n");
   }
   printf("</TokenList>\n");
   return 0;
@@ -95,7 +112,7 @@ int main() {
 <xsl:template match="Token" mode="Names">
   <xsl:text>  [TOKEN_ID_</xsl:text><xsl:value-of select="@name" /><xsl:text>]</xsl:text>
   <xsl:text>=</xsl:text>
-  <xsl:text>"TOKEN_ID_</xsl:text><xsl:value-of select="@name" /><xsl:text>",</xsl:text>
+  <xsl:text>"</xsl:text><xsl:value-of select="@name" /><xsl:text>",</xsl:text>
 </xsl:template>
 
 
