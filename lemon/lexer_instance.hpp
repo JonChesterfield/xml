@@ -58,14 +58,14 @@ struct lexer_instance {
     std::sort(matches.begin(), matches.end());
     assert(matches.size() > 0);
     if (matches.size() == 1) {
+      // Not generally a good sign
       assert(matches[0] == TOKEN_ID_UNKNOWN);
-      fprintf(stderr, "Only match was unknown fallback\n");
-      exit(1);
     }
 
+    // Kind of messy rearranging. Want the lowest index other than
+    // unknown, unless only unknown hits.
     assert(matches[0] == TOKEN_ID_UNKNOWN);
-    assert(matches.size() > 1);
-    int winning = matches[1];
+    int winning = matches.size() > 1 ? matches[1] : matches[0];
     if (verbose)
       for (size_t i = 0; i < matches.size(); i++) {
         printf("Regex %s |%s| matched\n", token_names[matches[i]],

@@ -32,9 +32,6 @@ main:	parse.o main.o
 retest.o:	retest.cpp
 	g++ $(CXXFLAGS) -c $< -o $@
 
-arith.flex.o:	arith.flex.cpp lexer.h parse.h token.h lexer_instance.hpp
-	g++ $(CXXFLAGS) -c $< -o $@
-
 re2cdemo.cpp:	re2cdemo.re
 	re2c $< -o $@
 
@@ -43,6 +40,7 @@ re2cdemo.o:	re2cdemo.cpp
 
 re2cdemo:	re2cdemo.o
 	g++ $(CXXFLAGS) $^ -o $@
+
 
 
 
@@ -58,6 +56,8 @@ arith.lexer.cpp: arith.lexer.xml parse.h
 retest:	retest.o
 	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
 
+arith.lexer.o:	arith.lexer.cpp token.h lexer_instance.hpp
+	g++ $(CXXFLAGS) -c $< -o $@
 
 arith.lexer:	arith.lexer.o parse.o
 	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@

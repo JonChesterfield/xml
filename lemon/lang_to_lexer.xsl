@@ -36,7 +36,7 @@
 <xsl:text>&#xA;</xsl:text>
 <xsl:text>const char* token_names[] = {</xsl:text>
 <xsl:text>&#xA;</xsl:text>
-<xsl:text>    [TOKEN_ID_UNKNOWN] = "TOKEN_ID_UNKNOWN",</xsl:text>
+<xsl:text>    [TOKEN_ID_UNKNOWN] = "UNKNOWN",</xsl:text>
     <xsl:apply-templates select="node()|@*" mode="Names"/>
 <xsl:text>};
 enum { token_names_size = sizeof(token_names) / sizeof(token_names[0]) };
