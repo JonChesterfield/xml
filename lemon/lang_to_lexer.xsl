@@ -18,15 +18,15 @@
 #include <cstdlib>
 
 #include "token.h"
-extern "C" {
-#include "parse.h"
-}
 
-#include "lex_then_parse.hpp"
+#include "lexer_instance.hpp"
 ]]></xsl:text>
 
-<xsl:text>enum { TOKEN_ID_UNKNOWN = 0 };</xsl:text>
-<xsl:text>&#xA;</xsl:text>
+<xsl:text>// Enumeration&#xA;</xsl:text>
+<xsl:text>enum {
+  TOKEN_ID_UNKNOWN = 0,</xsl:text>
+<xsl:apply-templates select="node()|@*" mode="Enumerate"/>
+<xsl:text>};&#xA;</xsl:text>
 
 <xsl:text>// Names table</xsl:text>
 <xsl:text>&#xA;</xsl:text>
@@ -55,15 +55,36 @@ static_assert((size_t)regexes_size == (size_t)token_names_size, "");
 
 int main() {
   const bool verbose = false;
-  const char *example = "( 10 + 2 * (4 /\t2)    - 1 ) % 8";
-
+  const char *input = "( 10 + 2 * (4 /\t2)    - 1 ) % 8";
   using LexerType = lexer_instance<regexes_size, token_names, regexes>;
+  auto lexer = LexerType(input);
+  if (!lexer) {
+    return 1;
+  }
 
-  return lex_then_parse<LexerType>(example, strlen(example));
+  printf(R"(<?xml version="1.0" encoding="UTF-8"?>)" "\n");
+  printf("<TokenList>\n");
+  while (lexer) {
+    token tok = lexer.next();
+    if (token_empty(tok)) {
+      return 2;
+    }
+    printf("  ");
+    token_named_dump(tok, token_names);
+  }
+  printf("</TokenList>\n");
+  return 0;
 }
 
 ]]></xsl:text>
 </xsl:template>
+
+<xsl:template match="Token" mode="Enumerate">
+<xsl:text>TOKEN_ID_</xsl:text>
+<xsl:value-of select="@name" />      
+<xsl:text>,</xsl:text>
+</xsl:template>
+
     
 <xsl:template match="Token" mode="Regexes">
   <xsl:text>  [TOKEN_ID_</xsl:text><xsl:value-of select="@name" /><xsl:text>]</xsl:text>

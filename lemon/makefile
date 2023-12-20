@@ -55,10 +55,10 @@ re2cdemo:	re2cdemo.o
 
 
 
-arith.flex.xml:	lang_to_flex.xsl arith.lang.xml
+arith.lexer.xml:	lang_to_lexer.xsl arith.lang.xml
 	xsltproc --output $@ $^
 
-arith.flex.cpp: arith.flex.xml parse.h
+arith.lexer.cpp: arith.lexer.xml parse.h
 	xsltproc --output $@ ../subtransforms/drop_outer_element.xsl $<
 	clang-format -i $@
 
@@ -71,18 +71,18 @@ re2_lexer:	re2_lexer.o lexer.o parse.o
 	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
 
 
-arith.flex:	arith.flex.o lexer.o parse.o
+arith.lexer:	arith.lexer.o lexer.o parse.o
 	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
 
 lex_to_xml:	lex_to_xml.o lexer.o parse.o
 	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
 
 
-all::	main retest re2cdemo re2_lexer arith.flex lex_to_xml
+all::	main retest re2cdemo re2_lexer arith.lexer lex_to_xml
 
 clean::
-	rm -f lemon main makeheaders retest re2cdemo re2_lexer arith.flex
+	rm -f lemon main makeheaders retest re2cdemo re2_lexer arith.lexer lex_to_xml
 	rm -f *.o
-	rm -f arith.flex.xml
+	rm -f arith.lexer.xml
 	rm -f lemon parse.c parse.h parse.out
-	rm -f re2cdemo.cpp arith.flex.cpp
+	rm -f re2cdemo.cpp arith.lexer.cpp

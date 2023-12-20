@@ -2,6 +2,9 @@
 #define LEX_THEN_PARSE_HPP_INCLUDED
 
 #include "lexer_instance.hpp"
+extern "C" {
+#include "parse.h"
+}
 
 // e.g. LexerType = lexer_instance<regexes_size, token_names, regexes>
 template <typename LexerType> int lex_then_parse(const char *input, size_t N) {

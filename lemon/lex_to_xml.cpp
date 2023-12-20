@@ -2,6 +2,10 @@
 #include <vector>
 #include <cassert>
 
+extern "C" {
+#include "parse.h"
+}
+
 enum { TOKEN_ID_UNKNOWN = 0 };
 
 const char *token_names[] = {
