@@ -32,12 +32,6 @@ main:	parse.o main.o
 retest.o:	retest.cpp
 	g++ $(CXXFLAGS) -c $< -o $@
 
-lexer.o:	lexer.cpp lexer.h
-	g++ $(CXXFLAGS) -c $< -o $@
-
-re2_lexer.o:	re2_lexer.cpp lexer.h parse.h token.h
-	g++ $(CXXFLAGS) -c $< -o $@
-
 arith.flex.o:	arith.flex.cpp lexer.h parse.h token.h lexer_instance.hpp
 	g++ $(CXXFLAGS) -c $< -o $@
 
@@ -64,23 +58,20 @@ arith.lexer.cpp: arith.lexer.xml parse.h
 retest:	retest.o
 	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
 
-re2_lexer:	re2_lexer.o lexer.o parse.o
-	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
 
-
-arith.lexer:	arith.lexer.o lexer.o parse.o
+arith.lexer:	arith.lexer.o parse.o
 	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
 
 arith.xml:	arith.lexer
-	echo "1 + 2 / 1 * 7 % 2" | ./arith.lexer > $@
+	echo "1 + 2 / 1 * (7 % 3)" | ./arith.lexer > $@
 
 arith.txt:	TokenList_to_bytes.xsl arith.xml
 	xsltproc --output $@ $^
 
-all::	main retest re2cdemo re2_lexer arith.lexer
+all::	main retest re2cdemo arith.lexer arith.txt
 
 clean::
-	rm -f lemon main makeheaders retest re2cdemo re2_lexer arith.lexer
+	rm -f lemon main makeheaders retest re2cdemo arith.lexer
 	rm -f *.o
 	rm -f arith.lexer.xml arith.xml arith.txt
 	rm -f lemon parse.c parse.h parse.out

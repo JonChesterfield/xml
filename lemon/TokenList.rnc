@@ -1,3 +1,8 @@
 start = TokenList
-Token = element * {attribute name {xsd:string}?, attribute value {xsd:string}}
+Token =
+  element * {
+    attribute name { xsd:string }?,
+    (attribute value { xsd:string }
+     | attribute literal { xsd:string })
+  }
 TokenList = element TokenList { Token* }

@@ -54,21 +54,49 @@ enum { token_names_size = sizeof(token_names) / sizeof(token_names[0]) };
 enum { regexes_size = sizeof(regexes) / sizeof(regexes[0]) };
 </xsl:text>
 
+<xsl:text>// Literals table</xsl:text>
+<xsl:text>&#xA;</xsl:text>
+    
+<xsl:text>const char* literals[] = {</xsl:text>
+<xsl:text>&#xA;</xsl:text>
+<xsl:text>    [TOKEN_ID_UNKNOWN] = nullptr,</xsl:text>
+    <xsl:apply-templates select="node()|@*" mode="Literals"/>
+
+<xsl:text>};
+enum { literals_size = sizeof(literals) / sizeof(literals[0]) };
+</xsl:text>
+
+
+
+
+
 <xsl:text><![CDATA[
+static_assert((size_t)regexes_size == (size_t)literals_size, "");
 static_assert((size_t)regexes_size == (size_t)token_names_size, "");
+
+static bool is_regex(int index) { return regexes[index] != nullptr; }
+static bool is_literal(int index) { return literals[index] != nullptr; }
 
 int main() {
 
-    std::vector<char> all_stdin;
-    std::streamsize buffer_sz = 4 * 1024;
-    std::vector<char> buffer(buffer_sz);
-    all_stdin.reserve(buffer_sz);
+  for (int i = 0; i < token_names_size; i++)
+  {
+    assert(is_regex(i) || is_literal(i));
+    assert(!(is_regex(i) && is_literal(i)));
+  }
 
-    auto rdbuf = std::cin.rdbuf();
-    while (auto cnt_char = rdbuf->sgetn(buffer.data(), buffer_sz))
-        all_stdin.insert(all_stdin.end(), buffer.data(), buffer.data() + cnt_char);
+  std::vector<char> all_stdin;
+  std::streamsize buffer_sz = 4 * 1024;
+  std::vector<char> buffer(buffer_sz);
+  all_stdin.reserve(buffer_sz);
 
-  using LexerType = lexer_instance<regexes_size, token_names, regexes>;
+  auto rdbuf = std::cin.rdbuf();
+  while (auto cnt_char = rdbuf->sgetn(buffer.data(), buffer_sz))
+  {
+    all_stdin.insert(all_stdin.end(), buffer.data(), buffer.data() + cnt_char);
+  }
+
+  using LexerType = lexer_instance<regexes_size, token_names, regexes, literals>;
   auto lexer = LexerType(all_stdin.data(), all_stdin.size());
   if (!lexer) {
     return 1;
@@ -81,8 +109,9 @@ int main() {
     if (token_empty(tok)) {
       return 2;
     }
-
-    printf("  <%s value = \"", token_names[tok.name]);
+    int index = tok.name;
+    printf("  <%s %s = \"", token_names[index], 
+           (is_regex(index) ? "value" : "literal"));
     const char *c = tok.value_start;
     while (c != tok.value_end) {
       printf("%c", *c++);
@@ -106,8 +135,38 @@ int main() {
 <xsl:template match="Token" mode="Regexes">
   <xsl:text>  [TOKEN_ID_</xsl:text><xsl:value-of select="@name" /><xsl:text>]</xsl:text>
   <xsl:text>=</xsl:text>
-  <xsl:text>R"(</xsl:text><xsl:value-of select="@regex" /><xsl:text>)",</xsl:text>
+
+  <xsl:choose>
+      <xsl:when test="@regex" >
+        <xsl:text>R"(</xsl:text><xsl:value-of select="@regex" /><xsl:text>)",</xsl:text>          
+      </xsl:when>
+      <xsl:when test="@literal" >
+        <xsl:text>nullptr,</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+          <xsl:text>error_no_regex_or_literal,</xsl:text>
+      </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
+
+
+<xsl:template match="Token" mode="Literals">
+  <xsl:text>  [TOKEN_ID_</xsl:text><xsl:value-of select="@name" /><xsl:text>]</xsl:text>
+  <xsl:text>=</xsl:text>
+
+  <xsl:choose>
+      <xsl:when test="@regex" >
+        <xsl:text>nullptr,</xsl:text>
+      </xsl:when>
+      <xsl:when test="@literal" >
+        <xsl:text>R"(</xsl:text><xsl:value-of select="@literal" /><xsl:text>)",</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+          <xsl:text>error_no_regex_or_literal,</xsl:text>
+      </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 
 <xsl:template match="Token" mode="Names">
   <xsl:text>  [TOKEN_ID_</xsl:text><xsl:value-of select="@name" /><xsl:text>]</xsl:text>

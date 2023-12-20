@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Work in progress, looking to parse the TokenList XML form -->
+<Language>
+  <Tokens>
+    <Token name="Header" literal='&lt;?xml version="1.0" encoding="UTF-8"?&gt;' />
+    <Token name="TokenListOpen" literal="&lt;TokenList&gt;" />
+    <Token name="TokenListClose" literal="&lt;/TokenList&gt;" />
+    <Token name="Token" regex="&lt;[[:space:]]*(?:[[:alnum:]]|[_-.])+[[:space:]]*value[[:space:]]*=[[:space:]]*\".*\"[[:space:]]*/&gt;" />
+  </Tokens>
+</Language>
+

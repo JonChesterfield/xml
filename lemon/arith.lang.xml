@@ -6,9 +6,9 @@
     <Token name="TIMES" regex="[*]" />
     <Token name="DIVIDE" regex="[/]" />
     <Token name="MODULO" regex="[%]" />
-    <Token name="LPAREN" regex="\(" />
-    <Token name="RPAREN" regex="\)" />
+    <Token name="LPAREN" literal="(" />
+    <Token name="RPAREN" literal=")" />
     <Token name="INTEGER" regex="0|-*[1-9]+[0-9]*" />
-    <Token name="WHITESPACE" regex="[ \t\n\r\v]+" />
+    <Token name="WHITESPACE" regex="[[:space:]]+" />
   </Tokens>
 </Language>
