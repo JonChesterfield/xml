@@ -11,6 +11,13 @@
   </xsl:template>
 
   <xsl:template match="node()">
-    <xsl:value-of select="@value" />
+    <xsl:choose>
+      <xsl:when test="@value" >
+        <xsl:value-of select="@value" />
+      </xsl:when>
+      <xsl:when test="@literal" >
+        <xsl:value-of select="@literal" />
+      </xsl:when>
+    </xsl:choose>
   </xsl:template>
 </xsl:transform>
