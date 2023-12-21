@@ -1,8 +1,11 @@
+# xslt pipeline handling
 
 .SUFFIXES:
 MAKEFLAGS += -r
 .SECONDARY:
 # .DELETE_ON_ERROR:
+
+# SHELL = sh -xv
 
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
@@ -12,7 +15,7 @@ all::
 include submakefiles/schemas.mk
 
 XMLLINTOPTS := --huge --noout
-XSLTPROCOPTS := --huge
+XSLTPROCOPTS := --huge # --maxdepth 40000
 
 # Slightly messy. The main user of the schema files in this context
 # is xmllint, which wants the xml syntax .rng file.
@@ -103,15 +106,14 @@ validateB/$6:	$6
 validateC/$7:	$7
 	@xmllint --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
 
-# Formatting the xml messes up raw_sexpr handling
-$2/%.$4.xml:	$2/%.$3.xml $5 $6 $7 | validateA/$5 validateB/$6 validateC/$7
+$2/%.$4.prelint.xml:	$2/%.$3.xml $5 $6 $7 | validateA/$5 validateB/$6 validateC/$7
 	@mkdir -p "$$(dir $$@)"
 	@xmllint --relaxng $5 "$$<" $(XMLLINTOPTS) --quiet
 	@xsltproc $(XSLTPROCOPTS) --output "$$@" $6 "$$<"
-	@xmllint --relaxng $7 "$$@" $(XMLLINTOPTS) --quiet
-#	@xsltproc $(XSLTPROCOPTS) --output $$@ --maxdepth 40000 subtransforms/pretty.xsl $$@
-#	@xmllint --relaxng $7 $$@ $(XMLLINTOPTS) --quiet
 
+$2/%.$4.xml:	$2/%.$4.prelint.xml
+	@xmllint --relaxng $7 "$$<" $(XMLLINTOPTS) --quiet
+	@cp "$$<" "$$@"
 endef
 
 define XML_Pipeline_Template
@@ -175,7 +177,6 @@ $(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml va
 	@mkdir -p "$(dir $@)"
 	@xmllint --relaxng $(call get_schema_name, %ctree_to_csyntax/csyntax.rng) "$<" $(XMLLINTOPTS) --quiet
 	@xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
-
 
 clean::
 	rm -rf CSyntax
