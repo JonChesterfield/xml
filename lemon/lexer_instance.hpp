@@ -54,9 +54,18 @@ template <size_t regexes_size, const char *(&token_names)[regexes_size],
           const char *(&literals)[regexes_size]>
 struct lexer_instance {
   enum { TOKEN_ID_UNKNOWN = 0 };
-  enum { verbose = 0 };
-  lexer_instance(const char *start, const char *end) : start(start), end(end) {
+  enum { verbose = false };
 
+  static RE2::Options config()
+  {
+    RE2::Options opts;
+    opts.set_dot_nl(true);
+    opts.set_log_errors(false);
+    return opts;
+  }
+  
+  lexer_instance(const char *start, const char *end) : start(start), end(end) {
+    RE2::Options opts = config();
     for (size_t i = 0; i < regexes_size; i++) {
       assert((regexes[i] == nullptr) != (literals[i] == nullptr));
       if (regexes[i] != nullptr) {
@@ -68,7 +77,7 @@ struct lexer_instance {
         derived_regexes.push_back(re2::RE2::QuoteMeta(literals[i]));
       }
 
-      regex_engines.push_back(std::make_unique<re2::RE2>(derived_regexes[i]));
+      regex_engines.push_back(std::make_unique<re2::RE2>(derived_regexes[i], opts));
     }
 
     if (verbose) {
@@ -145,7 +154,7 @@ struct lexer_instance {
       re2::RE2 const &tmp = *regex_engines[winning];
       C = tmp.Match(cursor, 0, cursor.size(), RE2::ANCHOR_START, submatch, 1);
       if (verbose)
-        printf("Match ret %s\n", (C ? "true" : "false"));
+        printf("Match %d ret %s\n", winning, (C ? "true" : "false"));
       if (C) {
         token_length = submatch[0].size();
       }
@@ -154,10 +163,6 @@ struct lexer_instance {
 
     if (verbose && !C) {
       printf("Consume returned false\n");
-    }
-
-    if (verbose) {
-      printf("New cursor %s\n", cursor.as_string().c_str());
     }
 
     size_t size_after = cursor.size();
@@ -192,12 +197,10 @@ private:
       derived_regexes; // the engine should have captured this
   std::vector<std::unique_ptr<re2::RE2>> regex_engines;
   std::unique_ptr<RE2::Set> set_of_all_regexes;
-
+  
   static std::unique_ptr<RE2::Set>
   set_from_regex_table(std::vector<std::string> const &derived_regexes) {
-    RE2::Options opts;
-    opts.set_dot_nl(true);
-    opts.set_log_errors(false);
+    RE2::Options opts = config();
     // maybe never-capture for the set object
     std::unique_ptr<RE2::Set> set =
         std::make_unique<RE2::Set>(opts, RE2::ANCHOR_START);

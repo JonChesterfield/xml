@@ -51,6 +51,17 @@ arith.lexer.cpp: arith.lexer.xml parse.h
 	xsltproc --output $@ ../subtransforms/drop_outer_element.xsl $<
 	clang-format -i $@
 
+TokenList.lexer.xml:	lang_to_lexer.xsl TokenList.lang.xml
+	xsltproc --output $@ $^
+TokenList.lexer.cpp: TokenList.lexer.xml parse.h
+	xsltproc --output $@ ../subtransforms/drop_outer_element.xsl $<
+	clang-format -i $@
+TokenList.lexer.o:	TokenList.lexer.cpp token.h lexer_instance.hpp
+	g++ $(CXXFLAGS) -c $< -o $@
+TokenList.lexer:	TokenList.lexer.o parse.o
+	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
+
+
 # apt install libre2-dev
 #include <re2/re2.h>
 retest:	retest.o

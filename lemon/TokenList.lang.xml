@@ -3,9 +3,27 @@
 <Language>
   <Tokens>
     <Token name="Header" literal='&lt;?xml version="1.0" encoding="UTF-8"?&gt;' />
+
     <Token name="TokenListOpen" literal="&lt;TokenList&gt;" />
     <Token name="TokenListClose" literal="&lt;/TokenList&gt;" />
-    <Token name="Token" regex="&lt;[[:space:]]*(?:[[:alnum:]]|[_-.])+[[:space:]]*value[[:space:]]*=[[:space:]]*\".*\"[[:space:]]*/&gt;" />
+
+    <!-- Includes the leading < -->
+    <Token name="TokenOpen" regex="&lt;[A-Z]+[[:alnum:]]*" />
+
+    <Token name="TokenClose" regex="&lt;/[A-Z]*&gt;" />
+
+    <Token name="SingleClose" literal="&gt;" />
+    
+    <Token name="UnspecifiedClose" literal="/&gt;" />
+
+    <Token name="Assign" literal="=" />
+    <Token name="Name" literal="name" />
+    <Token name="Value" literal="value" />
+    <Token name="Literal" literal="literal" />
+
+    <Token name="StringLiteral" regex='\"(?:[^\\\"]|\\.)*\"' />
+
+    <Token name="Whitespace" regex="[[:space:]]+" />
   </Tokens>
 </Language>
 
