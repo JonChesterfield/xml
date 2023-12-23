@@ -12,6 +12,22 @@ MAKEFILE_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 all::
 
+
+# Considering a single source single file approach to tools
+# That covers lemon, makeheaders, could cover escaping bytes to xml
+
+C_OBJ_DIR := .tools.O
+C_SRC := $(wildcard C/*.c)
+C_HDR := $(wildcard C/*.h)
+C_OBJ := $(C_SRC:C/%.c=$(C_OBJ_DIR)/%.o)
+
+$(C_OBJ):	$(C_OBJ_DIR)/%.o:	C/%.c $(C_HDR)
+	@mkdir -p "$(dir $@)"
+	$(CC) $< -c -o $@
+
+clean::
+	rm -rf $(C_OBJ_DIR)
+
 include submakefiles/schemas.mk
 
 XMLLINTOPTS := --huge --noout
