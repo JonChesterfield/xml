@@ -15,14 +15,14 @@
 
 <xsl:template match="Tokens">
 <xsl:text><![CDATA[#include <cassert>
+#include <cstdio>
 #include <cstdlib>
 
 #include "token.h"
 
 #include "lexer_instance.hpp"
 
-#include <vector>
-#include <iostream>
+#include "../tools/io_buffer.h"
 
 ]]></xsl:text>
 
@@ -85,30 +85,10 @@ int main() {
     assert(!(is_regex(i) && is_literal(i)));
   }
 
-  std::vector<char> all_stdin;
-  std::streamsize buffer_sz = 4 * 1024;
-  std::vector<char> buffer(buffer_sz);
-  all_stdin.reserve(buffer_sz);
-
-  auto rdbuf = std::cin.rdbuf();
-  while (auto cnt_char = rdbuf->sgetn(buffer.data(), buffer_sz))
-  {
-    all_stdin.insert(all_stdin.end(), buffer.data(), buffer.data() + cnt_char);
-  }
-
-  using LexerType = lexer_instance<regexes_size, token_names, regexes, literals>;
-  auto lexer = LexerType(all_stdin.data(), all_stdin.size());
-  if (!lexer) {
-    return 1;
-  }
-
   printf(R"(<?xml version="1.0" encoding="UTF-8"?>)" "\n");
   printf("<TokenList>\n");
-  while (lexer) {
-    token tok = lexer.next();
-    if (token_empty(tok)) {
-      return 2;
-    }
+
+  auto k = [](token tok) -> int {
     int index = tok.name;
     printf("  <%s %s = \"", token_names[index], 
            (is_regex(index) ? "value" : "literal"));
@@ -117,7 +97,12 @@ int main() {
       printf("%c", *c++);
     }
     printf("\" />\n");
-  }
+    return 0;
+  };
+ 
+  int foreach_rc = foreach_token_in_file<regexes_size, token_names, regexes, literals>(stdin, k);
+  if (foreach_rc != 0) { return foreach_rc; }
+
   printf("</TokenList>\n");
   return 0;
 }

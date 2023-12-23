@@ -141,11 +141,7 @@ include $(SELF_DIR)raw_sexpr_to_expressions/raw_sexpr_to_expressions.mk
 # Create the input file
 $(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.raw_sexpr.xml: Lisp/%.scm
 	@mkdir -p "$(dir $@)"
-	@echo '<?xml version="1.0" encoding="UTF-8"?>' > "$@"
-	@echo '<RawText xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' >> "$@"
-	@echo '<![CDATA[' >> "$@"
-	@cat "$<" >> "$@"
-	@echo ']]></RawText>' >> "$@"
+	@$(file_to_cdata) < "$<" > "$@"
 	@xmllint --relaxng $(call get_schema_name, %raw_sexpr_to_expressions/raw_sexpr.rng) "$@" $(XMLLINTOPTS) --quiet
 
 

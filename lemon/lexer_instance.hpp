@@ -3,19 +3,61 @@
 
 #include <cstring>
 
+#include "../tools/io_buffer.h"
 #include "token.h"
 
 #include <re2/re2.h>
 #include <re2/set.h>
 
-template <size_t N, const char *(&token_names)[N], const char *(&regexes)[N],
-          const char *(&literals)[N]>
+template <size_t regexes_size, const char *(&token_names)[regexes_size],
+          const char *(&regexes)[regexes_size],
+          const char *(&literals)[regexes_size]>
+struct lexer_instance;
+
+template <size_t regexes_size, const char *(&token_names)[regexes_size],
+          const char *(&regexes)[regexes_size],
+          const char *(&literals)[regexes_size]>
+int foreach_token_in_file(FILE *f, int (*func)(token tok)) {
+  using io_buffer_deleter = struct {
+    void operator()(io_buffer *b) { free(b); }
+  };
+
+  auto all_stdin =
+      std::unique_ptr<io_buffer, io_buffer_deleter>(file_to_io_buffer(stdin));
+  if (!all_stdin) {
+    return 1;
+  }
+
+  using LexerType =
+      lexer_instance<regexes_size, token_names, regexes, literals>;
+  auto lexer = LexerType(all_stdin->data, all_stdin->N);
+  if (!lexer) {
+    return 2;
+  }
+
+  while (lexer) {
+    token tok = lexer.next();
+    if (token_empty(tok)) {
+      return 3;
+    }
+
+    if (func(tok) != 0) {
+      return 4;
+    }
+  }
+
+  return 0;
+}
+
+template <size_t regexes_size, const char *(&token_names)[regexes_size],
+          const char *(&regexes)[regexes_size],
+          const char *(&literals)[regexes_size]>
 struct lexer_instance {
   enum { TOKEN_ID_UNKNOWN = 0 };
   enum { verbose = 0 };
   lexer_instance(const char *start, const char *end) : start(start), end(end) {
 
-    for (size_t i = 0; i < N; i++) {
+    for (size_t i = 0; i < regexes_size; i++) {
       assert((regexes[i] == nullptr) != (literals[i] == nullptr));
       if (regexes[i] != nullptr) {
         assert(literals[i] == nullptr);
@@ -30,7 +72,7 @@ struct lexer_instance {
     }
 
     if (verbose) {
-      for (size_t i = 0; i < N; i++) {
+      for (size_t i = 0; i < regexes_size; i++) {
         printf("Regex[%zu] = %s\n", i, derived_regexes[i].c_str());
       }
     }
@@ -49,7 +91,7 @@ struct lexer_instance {
     std::vector<int> matches;
     re2::StringPiece cursor(start, end - start);
     RE2::Set::ErrorInfo err;
-    if (!set_of_all_regexes->Match(cursor, &matches)) {
+    if (!set_of_all_regexes->Match(cursor, &matches, &err)) {
       fprintf(stderr, "Match failed (%u)\n", err.kind);
       exit(1);
     }
@@ -169,7 +211,7 @@ private:
                   derived_regexes[i].c_str(), err.c_str());
           exit(1);
         }
-        assert(rc == i);
+        assert(rc >= 0 && ((size_t)rc == i));
       }
     }
 

@@ -20,9 +20,10 @@ typedef struct
 // returned buffer is null if anything went wrong
 // otherwise it will need to be free'd
 
-static io_buffer *file_to_io_buffer(FILE * /*open, rb*/);
-static int io_buffer_to_file(const io_buffer *,
+static __attribute__((unused)) io_buffer *file_to_io_buffer(FILE * /*open, rb*/);
+static __attribute__((unused)) int io_buffer_to_file(const io_buffer *,
                       FILE * /*open, wb*/);  // ret 0 on success
+
 
 
 io_buffer* file_to_io_buffer(FILE* f)
@@ -47,7 +48,7 @@ io_buffer* file_to_io_buffer(FILE* f)
             free(buffer);
             return NULL;
           }
-        buffer = tmp;
+        buffer = (io_buffer*) tmp;
       }
 
       size_t r = fread(&buffer->data[blocksize * blocks_read], 1, blocksize, f);
