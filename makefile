@@ -14,19 +14,14 @@ all::
 
 
 # Considering a single source single file approach to tools
-# That covers lemon, makeheaders, could cover escaping bytes to xml
+file_to_cdata := bin/file_to_cdata
+lemon := bin/lemon
+makeheaders := bin/makeheaders
 
-C_OBJ_DIR := .tools.O
-C_SRC := $(wildcard C/*.c)
-C_HDR := $(wildcard C/*.h)
-C_OBJ := $(C_SRC:C/%.c=$(C_OBJ_DIR)/%.o)
+# Source under TOOLS_DIR used to make binaries under TOOLS_DIR_BIN
+TOOLS_DIR := tools
+TOOLS_DIR_BIN := bin
 
-$(C_OBJ):	$(C_OBJ_DIR)/%.o:	C/%.c $(C_HDR)
-	@mkdir -p "$(dir $@)"
-	$(CC) $< -c -o $@
-
-clean::
-	rm -rf $(C_OBJ_DIR)
 
 include submakefiles/schemas.mk
 
@@ -203,6 +198,33 @@ clean::
 all::	$(CSYNTAX)
 
 all::	$(RAW_SCHEME:Lisp/%.scm=LispChecked/%.scm) $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) $(CSYNTAX)
+
+
+
+
+
+
+
+# Auxilary tools out of C
+TOOLS_SRC := $(wildcard $(TOOLS_DIR)/*.c)
+TOOLS_HDR := $(wildcard $(TOOLS_DIR)/*.h)
+TOOLS_DIR_OBJ := .$(TOOLS_DIR).O
+TOOLS_OBJ := $(TOOLS_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
+TOOLS_BIN := $(TOOLS_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_BIN)/%)
+
+$(TOOLS_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.c $(TOOLS_HDR)
+	@mkdir -p "$(dir $@)"
+	$(CC) $< -c -o $@
+
+$(TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o
+	@mkdir -p "$(dir $@)"
+	$(CC) $< -o $@
+
+clean::
+	rm -rf $(TOOLS_DIR_BIN) $(TOOLS_DIR_OBJ)
+
+
+
 
 
 # At the end to depend on the included makefiles as well as this one

@@ -1,9 +1,29 @@
-#include "io_buffer.h"
+#ifndef IO_BUFFER_H_INCLUDED
+#define IO_BUFFER_H_INCLUDED
+
+// TODO: unit test these, fwrite in chunks
+
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+typedef struct
+{
+  size_t N;
+  char data[];
+} io_buffer;
+
+// returned buffer is null if anything went wrong
+// otherwise it will need to be free'd
+
+static io_buffer *file_to_io_buffer(FILE * /*open, rb*/);
+static int io_buffer_to_file(const io_buffer *,
+                      FILE * /*open, wb*/);  // ret 0 on success
+
 
 io_buffer* file_to_io_buffer(FILE* f)
 {
@@ -14,7 +34,7 @@ io_buffer* file_to_io_buffer(FILE* f)
     }
 
   io_buffer* buffer = NULL;
-  unsigned blocksize = 8192;
+  const unsigned blocksize = 8192;
   unsigned base = sizeof(io_buffer) + 1;
 
   for (uint64_t blocks_read = 0;;)
@@ -64,3 +84,6 @@ int io_buffer_to_file(const io_buffer* buf, FILE* out)
     }
   return 0;
 }
+
+
+#endif
