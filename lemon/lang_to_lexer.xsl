@@ -197,6 +197,10 @@ int main() {
 </xsl:template>
 
 
+<xsl:template match="Productions" >
+  <!-- Lexer doesn't use the productions, discard them -->  
+</xsl:template>
+
 <xsl:template match="node()|@*">
      <xsl:copy>
        <xsl:apply-templates select="node()|@*"/>

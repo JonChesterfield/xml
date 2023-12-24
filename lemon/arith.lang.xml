@@ -11,4 +11,26 @@
     <Token name="INTEGER" regex="0|-*[1-9]+[0-9]*" />
     <Token name="WHITESPACE" regex="[[:space:]]+" />
   </Tokens>
+
+  <Productions>
+    <Production>
+      <Result>
+        <Type>expr</Type>
+        <Name>A</Name>
+      </Result>
+      <Arguments>
+        <Argument>
+          <Type>expr</Type>
+          <Name>B</Name>
+        </Argument>
+        <Token name="PLUS" />
+        <Argument>
+          <Type>expr</Type>
+          <Name>C</Name>
+        </Argument>
+      </Arguments>
+        
+
+    </Production>
+</Productions>
 </Language>

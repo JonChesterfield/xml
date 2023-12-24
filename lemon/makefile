@@ -58,9 +58,11 @@ TokenList.lexer.cpp: TokenList.lexer.xml parse.h
 	clang-format -i $@
 TokenList.lexer.o:	TokenList.lexer.cpp token.h lexer_instance.hpp
 	g++ $(CXXFLAGS) -c $< -o $@
-TokenList.lexer:	TokenList.lexer.o parse.o
+TokenList.lexer:	TokenList.lexer.o
 	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
 
+clean::
+	rm -f TokenList.lexer TokenList.lexer.o TokenList.lexer.cpp TokenList.lexer.xml
 
 # apt install libre2-dev
 #include <re2/re2.h>
