@@ -73,8 +73,15 @@ arith.lexer.o:	arith.lexer.cpp token.h lexer_instance.hpp
 arith.lexer:	arith.lexer.o parse.o
 	g++ $(CXXFLAGS) $^ /usr/lib/x86_64-linux-gnu/libre2.a -o $@
 
-arith.xml:	arith.lexer
+TokenList.rng:	TokenList.rnc
+	trang -Irnc -Orng $< $@
+
+clean::
+	rm -f TokenList.rng
+
+arith.xml:	arith.lexer TokenList.rng
 	echo "1 + 2 / 1 * (7 % 3)" | ./arith.lexer > $@
+	xmllint --relaxng TokenList.rng $@
 
 arith.txt:	TokenList_to_bytes.xsl arith.xml
 	xsltproc --output $@ $^

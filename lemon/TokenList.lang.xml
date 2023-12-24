@@ -21,6 +21,9 @@
     <Token name="Value" literal="value" />
     <Token name="Literal" literal="literal" />
 
+    <Token name="Hexvalue" literal="hexvalue" />
+    <Token name="Hexliteral" literal="hexliteral" />
+
     <Token name="StringLiteral" regex='\"(?:[^\\\"]|\\.)*\"' />
 
     <Token name="Whitespace" regex="[[:space:]]+" />

@@ -5,6 +5,8 @@
 #include <stddef.h> // size_t
 #include <stdio.h>
 
+#include "../tools/ascii.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,6 +46,18 @@ static inline size_t token_width(token s) {
 
 static inline bool token_empty(token s) { return token_width(s) == 0; }
 
+static inline bool token_chars_all_alphanumeric(token s)
+{
+  size_t w = token_width(s);
+  bool all = true;
+  for (size_t i = 0; i < w; i++)
+    {
+      char c = s.value_start[i];
+      all &= ascii_char_to_type(c) == alphanumeric;
+    }
+  return all;
+}
+  
 static inline void token_dump(token s) {
   printf("<Token name = %d value = \"", s.name);
   const char *c = s.value_start;

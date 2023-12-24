@@ -77,6 +77,34 @@ static_assert((size_t)regexes_size == (size_t)token_names_size, "");
 static bool is_regex(int index) { return regexes[index] != nullptr; }
 static bool is_literal(int index) { return literals[index] != nullptr; }
 
+
+// xml quoting is messier than this
+// element/attribute names have different restrictions to values
+
+static bool token_requires_hex(token s)
+{
+  size_t w = token_width(s);
+  for (size_t i = 0; i < w; i++)
+    {
+      char c = s.value_start[i];
+      if (ascii_char_to_type(c) == alphanumeric) {
+        continue;
+      }
+      switch(c)
+      {
+        case '_':
+        case '-':
+        case ' ':
+        case '.':
+          break;
+        default:
+          // Unknown thing, hex escape it
+          return true;          
+      }
+    }
+  return false;
+}
+
 int main() {
 
   for (int i = 0; i < token_names_size; i++)
@@ -90,11 +118,20 @@ int main() {
 
   auto k = [](token tok) -> int {
     int index = tok.name;
-    printf("  <%s %s = \"", token_names[index], 
+    bool req_hex = token_requires_hex(tok);
+
+    const char * pre = (req_hex ? "hex" : "");
+    printf("  <%s %s%s = \"", token_names[index], 
+           pre,
            (is_regex(index) ? "value" : "literal"));
     const char *c = tok.value_start;
     while (c != tok.value_end) {
-      printf("%c", *c++);
+      if (req_hex) {
+        printf("%s", ascii_char_to_hex(*c));
+        c++;
+      } else {
+        printf("%c", *c++);
+      }
     }
     printf("\" />\n");
     return 0;

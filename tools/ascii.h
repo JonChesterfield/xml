@@ -1,9 +1,6 @@
 #ifndef ASCII_H_INCLUDED
 #define ASCII_H_INCLUDED
 
-#include <limits.h>
-#include <stdbool.h>
-
 typedef enum {
   alphanumeric = 1,
   punctuation = 2,
@@ -17,218 +14,30 @@ typedef struct {
   const char name[4];
 } ascii_element;
 
-_Static_assert(sizeof(ascii_element) == 8, "");
-
-#ifndef ASCII_TABLE_ENABLE
-#define ASCII_TABLE_ENABLE 0
+#ifdef __cplusplus
+#define ASCII_CONSTEXPR constexpr
+#else
+#define ASCII_CONSTEXPR
 #endif
 
 __attribute__((unused)) static const char *ascii_char_to_name(char x);
 __attribute__((unused)) static const char *ascii_char_to_hex(char x);
 __attribute__((unused)) static ascii_subtype ascii_char_to_type(char x);
 
-static unsigned ascii_char_to_int(char x) {
+static ASCII_CONSTEXPR unsigned ascii_char_to_int(char x) {
   // x + 256 means it'll be >= 0 regardless of whether char is signed
   // unsigned mod is simpler, removes a branch
   int y = (int)x + 256;
   return ((unsigned)y % 256u);
 }
 
-#if ASCII_TABLE_ENABLE
-static const _Alignas(8) ascii_element ascii_table[128] = {
-    [0x00] = {{"00"}, control, {"NUL"}},
-    [0x01] = {{"01"}, control, {"SOH"}},
-    [0x02] = {{"02"}, control, {"STX"}},
-    [0x03] = {{"03"}, control, {"ETX"}},
-    [0x04] = {{"04"}, control, {"EOT"}},
-    [0x05] = {{"05"}, control, {"ENQ"}},
-    [0x06] = {{"06"}, control, {"ACK"}},
-    [0x07] = {{"07"}, control, {"BEL"}},
-
-    [0x08] = {{"08"}, control, {"BS"}},
-    [0x09] = {{"09"}, control, {"HT"}},
-    [0x0a] = {{"0a"}, control, {"LF"}},
-    [0x0b] = {{"0b"}, control, {"VT"}},
-    [0x0c] = {{"0c"}, control, {"FF"}},
-    [0x0d] = {{"0d"}, control, {"CR"}},
-    [0x0e] = {{"0e"}, control, {"SO"}},
-    [0x0f] = {{"0f"}, control, {"SI"}},
-
-    [0x10] = {{"10"}, control, {"DLE"}},
-    [0x11] = {{"11"}, control, {"DC1"}},
-    [0x12] = {{"12"}, control, {"DC2"}},
-    [0x13] = {{"13"}, control, {"DC3"}},
-    [0x14] = {{"14"}, control, {"NAK"}},
-    [0x15] = {{"15"}, control, {"SYN"}},
-    [0x16] = {{"16"}, control, {"ETB"}},
-    [0x17] = {{"17"}, control, {"CAN"}},
-
-    [0x18] = {{"18"}, control, {"EM"}},
-    [0x19] = {{"19"}, control, {"SUB"}},
-    [0x1a] = {{"1a"}, control, {"ESC"}},
-    [0x1b] = {{"1b"}, control, {"FS"}},
-    [0x1c] = {{"1c"}, control, {"GS"}},
-    [0x1d] = {{"1d"}, control, {"CR"}},
-    [0x1e] = {{"1e"}, control, {"RS"}},
-    [0x1f] = {{"1f"}, control, {"US"}},
-
-    [0x20] = {{"20"}, punctuation, {"SP"}},
-    [0x21] = {{"21"}, punctuation, {"!"}},
-    [0x22] = {{"22"}, punctuation, {"\""}},
-    [0x23] = {{"23"}, punctuation, {"#"}},
-    [0x24] = {{"24"}, punctuation, {"$"}},
-    [0x25] = {{"25"}, punctuation, {"%"}},
-    [0x26] = {{"26"}, punctuation, {"&"}},
-    [0x27] = {{"27"}, punctuation, {"'"}},
-
-    [0x28] = {{"28"}, punctuation, {"("}},
-    [0x29] = {{"29"}, punctuation, {")"}},
-    [0x2a] = {{"2a"}, punctuation, {"*"}},
-    [0x2b] = {{"2b"}, punctuation, {"+"}},
-    [0x2c] = {{"2c"}, punctuation, {","}},
-    [0x2d] = {{"2d"}, punctuation, {"-"}},
-    [0x2e] = {{"2e"}, punctuation, {"."}},
-    [0x2f] = {{"2f"}, punctuation, {"/"}},
-
-    [0x30] = {{"30"}, alphanumeric, {"0"}},
-    [0x31] = {{"31"}, alphanumeric, {"1"}},
-    [0x32] = {{"32"}, alphanumeric, {"2"}},
-    [0x33] = {{"33"}, alphanumeric, {"3"}},
-    [0x34] = {{"34"}, alphanumeric, {"4"}},
-    [0x35] = {{"35"}, alphanumeric, {"5"}},
-    [0x36] = {{"36"}, alphanumeric, {"6"}},
-    [0x37] = {{"37"}, alphanumeric, {"7"}},
-
-    [0x38] = {{"38"}, alphanumeric, {"8"}},
-    [0x39] = {{"39"}, alphanumeric, {"9"}},
-    [0x3a] = {{"3a"}, punctuation, {":"}},
-    [0x3b] = {{"3b"}, punctuation, {";"}},
-    [0x3c] = {{"3c"}, punctuation, {"<"}},
-    [0x3d] = {{"3d"}, punctuation, {"="}},
-    [0x3e] = {{"3e"}, punctuation, {">"}},
-    [0x3f] = {{"3f"}, punctuation, {"?"}},
-
-    [0x40] = {{"40"}, punctuation, {"@"}},
-    [0x41] = {{"41"}, alphanumeric, {"A"}},
-    [0x42] = {{"42"}, alphanumeric, {"B"}},
-    [0x43] = {{"43"}, alphanumeric, {"C"}},
-    [0x44] = {{"44"}, alphanumeric, {"D"}},
-    [0x45] = {{"45"}, alphanumeric, {"E"}},
-    [0x46] = {{"46"}, alphanumeric, {"F"}},
-    [0x47] = {{"47"}, alphanumeric, {"G"}},
-
-    [0x48] = {{"48"}, alphanumeric, {"H"}},
-    [0x49] = {{"49"}, alphanumeric, {"I"}},
-    [0x4a] = {{"4a"}, alphanumeric, {"J"}},
-    [0x4b] = {{"4b"}, alphanumeric, {"K"}},
-    [0x4c] = {{"4c"}, alphanumeric, {"L"}},
-    [0x4d] = {{"4d"}, alphanumeric, {"M"}},
-    [0x4e] = {{"4e"}, alphanumeric, {"N"}},
-    [0x4f] = {{"4f"}, alphanumeric, {"O"}},
-
-    [0x50] = {{"50"}, alphanumeric, {"P"}},
-    [0x51] = {{"51"}, alphanumeric, {"Q"}},
-    [0x52] = {{"52"}, alphanumeric, {"R"}},
-    [0x53] = {{"53"}, alphanumeric, {"S"}},
-    [0x54] = {{"54"}, alphanumeric, {"T"}},
-    [0x55] = {{"55"}, alphanumeric, {"U"}},
-    [0x56] = {{"56"}, alphanumeric, {"V"}},
-    [0x57] = {{"57"}, alphanumeric, {"W"}},
-
-    [0x58] = {{"58"}, alphanumeric, {"X"}},
-    [0x59] = {{"59"}, alphanumeric, {"Y"}},
-    [0x5a] = {{"5a"}, alphanumeric, {"Z"}},
-    [0x5b] = {{"5b"}, punctuation, {"["}},
-    [0x5c] = {{"5c"}, punctuation, {"\\"}},
-    [0x5d] = {{"5d"}, punctuation, {"]"}},
-    [0x5e] = {{"5e"}, punctuation, {"^"}},
-    [0x5f] = {{"5f"}, punctuation, {"_"}},
-
-    [0x60] = {{"60"}, punctuation, {"`"}},
-    [0x61] = {{"61"}, alphanumeric, {"a"}},
-    [0x62] = {{"62"}, alphanumeric, {"b"}},
-    [0x63] = {{"63"}, alphanumeric, {"c"}},
-    [0x64] = {{"64"}, alphanumeric, {"d"}},
-    [0x65] = {{"65"}, alphanumeric, {"e"}},
-    [0x66] = {{"66"}, alphanumeric, {"f"}},
-    [0x67] = {{"67"}, alphanumeric, {"g"}},
-
-    [0x68] = {{"68"}, alphanumeric, {"h"}},
-    [0x69] = {{"69"}, alphanumeric, {"i"}},
-    [0x6a] = {{"6a"}, alphanumeric, {"j"}},
-    [0x6b] = {{"6b"}, alphanumeric, {"k"}},
-    [0x6c] = {{"6c"}, alphanumeric, {"l"}},
-    [0x6d] = {{"6d"}, alphanumeric, {"m"}},
-    [0x6e] = {{"6e"}, alphanumeric, {"n"}},
-    [0x6f] = {{"6f"}, alphanumeric, {"o"}},
-
-    [0x70] = {{"70"}, alphanumeric, {"p"}},
-    [0x71] = {{"71"}, alphanumeric, {"q"}},
-    [0x72] = {{"72"}, alphanumeric, {"r"}},
-    [0x73] = {{"73"}, alphanumeric, {"s"}},
-    [0x74] = {{"74"}, alphanumeric, {"t"}},
-    [0x75] = {{"75"}, alphanumeric, {"u"}},
-    [0x76] = {{"76"}, alphanumeric, {"v"}},
-    [0x77] = {{"77"}, alphanumeric, {"w"}},
-
-    [0x78] = {{"78"}, alphanumeric, {"x"}},
-    [0x79] = {{"79"}, alphanumeric, {"y"}},
-    [0x7a] = {{"7a"}, alphanumeric, {"z"}},
-    [0x7b] = {{"7b"}, punctuation, {"{"}},
-    [0x7c] = {{"7c"}, punctuation, {"|"}},
-    [0x7d] = {{"7d"}, punctuation, {"}"}},
-    [0x7e] = {{"7e"}, punctuation, {"~"}},
-    [0x7f] = {{"7f"}, control, {"DEL"}},
-};
-
-static const char *ascii_table_char_to_name(char x) {
-  unsigned z = ascii_char_to_int(x);
-  if (z < 128u) {
-    return ascii_table[z].name;
-  } else {
-    return ascii_char_to_hex(x);
-  }
-}
-
-static const char *ascii_table_char_to_hex(char x) {
-  unsigned z = ascii_char_to_int(x);
-  if (z < 128u) {
-    return ascii_table[z].hex;
-  } else {
-    static const char higher[128 * 3] = "80\081\082\083\084\085\086\087\0"
-                                        "88\089\08a\08b\08c\08d\08e\08f\0"
-                                        "90\091\092\093\094\095\096\097\0"
-                                        "98\099\09a\09b\09c\09d\09e\09f\0"
-                                        "a0\0a1\0a2\0a3\0a4\0a5\0a6\0a7\0"
-                                        "a8\0a9\0aa\0ab\0ac\0ad\0ae\0af\0"
-                                        "b0\0b1\0b2\0b3\0b4\0b5\0b6\0b7\0"
-                                        "b8\0b9\0ba\0bb\0bc\0bd\0be\0bf\0"
-                                        "c0\0c1\0c2\0c3\0c4\0c5\0c6\0c7\0"
-                                        "c8\0c9\0ca\0cb\0cc\0cd\0ce\0cf\0"
-                                        "d0\0d1\0d2\0d3\0d4\0d5\0d6\0d7\0"
-                                        "d8\0d9\0da\0db\0dc\0dd\0de\0df\0"
-                                        "e0\0e1\0e2\0e3\0e4\0e5\0e6\0e7\0"
-                                        "e8\0e9\0ea\0eb\0ec\0ed\0ee\0ef\0"
-                                        "f0\0f1\0f2\0f3\0f4\0f5\0f6\0f7\0"
-                                        "f8\0f9\0fa\0fb\0fc\0fd\0fe\0ff\0";
-
-    return &higher[3 * (z - 128)];
-  }
-}
-
-static ascii_subtype ascii_table_char_to_type(char x) {
-  unsigned z = ascii_char_to_int(x);
-  char lookup = ascii_table[z % 128u].type;
-  if (z < 128u) {
-    return lookup;
-  } else {
-    return out_of_range;
-  }
-}
-
+#ifndef ASCII_TABLE_ENABLE
+#define ASCII_TABLE_ENABLE 0
 #endif
 
-static const _Alignas(8) char ascii_stringtable[128 * 8] = {
+// The flat char array is compiler friendly. The array of structs
+// further down in the file is easier to read.
+static ASCII_CONSTEXPR const char ascii_stringtable[128 * 8 + 1] = {
     //
     "00\0\3"
     "NUL\0"
@@ -532,22 +341,23 @@ static const char *ascii_stringtable_char_to_hex(char x) {
   if (z < 128u) {
     return &ascii_stringtable[8 * z];
   } else {
-    static const char higher[128 * 3] = "80\081\082\083\084\085\086\087\0"
-                                        "88\089\08a\08b\08c\08d\08e\08f\0"
-                                        "90\091\092\093\094\095\096\097\0"
-                                        "98\099\09a\09b\09c\09d\09e\09f\0"
-                                        "a0\0a1\0a2\0a3\0a4\0a5\0a6\0a7\0"
-                                        "a8\0a9\0aa\0ab\0ac\0ad\0ae\0af\0"
-                                        "b0\0b1\0b2\0b3\0b4\0b5\0b6\0b7\0"
-                                        "b8\0b9\0ba\0bb\0bc\0bd\0be\0bf\0"
-                                        "c0\0c1\0c2\0c3\0c4\0c5\0c6\0c7\0"
-                                        "c8\0c9\0ca\0cb\0cc\0cd\0ce\0cf\0"
-                                        "d0\0d1\0d2\0d3\0d4\0d5\0d6\0d7\0"
-                                        "d8\0d9\0da\0db\0dc\0dd\0de\0df\0"
-                                        "e0\0e1\0e2\0e3\0e4\0e5\0e6\0e7\0"
-                                        "e8\0e9\0ea\0eb\0ec\0ed\0ee\0ef\0"
-                                        "f0\0f1\0f2\0f3\0f4\0f5\0f6\0f7\0"
-                                        "f8\0f9\0fa\0fb\0fc\0fd\0fe\0ff\0";
+    static ASCII_CONSTEXPR const char higher[128 * 3 + 1] =
+        "80\081\082\083\084\085\086\087\0"
+        "88\089\08a\08b\08c\08d\08e\08f\0"
+        "90\091\092\093\094\095\096\097\0"
+        "98\099\09a\09b\09c\09d\09e\09f\0"
+        "a0\0a1\0a2\0a3\0a4\0a5\0a6\0a7\0"
+        "a8\0a9\0aa\0ab\0ac\0ad\0ae\0af\0"
+        "b0\0b1\0b2\0b3\0b4\0b5\0b6\0b7\0"
+        "b8\0b9\0ba\0bb\0bc\0bd\0be\0bf\0"
+        "c0\0c1\0c2\0c3\0c4\0c5\0c6\0c7\0"
+        "c8\0c9\0ca\0cb\0cc\0cd\0ce\0cf\0"
+        "d0\0d1\0d2\0d3\0d4\0d5\0d6\0d7\0"
+        "d8\0d9\0da\0db\0dc\0dd\0de\0df\0"
+        "e0\0e1\0e2\0e3\0e4\0e5\0e6\0e7\0"
+        "e8\0e9\0ea\0eb\0ec\0ed\0ee\0ef\0"
+        "f0\0f1\0f2\0f3\0f4\0f5\0f6\0f7\0"
+        "f8\0f9\0fa\0fb\0fc\0fd\0fe\0ff\0";
 
     return &higher[3 * (z - 128)];
   }
@@ -556,11 +366,206 @@ static const char *ascii_stringtable_char_to_hex(char x) {
 static ascii_subtype ascii_stringtable_char_to_type(char x) {
   unsigned z = ascii_char_to_int(x);
   if (z < 128u) {
-    return ascii_stringtable[z * 8 + 3];
+    return (ascii_subtype)ascii_stringtable[z * 8 + 3];
   } else {
     return out_of_range;
   }
 }
+
+#if ASCII_TABLE_ENABLE
+static ASCII_CONSTEXPR const ascii_element ascii_table[128] = {
+    [0x00] = {{"00"}, control, {"NUL"}},
+    [0x01] = {{"01"}, control, {"SOH"}},
+    [0x02] = {{"02"}, control, {"STX"}},
+    [0x03] = {{"03"}, control, {"ETX"}},
+    [0x04] = {{"04"}, control, {"EOT"}},
+    [0x05] = {{"05"}, control, {"ENQ"}},
+    [0x06] = {{"06"}, control, {"ACK"}},
+    [0x07] = {{"07"}, control, {"BEL"}},
+
+    [0x08] = {{"08"}, control, {"BS"}},
+    [0x09] = {{"09"}, control, {"HT"}},
+    [0x0a] = {{"0a"}, control, {"LF"}},
+    [0x0b] = {{"0b"}, control, {"VT"}},
+    [0x0c] = {{"0c"}, control, {"FF"}},
+    [0x0d] = {{"0d"}, control, {"CR"}},
+    [0x0e] = {{"0e"}, control, {"SO"}},
+    [0x0f] = {{"0f"}, control, {"SI"}},
+
+    [0x10] = {{"10"}, control, {"DLE"}},
+    [0x11] = {{"11"}, control, {"DC1"}},
+    [0x12] = {{"12"}, control, {"DC2"}},
+    [0x13] = {{"13"}, control, {"DC3"}},
+    [0x14] = {{"14"}, control, {"NAK"}},
+    [0x15] = {{"15"}, control, {"SYN"}},
+    [0x16] = {{"16"}, control, {"ETB"}},
+    [0x17] = {{"17"}, control, {"CAN"}},
+
+    [0x18] = {{"18"}, control, {"EM"}},
+    [0x19] = {{"19"}, control, {"SUB"}},
+    [0x1a] = {{"1a"}, control, {"ESC"}},
+    [0x1b] = {{"1b"}, control, {"FS"}},
+    [0x1c] = {{"1c"}, control, {"GS"}},
+    [0x1d] = {{"1d"}, control, {"CR"}},
+    [0x1e] = {{"1e"}, control, {"RS"}},
+    [0x1f] = {{"1f"}, control, {"US"}},
+
+    [0x20] = {{"20"}, punctuation, {"SP"}},
+    [0x21] = {{"21"}, punctuation, {"!"}},
+    [0x22] = {{"22"}, punctuation, {"\""}},
+    [0x23] = {{"23"}, punctuation, {"#"}},
+    [0x24] = {{"24"}, punctuation, {"$"}},
+    [0x25] = {{"25"}, punctuation, {"%"}},
+    [0x26] = {{"26"}, punctuation, {"&"}},
+    [0x27] = {{"27"}, punctuation, {"'"}},
+
+    [0x28] = {{"28"}, punctuation, {"("}},
+    [0x29] = {{"29"}, punctuation, {")"}},
+    [0x2a] = {{"2a"}, punctuation, {"*"}},
+    [0x2b] = {{"2b"}, punctuation, {"+"}},
+    [0x2c] = {{"2c"}, punctuation, {","}},
+    [0x2d] = {{"2d"}, punctuation, {"-"}},
+    [0x2e] = {{"2e"}, punctuation, {"."}},
+    [0x2f] = {{"2f"}, punctuation, {"/"}},
+
+    [0x30] = {{"30"}, alphanumeric, {"0"}},
+    [0x31] = {{"31"}, alphanumeric, {"1"}},
+    [0x32] = {{"32"}, alphanumeric, {"2"}},
+    [0x33] = {{"33"}, alphanumeric, {"3"}},
+    [0x34] = {{"34"}, alphanumeric, {"4"}},
+    [0x35] = {{"35"}, alphanumeric, {"5"}},
+    [0x36] = {{"36"}, alphanumeric, {"6"}},
+    [0x37] = {{"37"}, alphanumeric, {"7"}},
+
+    [0x38] = {{"38"}, alphanumeric, {"8"}},
+    [0x39] = {{"39"}, alphanumeric, {"9"}},
+    [0x3a] = {{"3a"}, punctuation, {":"}},
+    [0x3b] = {{"3b"}, punctuation, {";"}},
+    [0x3c] = {{"3c"}, punctuation, {"<"}},
+    [0x3d] = {{"3d"}, punctuation, {"="}},
+    [0x3e] = {{"3e"}, punctuation, {">"}},
+    [0x3f] = {{"3f"}, punctuation, {"?"}},
+
+    [0x40] = {{"40"}, punctuation, {"@"}},
+    [0x41] = {{"41"}, alphanumeric, {"A"}},
+    [0x42] = {{"42"}, alphanumeric, {"B"}},
+    [0x43] = {{"43"}, alphanumeric, {"C"}},
+    [0x44] = {{"44"}, alphanumeric, {"D"}},
+    [0x45] = {{"45"}, alphanumeric, {"E"}},
+    [0x46] = {{"46"}, alphanumeric, {"F"}},
+    [0x47] = {{"47"}, alphanumeric, {"G"}},
+
+    [0x48] = {{"48"}, alphanumeric, {"H"}},
+    [0x49] = {{"49"}, alphanumeric, {"I"}},
+    [0x4a] = {{"4a"}, alphanumeric, {"J"}},
+    [0x4b] = {{"4b"}, alphanumeric, {"K"}},
+    [0x4c] = {{"4c"}, alphanumeric, {"L"}},
+    [0x4d] = {{"4d"}, alphanumeric, {"M"}},
+    [0x4e] = {{"4e"}, alphanumeric, {"N"}},
+    [0x4f] = {{"4f"}, alphanumeric, {"O"}},
+
+    [0x50] = {{"50"}, alphanumeric, {"P"}},
+    [0x51] = {{"51"}, alphanumeric, {"Q"}},
+    [0x52] = {{"52"}, alphanumeric, {"R"}},
+    [0x53] = {{"53"}, alphanumeric, {"S"}},
+    [0x54] = {{"54"}, alphanumeric, {"T"}},
+    [0x55] = {{"55"}, alphanumeric, {"U"}},
+    [0x56] = {{"56"}, alphanumeric, {"V"}},
+    [0x57] = {{"57"}, alphanumeric, {"W"}},
+
+    [0x58] = {{"58"}, alphanumeric, {"X"}},
+    [0x59] = {{"59"}, alphanumeric, {"Y"}},
+    [0x5a] = {{"5a"}, alphanumeric, {"Z"}},
+    [0x5b] = {{"5b"}, punctuation, {"["}},
+    [0x5c] = {{"5c"}, punctuation, {"\\"}},
+    [0x5d] = {{"5d"}, punctuation, {"]"}},
+    [0x5e] = {{"5e"}, punctuation, {"^"}},
+    [0x5f] = {{"5f"}, punctuation, {"_"}},
+
+    [0x60] = {{"60"}, punctuation, {"`"}},
+    [0x61] = {{"61"}, alphanumeric, {"a"}},
+    [0x62] = {{"62"}, alphanumeric, {"b"}},
+    [0x63] = {{"63"}, alphanumeric, {"c"}},
+    [0x64] = {{"64"}, alphanumeric, {"d"}},
+    [0x65] = {{"65"}, alphanumeric, {"e"}},
+    [0x66] = {{"66"}, alphanumeric, {"f"}},
+    [0x67] = {{"67"}, alphanumeric, {"g"}},
+
+    [0x68] = {{"68"}, alphanumeric, {"h"}},
+    [0x69] = {{"69"}, alphanumeric, {"i"}},
+    [0x6a] = {{"6a"}, alphanumeric, {"j"}},
+    [0x6b] = {{"6b"}, alphanumeric, {"k"}},
+    [0x6c] = {{"6c"}, alphanumeric, {"l"}},
+    [0x6d] = {{"6d"}, alphanumeric, {"m"}},
+    [0x6e] = {{"6e"}, alphanumeric, {"n"}},
+    [0x6f] = {{"6f"}, alphanumeric, {"o"}},
+
+    [0x70] = {{"70"}, alphanumeric, {"p"}},
+    [0x71] = {{"71"}, alphanumeric, {"q"}},
+    [0x72] = {{"72"}, alphanumeric, {"r"}},
+    [0x73] = {{"73"}, alphanumeric, {"s"}},
+    [0x74] = {{"74"}, alphanumeric, {"t"}},
+    [0x75] = {{"75"}, alphanumeric, {"u"}},
+    [0x76] = {{"76"}, alphanumeric, {"v"}},
+    [0x77] = {{"77"}, alphanumeric, {"w"}},
+
+    [0x78] = {{"78"}, alphanumeric, {"x"}},
+    [0x79] = {{"79"}, alphanumeric, {"y"}},
+    [0x7a] = {{"7a"}, alphanumeric, {"z"}},
+    [0x7b] = {{"7b"}, punctuation, {"{"}},
+    [0x7c] = {{"7c"}, punctuation, {"|"}},
+    [0x7d] = {{"7d"}, punctuation, {"}"}},
+    [0x7e] = {{"7e"}, punctuation, {"~"}},
+    [0x7f] = {{"7f"}, control, {"DEL"}},
+};
+
+static const char *ascii_table_char_to_name(char x) {
+  unsigned z = ascii_char_to_int(x);
+  if (z < 128u) {
+    return ascii_table[z].name;
+  } else {
+    return ascii_char_to_hex(x);
+  }
+}
+
+static const char *ascii_table_char_to_hex(char x) {
+  unsigned z = ascii_char_to_int(x);
+  if (z < 128u) {
+    return ascii_table[z].hex;
+  } else {
+    static ASCII_CONSTEXPR const char higher[128 * 3 + 1] =
+        "80\081\082\083\084\085\086\087\0"
+        "88\089\08a\08b\08c\08d\08e\08f\0"
+        "90\091\092\093\094\095\096\097\0"
+        "98\099\09a\09b\09c\09d\09e\09f\0"
+        "a0\0a1\0a2\0a3\0a4\0a5\0a6\0a7\0"
+        "a8\0a9\0aa\0ab\0ac\0ad\0ae\0af\0"
+        "b0\0b1\0b2\0b3\0b4\0b5\0b6\0b7\0"
+        "b8\0b9\0ba\0bb\0bc\0bd\0be\0bf\0"
+        "c0\0c1\0c2\0c3\0c4\0c5\0c6\0c7\0"
+        "c8\0c9\0ca\0cb\0cc\0cd\0ce\0cf\0"
+        "d0\0d1\0d2\0d3\0d4\0d5\0d6\0d7\0"
+        "d8\0d9\0da\0db\0dc\0dd\0de\0df\0"
+        "e0\0e1\0e2\0e3\0e4\0e5\0e6\0e7\0"
+        "e8\0e9\0ea\0eb\0ec\0ed\0ee\0ef\0"
+        "f0\0f1\0f2\0f3\0f4\0f5\0f6\0f7\0"
+        "f8\0f9\0fa\0fb\0fc\0fd\0fe\0ff\0";
+
+    return &higher[3 * (z - 128)];
+  }
+}
+
+static ascii_subtype ascii_table_char_to_type(char x) {
+  unsigned z = ascii_char_to_int(x);
+  char lookup = ascii_table[z % 128u].type;
+  if (z < 128u) {
+    return (ascii_subtype)lookup;
+  } else {
+    return out_of_range;
+  }
+}
+
+#endif
 
 __attribute__((unused)) static const char *ascii_char_to_name(char x) {
   return ascii_stringtable_char_to_name(x);
