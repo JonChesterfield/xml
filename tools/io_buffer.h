@@ -24,7 +24,18 @@ static __attribute__((unused)) io_buffer *file_to_io_buffer(FILE * /*open, rb*/)
 static __attribute__((unused)) int io_buffer_to_file(const io_buffer *,
                       FILE * /*open, wb*/);  // ret 0 on success
 
-
+static __attribute__((unused))
+io_buffer* new_io_buffer(size_t N)
+{
+  unsigned base = sizeof(io_buffer) + 1;
+  io_buffer * buffer = (io_buffer *) malloc(base + N);
+  if (buffer)
+    {
+      buffer->N = N;
+      buffer->data[N] = '\0';
+    }
+  return buffer;
+}
 
 io_buffer* file_to_io_buffer(FILE* f)
 {

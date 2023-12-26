@@ -6,16 +6,12 @@
                extension-element-prefixes="str ext"
                >
 
-<xsl:template match="node()|@*">
-     <xsl:copy>
-       <xsl:apply-templates select="node()|@*"/>
-     </xsl:copy>
-</xsl:template>
+<xsl:include href="../subtransforms/ascii_hex_functions.xsl" />
 
 <xsl:template match="ListSymbols">
-<Expressions>
-  <xsl:apply-templates select="node()|@*"/>
-</Expressions>
+  <Expressions>
+    <xsl:apply-templates select="node()|@*"/>
+  </Expressions>
 </xsl:template>
   
 <xsl:template match="List[not(*)]">
@@ -23,11 +19,25 @@
 </xsl:template>
 
 <xsl:template match="List[(*)]">
-  <xsl:variable name="car" select="*[1]" />
-  <xsl:element name="{$car}">
+  <!-- This will mostly work - removes ? and similar from element names.
+       Elements also can't start with [0-9] or [Xx][Mm][Ll] which might need
+       to be escaped here as well
+  -->
+  
+  <xsl:variable name="ecar">
+    <xsl:call-template name="ascii-to-mixed">
+      <xsl:with-param name="str" select="*[1]"/>
+    </xsl:call-template>
+  </xsl:variable>
+  <xsl:element name="{$ecar}">
     <xsl:apply-templates select="*[position() > 1]" />
-</xsl:element>
+  </xsl:element>
+</xsl:template>
 
+<xsl:template match="node()|@*">
+     <xsl:copy>
+       <xsl:apply-templates select="node()|@*"/>
+     </xsl:copy>
 </xsl:template>
 
 </xsl:transform>

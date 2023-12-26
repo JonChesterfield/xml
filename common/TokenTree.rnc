@@ -1,0 +1,12 @@
+start = TokenTree
+Token =
+  element * {
+    attribute name { xsd:string }?,
+    (attribute value { xsd:string }
+     | attribute literal { xsd:string }
+     | attribute hexvalue { xsd:hexBinary }
+     | attribute hexliteral { xsd:hexBinary })?
+   , Token*
+  }
+
+TokenTree = element TokenTree { Token* }

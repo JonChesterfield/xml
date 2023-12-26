@@ -1,0 +1,2 @@
+start = RawBinary
+RawBinary = element RawBinary { xsd:hexBinary }

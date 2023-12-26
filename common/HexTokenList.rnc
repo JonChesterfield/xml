@@ -1,0 +1,6 @@
+start = HexTokenList
+HexToken =
+  element * {
+    attribute (hexvalue | hexliteral) { xsd:hexBinary }
+  }
+HexTokenList = element HexTokenList { HexToken* }

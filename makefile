@@ -15,6 +15,7 @@ all::
 
 # Considering a single source single file approach to tools
 file_to_cdata := bin/file_to_cdata
+hex_to_binary := bin/hex_to_binary
 lemon := bin/lemon
 makeheaders := bin/makeheaders
 
@@ -94,42 +95,58 @@ all::	validate/subtransforms
 
 
 # arguments
-# $1 name of current pipeine, source directory
-# $2 name of directory to write files into to
+# $1 name of directory to write files into
+# $2 from format, requires $(from).rng in source directory
+# $3 to format, requires $(to).rng in source directory
+# $4 schema for from format
+# $5 transform to apply
+# $6 schema for to format
+# transform will run $2_to_$3.xsl
+# Checks the xsl transform and the schemas for validity before running
+
+define XML_Pipeline_Template_Precise
+
+.PHONY: validateA/$4
+validateA/$4:	$4
+	@xmllint --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
+
+.PHONY: validateB/$5
+validateB/$5:	$5
+	@xmllint --relaxng xslt.rng "$$<" $(XMLLINTOPTS) --quiet
+
+.PHONY: validateC/$6
+validateC/$6:	$6
+	@xmllint --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
+
+$1/%.$3.prelint.xml:	$1/%.$2.xml $4 $5 $6 validateA/$4 validateB/$5 validateC/$6 validate/subtransforms
+	@mkdir -p "$$(dir $$@)"
+	@xmllint --relaxng $4 "$$<" $(XMLLINTOPTS) --quiet
+	@xsltproc $(XSLTPROCOPTS) --output "$$@" $5 "$$<"
+
+$1/%.$3.pretty.xml:	$1/%.$3.prelint.xml
+	@xsltproc $(XSLTPROCOPTS) --output "$$@" subtransforms/pretty.xsl "$$<"
+
+$1/%.$3.xml:	$1/%.$3.pretty.xml
+	@xmllint --relaxng $6 "$$<" $(XMLLINTOPTS) --quiet
+	@cp "$$<" "$$@"
+endef
+
+# arguments
+# $1 name of current pipeline, source directory
+# $2 name of directory to write files into
 # $3 from format, requires $(from).rng in source directory
 # $4 to format, requires $(to).rng in source directory
 # transform will run $3_to_$4.xsl
 # Checks the xsl transform and the schemas for validity before running
 
-# Same four arguments as XML_Pipeline_Template then three abbreviations
-# for the two schemas and the transform
-define XML_Pipeline_Template_Lemma
-
-.PHONY: validateA/$5
-validateA/$5:	$5
-	@xmllint --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
-
-.PHONY: validateB/$6
-validateB/$6:	$6
-	@xmllint --relaxng xslt.rng "$$<" $(XMLLINTOPTS) --quiet
-
-.PHONY: validateC/$7
-validateC/$7:	$7
-	@xmllint --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
-
-$2/%.$4.prelint.xml:	$2/%.$3.xml $5 $6 $7 | validateA/$5 validateB/$6 validateC/$7
-	@mkdir -p "$$(dir $$@)"
-	@xmllint --relaxng $5 "$$<" $(XMLLINTOPTS) --quiet
-	@xsltproc $(XSLTPROCOPTS) --output "$$@" $6 "$$<"
-
-$2/%.$4.xml:	$2/%.$4.prelint.xml
-	@xmllint --relaxng $7 "$$<" $(XMLLINTOPTS) --quiet
-	@cp "$$<" "$$@"
-endef
-
 define XML_Pipeline_Template
-$(call XML_Pipeline_Template_Lemma,$1,$2,$3,$4,$(call get_schema_name, %$1/$3.rng),$1/$3_to_$4.xsl,$(call get_schema_name, %$1/$4.rng))
+$(call XML_Pipeline_Template_Precise,$2,$3,$4,$(call get_schema_name, %$1/$3.rng),$1/$3_to_$4.xsl,$(call get_schema_name, %$1/$4.rng))
 endef
+
+define XML_Pipeline_Template_Common
+$(call XML_Pipeline_Template_Precise,$1,$2,$3,$(call get_schema_name, %common/$2.rng),common/$2_to_$3.xsl,$(call get_schema_name, %common/$3.rng))
+endef
+
 
 XMLPipelineWorkDir := .pipeline
 
@@ -139,7 +156,7 @@ XMLPipelineWorkDir := .pipeline
 include $(SELF_DIR)raw_sexpr_to_expressions/raw_sexpr_to_expressions.mk
 
 # Create the input file
-$(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.raw_sexpr.xml: Lisp/%.scm
+$(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.raw_sexpr.xml: Lisp/%.scm $(file_to_cdata)
 	@mkdir -p "$(dir $@)"
 	@$(file_to_cdata) < "$<" > "$@"
 	@xmllint --relaxng $(call get_schema_name, %raw_sexpr_to_expressions/raw_sexpr.rng) "$@" $(XMLLINTOPTS) --quiet
@@ -210,7 +227,7 @@ TOOLS_BIN := $(TOOLS_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_BIN)/%)
 
 $(TOOLS_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.c $(TOOLS_HDR)
 	@mkdir -p "$(dir $@)"
-	$(CC) $< -c -o $@
+	$(CC) -Wall $< -c -o $@
 
 $(TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o
 	@mkdir -p "$(dir $@)"
