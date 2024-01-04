@@ -4490,8 +4490,9 @@ void ReportTable(
     fprintf(out,"#define %sARG_SDECL %s;\n",name,lemp->arg);  lineno++;
     fprintf(out,"#define %sARG_PDECL ,%s\n",name,lemp->arg);  lineno++;
     fprintf(out,"#define %sARG_PARAM ,%s\n",name,&lemp->arg[i]);  lineno++;
-    fprintf(out,"#define %sARG_FETCH %s=yypParser->%s;\n",
-                 name,lemp->arg,&lemp->arg[i]);  lineno++;
+    // patched to wrap it in a (void) to avoid unused argument noise
+    fprintf(out,"#define %sARG_FETCH %s=yypParser->%s; (void)%s;\n",
+            name,lemp->arg,&lemp->arg[i],&lemp->arg[i]);  lineno++;
     fprintf(out,"#define %sARG_STORE yypParser->%s=%s;\n",
                  name,&lemp->arg[i],&lemp->arg[i]);  lineno++;
   }else{

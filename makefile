@@ -12,6 +12,12 @@ MAKEFILE_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 all::
 
+CC := clang
+CXX := clang++
+
+C_OR_CXX_FLAGS := -Wall -Wextra -g
+CFLAGS := -std=c11 $(C_OR_CXX_FLAGS)
+CXXFLAGS := -std=c++14 -Wno-c99-designator $(C_OR_CXX_FLAGS)
 
 # Considering a single source single file approach to tools
 file_to_cdata := bin/file_to_cdata
@@ -27,7 +33,8 @@ TOOLS_DIR_BIN := bin
 include submakefiles/schemas.mk
 
 XMLLINTOPTS := --huge --noout
-XSLTPROCOPTS := --huge # --maxdepth 40000
+# The xml pretty printer tends to trip the depth limit when it's the default 3000
+XSLTPROCOPTS := --huge  --maxdepth 40000
 
 # Slightly messy. The main user of the schema files in this context
 # is xmllint, which wants the xml syntax .rng file.
@@ -105,20 +112,21 @@ all::	validate/subtransforms
 # Checks the xsl transform and the schemas for validity before running
 
 define XML_Pipeline_Template_Precise
-
-.PHONY: validateA/$4
-validateA/$4:	$4
+# Multiple definitions of the same target is a hazard here
+# Would be better to use a single rule for any schema validation
+.PHONY: validateA/$1/$4
+validateA/$1/$4:	$4
 	@xmllint --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
 
-.PHONY: validateB/$5
-validateB/$5:	$5
+.PHONY: validateB/$1/$5
+validateB/$1/$5:	$5
 	@xmllint --relaxng xslt.rng "$$<" $(XMLLINTOPTS) --quiet
 
-.PHONY: validateC/$6
-validateC/$6:	$6
+.PHONY: validateC/$1/$6
+validateC/$1/$6:	$6
 	@xmllint --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
 
-$1/%.$3.prelint.xml:	$1/%.$2.xml $4 $5 $6 validateA/$4 validateB/$5 validateC/$6 validate/subtransforms
+$1/%.$3.prelint.xml:	$1/%.$2.xml $4 $5 $6 validateA/$1/$4 validateB/$1/$5 validateC/$1/$6 validate/subtransforms
 	@mkdir -p "$$(dir $$@)"
 	@xmllint --relaxng $4 "$$<" $(XMLLINTOPTS) --quiet
 	@xsltproc $(XSLTPROCOPTS) --output "$$@" $5 "$$<"
@@ -216,22 +224,29 @@ all::	$(RAW_SCHEME:Lisp/%.scm=LispChecked/%.scm) $(RAW_SCHEME:Lisp/%.scm=LispExp
 
 
 
-
-
 # Auxilary tools out of C
-TOOLS_SRC := $(wildcard $(TOOLS_DIR)/*.c)
-TOOLS_HDR := $(wildcard $(TOOLS_DIR)/*.h)
 TOOLS_DIR_OBJ := .$(TOOLS_DIR).O
-TOOLS_OBJ := $(TOOLS_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
-TOOLS_BIN := $(TOOLS_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_BIN)/%)
+TOOLS_C_SRC := $(wildcard $(TOOLS_DIR)/*.c)
+TOOLS_CPP_SRC := $(wildcard $(TOOLS_DIR)/*.cpp)
+TOOLS_HDR := $(wildcard $(TOOLS_DIR)/*.h) $(wildcard $(TOOLS_DIR)/*.hpp)
 
-$(TOOLS_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.c $(TOOLS_HDR)
+TOOLS_C_OBJ := $(TOOLS_C_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
+TOOLS_CPP_OBJ := $(TOOLS_CPP_SRC:$(TOOLS_DIR)/%.cpp=$(TOOLS_DIR_OBJ)/%.o)
+
+# Binaries are C for now, no C++. However some objects are built from C++
+TOOLS_BIN := $(TOOLS_C_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_BIN)/%)
+
+$(TOOLS_C_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.c $(TOOLS_HDR)
 	@mkdir -p "$(dir $@)"
-	$(CC) -Wall $< -c -o $@
+	@$(CC) $(CFLAGS) $< -c -o $@
+
+$(TOOLS_CPP_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.cpp $(TOOLS_HDR)
+	@mkdir -p "$(dir $@)"
+	@$(CXX) $(CXXFLAGS) $< -c -o $@
 
 $(TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o
 	@mkdir -p "$(dir $@)"
-	$(CC) $< -o $@
+	@$(CC) $(CFLAGS) $< -o $@
 
 clean::
 	rm -rf $(TOOLS_DIR_BIN) $(TOOLS_DIR_OBJ)

@@ -1660,7 +1660,7 @@ static Token *FindDeclName(Token *pFirst, Token *pLast){
        "union", "volatile", "virtual", "void", };
 
       if( !isInit ){
-        int i;
+        size_t i;
         for(i=0; i<sizeof(aWords)/sizeof(aWords[0]); i++){
           IdentTableInsert(&sReserved,aWords[i],0);
         }
@@ -3024,7 +3024,7 @@ static void DocumentationDump(void){
   };
 
   for(pDecl = pDeclFirst; pDecl; pDecl=pDecl->pNext){
-    int i;
+    size_t i;
     int nLabel = 0;
     char *zDecl;
     char zLabel[50];
@@ -3087,6 +3087,7 @@ void PrintModuleRecord(const char *zFile, const char *zFilename){
 ** object.
 */
 static InFile *CreateInFile(char *zArg, int *pnErr){
+  (void)pnErr;
   int nSrc;
   char *zSrc;
   InFile *pFile;
@@ -3223,7 +3224,7 @@ static void AddParameters(int index, int *pArgc, char ***pArgv){
     }
     n = 0;
     while( c!=EOF && !isspace(c) ){
-      if( n<sizeof(zBuf)-1 ){ zBuf[n++] = c; }
+      if( n < (int)(sizeof(zBuf)-1) ){ zBuf[n++] = c; }
       startOfLine = 0;
       c = getc(in);
     }
