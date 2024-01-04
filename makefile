@@ -25,6 +25,8 @@ hex_to_binary := bin/hex_to_binary
 lemon := bin/lemon
 makeheaders := bin/makeheaders
 
+cmark := bin/cmark
+
 # Source under TOOLS_DIR used to make binaries under TOOLS_DIR_BIN
 TOOLS_DIR := tools
 TOOLS_DIR_BIN := bin
@@ -224,17 +226,23 @@ all::	$(RAW_SCHEME:Lisp/%.scm=LispChecked/%.scm) $(RAW_SCHEME:Lisp/%.scm=LispExp
 
 
 
-# Auxilary tools out of C
-TOOLS_DIR_OBJ := .$(TOOLS_DIR).O
-TOOLS_C_SRC := $(wildcard $(TOOLS_DIR)/*.c)
-TOOLS_CPP_SRC := $(wildcard $(TOOLS_DIR)/*.cpp)
-TOOLS_HDR := $(wildcard $(TOOLS_DIR)/*.h) $(wildcard $(TOOLS_DIR)/*.hpp)
+# Building auxilary tools out of C.
 
+# Simple binaries are some single file C files at top level
+SIMPLE_TOOLS_BIN := $(lemon) $(makeheaders) $(hex_to_binary) $(file_to_cdata)
+
+# cmark uses multiple source files, specifically all those under the cmark directory
+CMARK_SRC:= $(wildcard $(TOOLS_DIR)/cmark/*.c)
+
+# All C, C++ get compiled to object files individually
+TOOLS_DIR_OBJ := .$(TOOLS_DIR).O
+TOOLS_C_SRC := $(call rwildcard,$(TOOLS_DIR),*.c)
+TOOLS_CPP_SRC := $(call rwildcard,$(TOOLS_DIR),*.cpp)
+
+# Assumes everything depends on all headers
+TOOLS_HDR := $(call rwildcard,$(TOOLS_DIR),*.h) $(call rwildcard,$(TOOLS_DIR),*.hpp) $(call rwildcard,$(TOOLS_DIR),*.inc)
 TOOLS_C_OBJ := $(TOOLS_C_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 TOOLS_CPP_OBJ := $(TOOLS_CPP_SRC:$(TOOLS_DIR)/%.cpp=$(TOOLS_DIR_OBJ)/%.o)
-
-# Binaries are C for now, no C++. However some objects are built from C++
-TOOLS_BIN := $(TOOLS_C_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_BIN)/%)
 
 $(TOOLS_C_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.c $(TOOLS_HDR)
 	@mkdir -p "$(dir $@)"
@@ -244,9 +252,16 @@ $(TOOLS_CPP_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.cpp $(TOOLS_HDR)
 	@mkdir -p "$(dir $@)"
 	@$(CXX) $(CXXFLAGS) $< -c -o $@
 
-$(TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o
+CMARK_OBJ := $(CMARK_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
+$(cmark):	$(CMARK_OBJ)
+	@mkdir -p "$(dir $@)"
+	@$(CC) $(CFLAGS) $^ -o $@
+
+$(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o
 	@mkdir -p "$(dir $@)"
 	@$(CC) $(CFLAGS) $< -o $@
+
+tools:	$(SIMPLE_TOOLS_BIN) $(TOOLS_DIR_BIN)/cmark
 
 clean::
 	rm -rf $(TOOLS_DIR_BIN) $(TOOLS_DIR_OBJ)
