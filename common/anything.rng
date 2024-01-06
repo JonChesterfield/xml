@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Vincent Biragnet at https://stackoverflow.com/a/13728013/3726169 -->
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+  <start>
+    <ref name="anyElement"/>
+  </start>
+  <define name="anyElement">
+    <element>
+      <anyName/>
+      <ref name="anyAttributes"/>
+      <mixed>
+        <zeroOrMore>
+          <ref name="anyElement"/>
+        </zeroOrMore>
+      </mixed>
+    </element>
+  </define>
+  <define name="anyAttributes">
+    <zeroOrMore>
+      <attribute>
+        <anyName/>
+      </attribute>
+    </zeroOrMore>
+  </define>
+</grammar>

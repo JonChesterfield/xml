@@ -26,9 +26,9 @@ $(RENAMEDSRC):	$(WORKDIR)/%.md:	$(ALL_SRC_WITH_SPACES) | $(WORKDIR)
 	cmp $(bs_spaces) $@ >/dev/null 2>&1 || cp $(bs_spaces) $@
 
 
-CMARKFILES := $(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.xml,$(RENAMEDSRC))
-
 clean::
 	rm -rf $(WORKDIR)
 
-planning:	$(CMARKFILES)
+planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.xml,$(RENAMEDSRC))
+planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.html,$(RENAMEDSRC))
+# planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.md.xml,$(RENAMEDSRC))

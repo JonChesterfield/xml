@@ -1,0 +1,9 @@
+# Vincent Biragnet at https://stackoverflow.com/a/13728013/3726169
+
+start = anyElement
+anyElement =
+  element * {
+    anyAttributes,
+    mixed { anyElement* }
+  }
+anyAttributes = attribute * { text }*

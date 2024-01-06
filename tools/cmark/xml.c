@@ -217,8 +217,12 @@ char *cmark_render_xml(cmark_node *root, int options) {
   cmark_iter *iter = cmark_iter_new(root);
 
   cmark_strbuf_puts(state.xml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+#if 0
+  // This clause is annoyingly difficult to drop in postprocessing
+  // xsltproc
   cmark_strbuf_puts(state.xml,
                     "<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n");
+#endif
   while ((ev_type = cmark_iter_next(iter)) != CMARK_EVENT_DONE) {
     cur = cmark_iter_get_node(iter);
     S_render_node(cur, ev_type, &state, options);

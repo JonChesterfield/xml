@@ -34,9 +34,14 @@ TOOLS_DIR_BIN := bin
 
 include submakefiles/schemas.mk
 
-XMLLINTOPTS := --huge --noout
+# This doens't work as it should - dropdtd does not suppress the warning
+# on missing dtd if also doing some other verification
+# Patching around by patching cmark/xml.c to not write the DOCTYPE
+XMLLINTOPTS := --nonet --huge --noout --dropdtd
+
 # The xml pretty printer tends to trip the depth limit when it's the default 3000
-XSLTPROCOPTS := --huge  --maxdepth 40000
+# novalid stops it looking for .dtd files, notably CommonMark.dtd
+XSLTPROCOPTS := --huge  --maxdepth 40000 --novalid
 
 # Slightly messy. The main user of the schema files in this context
 # is xmllint, which wants the xml syntax .rng file.
@@ -231,6 +236,12 @@ include $(SELF_DIR)Planning/Planning.mk
 %.cmark.xml:	%.md | $(cmark)
 	./$(cmark) --to xml $^ > $@
 
+%.cmark.html:	%.md | $(cmark)
+	./$(cmark) --to html $^ > $@
+
+# $(info $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,md,$(call get_schema_name, %common/cmark.rng),common/cmark_to_md.xsl,$(call get_schema_name, %common/md.rng)))
+
+$(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,md,$(call get_schema_name, %common/cmark.rng),common/cmark_to_md.xsl,$(call get_schema_name, %common/md.rng)))
 
 
 # Building auxilary tools out of C.
