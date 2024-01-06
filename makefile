@@ -222,7 +222,14 @@ all::	$(CSYNTAX)
 
 all::	$(RAW_SCHEME:Lisp/%.scm=LispChecked/%.scm) $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) $(CSYNTAX)
 
+include $(SELF_DIR)Planning/Planning.mk
 
+
+# Global transform rules. Make a file next to the current file with a different suffix.
+
+# Any .md file to commonmark xml
+%.cmark.xml:	%.md | $(cmark)
+	./$(cmark) --to xml $^ > $@
 
 
 
