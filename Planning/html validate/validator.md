@@ -1,0 +1,1 @@
+Derive rnc from github validator

@@ -5,7 +5,7 @@ MAKEFLAGS += -r
 .SECONDARY:
 # .DELETE_ON_ERROR:
 
- SHELL = sh -xv
+# SHELL = sh -xv
 
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
@@ -234,10 +234,10 @@ include $(SELF_DIR)Planning/Planning.mk
 
 # Any .md file to commonmark xml
 %.cmark.xml:	%.md | $(cmark)
-	./$(cmark) --to xml $^ > $@
+	@./$(cmark) --to xml $^ > $@
 
 %.cmark.html:	%.md | $(cmark)
-	./$(cmark) --to html $^ > $@
+	@./$(cmark) --to html $^ > $@
 
 $(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,md,$(call get_schema_name, %common/cmark.rng),common/cmark_to_md.xsl,$(call get_schema_name, %common/md.rng)))
 
