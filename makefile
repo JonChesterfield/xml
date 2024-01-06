@@ -5,7 +5,7 @@ MAKEFLAGS += -r
 .SECONDARY:
 # .DELETE_ON_ERROR:
 
-# SHELL = sh -xv
+ SHELL = sh -xv
 
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
@@ -239,10 +239,13 @@ include $(SELF_DIR)Planning/Planning.mk
 %.cmark.html:	%.md | $(cmark)
 	./$(cmark) --to html $^ > $@
 
-# $(info $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,md,$(call get_schema_name, %common/cmark.rng),common/cmark_to_md.xsl,$(call get_schema_name, %common/md.rng)))
-
 $(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,md,$(call get_schema_name, %common/cmark.rng),common/cmark_to_md.xsl,$(call get_schema_name, %common/md.rng)))
 
+$(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,html,$(call get_schema_name, %common/cmark.rng),common/cmark_to_html.xsl,$(call get_schema_name, %common/html.rng)))
+
+%.html:	%.html.xml
+	@xmllint --relaxng $(call get_schema_name, %common/html.rng) "$<" $(XMLLINTOPTS) --quiet
+	@xsltproc $(XSLTPROCOPTS) --output "$@" xml_to_html.xsl "$<"
 
 # Building auxilary tools out of C.
 

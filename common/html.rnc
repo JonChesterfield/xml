@@ -1,0 +1,9 @@
+# same as anything, will replace with one from https://github.com/validator/validator
+
+start = anyElement
+anyElement =
+  element * {
+    anyAttributes,
+    mixed { anyElement* }
+  }
+anyAttributes = attribute * { text }*

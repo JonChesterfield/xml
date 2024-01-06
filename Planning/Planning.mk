@@ -31,4 +31,5 @@ clean::
 
 planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.xml,$(RENAMEDSRC))
 planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.html,$(RENAMEDSRC))
+planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.html,$(RENAMEDSRC))
 # planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.md.xml,$(RENAMEDSRC))
