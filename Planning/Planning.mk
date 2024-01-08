@@ -34,8 +34,8 @@ $(RENAMED_ESCAPED_SRC):	$(WORKDIR)/%.md:	$(ALL_SRC_WITH_SPACES) | $(WORKDIR)
 clean::
 	rm -rf $(WORKDIR)
 
-planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.xml,$(RENAMED_ESCAPED_SRC))
-planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.html,$(RENAMED_ESCAPED_SRC))
+#planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.xml,$(RENAMED_ESCAPED_SRC))
+#planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.html,$(RENAMED_ESCAPED_SRC))
 #planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.html,$(RENAMED_ESCAPED_SRC))
 # planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.md.xml,$(RENAMED_ESCAPED_SRC))
 
@@ -43,12 +43,9 @@ planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.html,$(RENAMED_ESCAPED_S
 %.xml.card:	%.cmark.html
 #	@echo $*
 	$(eval stem := $(patsubst $(WORKDIR)/%,%,$(subst $(SPACE_ESC), ,$*)))
-	@echo '<card name="$(stem)">' >> $@
+	@echo '<card name="$(notdir $(stem))">' > $@
 	@cat $< >> $@
 	@echo '</card>' >> $@
-
-DERIVED_CARDS := $(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.xml.card,$(RENAMED_ESCAPED_SRC))
-planning:	$(DERIVED_CARDS)
 
 $(info "renamed escaped src")
 $(info $(RENAMED_ESCAPED_SRC))
@@ -56,19 +53,23 @@ $(info $(RENAMED_ESCAPED_SRC))
 $(info "renamed escaped dirs")
 $(info $(RENAMED_ESCAPED_DIRS))
 
+DERIVED_CARDS := $(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.xml.card,$(RENAMED_ESCAPED_SRC))
+
 $(info "derived cards")
 $(info $(DERIVED_CARDS))
 
+COLLECTED_CARDS := $(RENAMED_ESCAPED_DIRS:=.cards.xml)
 # can determine the files under the scope of a particular directory
-$(RENAMED_ESCAPED_DIRS:=.cards.xml):	$(WORKDIR)/%.cards.xml:	$(DERIVED_CARDS)
+# depends all all derived cards, so makes all of them, and then pulls out those
+# applicable to the directory identified by the stem
+$(COLLECTED_CARDS):	$(WORKDIR)/%.cards.xml:	$(DERIVED_CARDS)
 	@mkdir -p $(@D)
 #	echo $* > $@
-#	echo $(filter $(WORKDIR)/$*/%,$(RENAMED_ESCAPED_SRC))
 	echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
 	$(eval stem := $(patsubst $(WORKDIR)/%,%,$(subst $(SPACE_ESC), ,$*)))
 	@echo '<cards name="$(stem)">' >> $@
-	cat $(DERIVED_CARDS) >> $@
+	@cat $(filter $(WORKDIR)/$*/%,$(DERIVED_CARDS)) >> $@
 	@echo '</cards>' >> $@
 
 
-planning: $(RENAMED_ESCAPED_DIRS:=.cards.xml)
+planning: $(COLLECTED_CARDS)
