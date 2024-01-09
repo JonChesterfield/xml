@@ -37,39 +37,31 @@ clean::
 #planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.xml,$(RENAMED_ESCAPED_SRC))
 #planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.html,$(RENAMED_ESCAPED_SRC))
 #planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.html,$(RENAMED_ESCAPED_SRC))
-# planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.md.xml,$(RENAMED_ESCAPED_SRC))
+#planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.md.xml,$(RENAMED_ESCAPED_SRC))
 
 
-%.xml.card:	%.cmark.html
-#	@echo $*
+%.xml.task:	%.cmark.html
 	$(eval stem := $(patsubst $(WORKDIR)/%,%,$(subst $(SPACE_ESC), ,$*)))
-	@echo '<card name="$(notdir $(stem))">' > $@
+	@echo '<task name="$(notdir $(stem))">' > $@
 	@cat $< >> $@
-	@echo '</card>' >> $@
+	@echo '</task>' >> $@
 
-$(info "renamed escaped src")
-$(info $(RENAMED_ESCAPED_SRC))
+DERIVED_CARDS := $(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.xml.task,$(RENAMED_ESCAPED_SRC))
 
-$(info "renamed escaped dirs")
-$(info $(RENAMED_ESCAPED_DIRS))
-
-DERIVED_CARDS := $(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.xml.card,$(RENAMED_ESCAPED_SRC))
-
-$(info "derived cards")
-$(info $(DERIVED_CARDS))
-
-COLLECTED_CARDS := $(RENAMED_ESCAPED_DIRS:=.cards.xml)
+COLLECTED_CARDS := $(RENAMED_ESCAPED_DIRS:=.card.xml)
 # can determine the files under the scope of a particular directory
 # depends all all derived cards, so makes all of them, and then pulls out those
 # applicable to the directory identified by the stem
-$(COLLECTED_CARDS):	$(WORKDIR)/%.cards.xml:	$(DERIVED_CARDS)
+$(COLLECTED_CARDS):	$(WORKDIR)/%.card.xml:	$(DERIVED_CARDS)
 	@mkdir -p $(@D)
-#	echo $* > $@
 	echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
 	$(eval stem := $(patsubst $(WORKDIR)/%,%,$(subst $(SPACE_ESC), ,$*)))
-	@echo '<cards name="$(stem)">' >> $@
+	@echo '<card name="$(stem)">' >> $@
 	@cat $(filter $(WORKDIR)/$*/%,$(DERIVED_CARDS)) >> $@
-	@echo '</cards>' >> $@
+	@echo '</card>' >> $@
 
+COLLECTED_CARDS_HTML := $(RENAMED_ESCAPED_DIRS:=.html)
+$(COLLECTED_CARDS_HTML):	$(WORKDIR)/%.html:	$(WORKDIR)/%.card.xml card_to_html.xsl
+	@xsltproc $(XSLTPROCOPTS) --output "$@" card_to_html.xsl "$<"
 
-planning: $(COLLECTED_CARDS)
+planning: $(COLLECTED_CARDS_HTML)
