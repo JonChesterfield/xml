@@ -12,8 +12,8 @@ MAKEFILE_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 all::
 
-CC := clang
-CXX := clang++
+CC := gcc
+CXX := g++
 
 C_OR_CXX_FLAGS := -Wall -Wextra -g
 CFLAGS := -std=c11 $(C_OR_CXX_FLAGS)

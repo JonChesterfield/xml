@@ -5,7 +5,7 @@
 
   <xsl:output method="xml" omit-xml-declaration="yes" indent="yes"/>
 
-  <xsl:template match="/card" >
+  <xsl:template match="/Project" >
     <html>
       <head>        
         <meta http-equiv="refresh" content="5" />
@@ -26,7 +26,7 @@
       align-items: center;
       }
 
-      .card {
+      .Project {
       background-color: #fff;
       min-width: 100%;
       min-height: 400px;
@@ -34,7 +34,7 @@
       overflow-x: auto;
       }
 
-      .card::-webkit-scrollbar {
+      .Project::-webkit-scrollbar {
       display: none;
       }
 
@@ -46,21 +46,30 @@
       ]]>
       </style>
       <body>
-        <section class="card">
-        <xsl:copy>
+        <section class="Project">
           <xsl:apply-templates select="node()|@*"/>
-        </xsl:copy>
         </section>
       </body>
     </html>
   </xsl:template>
 
-  <xsl:template match="task" >
+  <xsl:template match="card" >
     <div class="card--content">
       <h1>
         <xsl:value-of select="@name" />
       </h1>
       <xsl:apply-templates select="node()"/>
+    </div>      
+  </xsl:template>
+
+  <xsl:template match="task" >
+    <div>
+      <details>
+      <summary>
+        <xsl:value-of select="@name" />
+      </summary>
+      <xsl:apply-templates select="node()"/>
+      </details>
     </div>
   </xsl:template>
 

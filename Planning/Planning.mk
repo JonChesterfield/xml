@@ -48,20 +48,28 @@ clean::
 
 DERIVED_CARDS := $(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.xml.task,$(RENAMED_ESCAPED_SRC))
 
-COLLECTED_CARDS := $(RENAMED_ESCAPED_DIRS:=.card.xml)
+COLLECTED_TASKS := $(RENAMED_ESCAPED_DIRS:=.card.xml)
 # can determine the files under the scope of a particular directory
 # depends all all derived cards, so makes all of them, and then pulls out those
 # applicable to the directory identified by the stem
-$(COLLECTED_CARDS):	$(WORKDIR)/%.card.xml:	$(DERIVED_CARDS)
+$(COLLECTED_TASKS):	$(WORKDIR)/%.card.xml:	$(DERIVED_CARDS)
 	@mkdir -p $(@D)
-	echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
+#	echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
 	$(eval stem := $(patsubst $(WORKDIR)/%,%,$(subst $(SPACE_ESC), ,$*)))
 	@echo '<card name="$(stem)">' >> $@
 	@cat $(filter $(WORKDIR)/$*/%,$(DERIVED_CARDS)) >> $@
 	@echo '</card>' >> $@
 
-COLLECTED_CARDS_HTML := $(RENAMED_ESCAPED_DIRS:=.html)
-$(COLLECTED_CARDS_HTML):	$(WORKDIR)/%.html:	$(WORKDIR)/%.card.xml card_to_html.xsl
+$(WORKDIR)/Planning.cards.xml:	$(COLLECTED_TASKS)
+	echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
+	@echo '<Project name="Planning">' >> $@
+	cat $(COLLECTED_TASKS) >> $@
+	@echo '</Project>' >> $@
+
+Planning.html:	$(WORKDIR)/Planning.cards.xml card_to_html.xsl
 	@xsltproc $(XSLTPROCOPTS) --output "$@" card_to_html.xsl "$<"
 
-planning: $(COLLECTED_CARDS_HTML)
+clean::
+	rm -f Planning.html
+
+planning: Planning.html
