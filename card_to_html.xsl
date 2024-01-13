@@ -20,10 +20,10 @@
 
       body {
       //background-color: #8e44ad;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      //margin: 0;
+      //display: flex;
+      //justify-content: center;
+      //align-items: center;
       }
 
       .Project {

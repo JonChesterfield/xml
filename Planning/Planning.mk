@@ -55,15 +55,18 @@ COLLECTED_TASKS := $(RENAMED_ESCAPED_DIRS:=.card.xml)
 $(COLLECTED_TASKS):	$(WORKDIR)/%.card.xml:	$(DERIVED_CARDS)
 	@mkdir -p $(@D)
 #	echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
+	echo '' > $@
 	$(eval stem := $(patsubst $(WORKDIR)/%,%,$(subst $(SPACE_ESC), ,$*)))
 	@echo '<card name="$(stem)">' >> $@
-	@cat $(filter $(WORKDIR)/$*/%,$(DERIVED_CARDS)) >> $@
+# cat hangs if the list of files is empty and dev null contributes nothing
+	@cat /dev/null $(filter $(WORKDIR)/$*/%,$(DERIVED_CARDS)) >> $@
 	@echo '</card>' >> $@
 
 $(WORKDIR)/Planning.cards.xml:	$(COLLECTED_TASKS)
 	echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
 	@echo '<Project name="Planning">' >> $@
-	cat $(COLLECTED_TASKS) >> $@
+#	Sort isnt right here but it's predictable for now
+	cat $(sort $(COLLECTED_TASKS)) >> $@
 	@echo '</Project>' >> $@
 
 Planning.html:	$(WORKDIR)/Planning.cards.xml card_to_html.xsl
