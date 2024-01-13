@@ -31,7 +31,11 @@
       min-width: 100%;
       min-height: 400px;
       display: flex;
+      flex-wrap: nowrap;
       overflow-x: auto;
+      // This doesn't appear to do anything
+      scroll-snap-type: x mandatory;
+      scroll-padding: 50%;
       }
 
       .Project::-webkit-scrollbar {
@@ -42,6 +46,10 @@
       background-color: #e74c3c;
       min-width: 200px;
       margin: 5px;
+      height: 100vh;
+      width: 100vw;
+      scroll-snap-align: start;
+      flex: 0 0 auto;
       }
       ]]>
       </style>
