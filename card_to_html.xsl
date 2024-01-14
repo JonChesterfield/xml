@@ -8,7 +8,7 @@
   <xsl:template match="/Project" >
     <html>
       <head>        
-        <meta http-equiv="refresh" content="5" />
+        <!-- <meta http-equiv="refresh" content="5" /> -->
       </head>
       
       <style><![CDATA[
@@ -33,9 +33,11 @@
       display: flex;
       flex-wrap: nowrap;
       overflow-x: auto;
-      // This doesn't appear to do anything
+
+      // trial and error involved in picking these, scroll-padding seems to disable the snap
+      scroll-behavior: smooth;
       scroll-snap-type: x mandatory;
-      scroll-padding: 50%;
+      // scroll-padding: 50%;
       }
 
       .Project::-webkit-scrollbar {
