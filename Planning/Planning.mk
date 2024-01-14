@@ -1,7 +1,7 @@
-
-planning_src := Planning
-WORKDIR := .$(planning_src)/tmp
-
+obsidian_dir := ${HOME}/Documents/Obsidian
+planning_src := ${obsidian_dir}/PlanningWIP
+output_dir := ${obsidian_dir}/Projects
+WORKDIR := /tmp/.ObsidianXML
 
 # Most of the complexity here is about spaces in filenames. Could escape more aggressively.
 # Careful handling of spaces in filenames. Makefile uses whitespace delimited lists in most places.
@@ -34,12 +34,6 @@ $(RENAMED_ESCAPED_SRC):	$(WORKDIR)/%.md:	$(ALL_SRC_WITH_SPACES) | $(WORKDIR)
 clean::
 	rm -rf $(WORKDIR)
 
-#planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.xml,$(RENAMED_ESCAPED_SRC))
-#planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.cmark.html,$(RENAMED_ESCAPED_SRC))
-#planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.html,$(RENAMED_ESCAPED_SRC))
-#planning:	$(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.md.xml,$(RENAMED_ESCAPED_SRC))
-
-
 %.xml.task:	%.cmark.html
 	$(eval stem := $(patsubst $(WORKDIR)/%,%,$(subst $(SPACE_ESC), ,$*)))
 	@echo '<task name="$(notdir $(stem))">' > $@
@@ -55,7 +49,7 @@ COLLECTED_TASKS := $(RENAMED_ESCAPED_DIRS:=.card.xml)
 $(COLLECTED_TASKS):	$(WORKDIR)/%.card.xml:	$(DERIVED_CARDS)
 	@mkdir -p $(@D)
 #	echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
-	echo '' > $@
+	@echo '' > $@
 	$(eval stem := $(patsubst $(WORKDIR)/%,%,$(subst $(SPACE_ESC), ,$*)))
 	@echo '<card name="$(stem)">' >> $@
 # cat hangs if the list of files is empty and dev null contributes nothing
@@ -63,14 +57,22 @@ $(COLLECTED_TASKS):	$(WORKDIR)/%.card.xml:	$(DERIVED_CARDS)
 	@echo '</card>' >> $@
 
 $(WORKDIR)/Planning.cards.xml:	$(COLLECTED_TASKS)
-	echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
+	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
 	@echo '<Project name="Planning">' >> $@
 #	Sort isnt right here but it's predictable for now
-	cat $(sort $(COLLECTED_TASKS)) >> $@
+	@cat $(sort $(COLLECTED_TASKS)) >> $@
 	@echo '</Project>' >> $@
 
 Planning.html:	$(WORKDIR)/Planning.cards.xml card_to_html.xsl
 	@xsltproc $(XSLTPROCOPTS) --output "$@" card_to_html.xsl "$<"
+
+# Only copies changed files to not retrigger sync
+${output_dir}/Planning.html:	Planning.html
+	@echo "Recreating $@"
+	@cmp Planning.html $@ >/dev/null 2>&1 || cp Planning.html $@
+
+publish::	${output_dir}/Planning.html
+
 
 clean::
 	rm -f Planning.html

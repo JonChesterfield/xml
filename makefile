@@ -12,6 +12,9 @@ MAKEFILE_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 all::
 
+# uses a global c, c++ compiler
+# apt install trang xsltproc libxml2-utils
+
 CC := gcc
 CXX := g++
 
