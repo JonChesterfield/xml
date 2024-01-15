@@ -18,7 +18,15 @@
       height: 100%;
       }
 
-      body {
+   html {
+     font-size: 40px;
+   }
+
+   h1 {
+    font-size: 2.5rem;
+   }
+
+   body {
       //background-color: #8e44ad;
       //margin: 0;
       //display: flex;
