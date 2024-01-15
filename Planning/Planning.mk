@@ -71,7 +71,8 @@ ${output_dir}/Planning.html:	Planning.html
 	@echo "Recreating $@"
 	@cmp Planning.html $@ >/dev/null 2>&1 || cp Planning.html $@
 
-publish::	${output_dir}/Planning.html
+.PHONY:	publish
+publish:	${output_dir}/Planning.html
 
 
 clean::
