@@ -53,7 +53,7 @@ $(COLLECTED_TASKS):	$(WORKDIR)/%.card.xml:	$(DERIVED_CARDS)
 	$(eval stem := $(patsubst $(WORKDIR)/%,%,$(subst $(SPACE_ESC), ,$*)))
 	@echo '<card name="$(stem)">' >> $@
 # cat hangs if the list of files is empty and dev null contributes nothing
-	@cat /dev/null $(filter $(WORKDIR)/$*/%,$(DERIVED_CARDS)) >> $@
+	@cat /dev/null $(sort $(filter $(WORKDIR)/$*/%,$(DERIVED_CARDS))) >> $@
 	@echo '</card>' >> $@
 
 $(WORKDIR)/Planning.cards.xml:	$(COLLECTED_TASKS)
@@ -67,15 +67,18 @@ Planning.html:	$(WORKDIR)/Planning.cards.xml card_to_html.xsl
 	@xsltproc $(XSLTPROCOPTS) --output "$@" card_to_html.xsl "$<"
 
 # Only copies changed files to not retrigger sync
-${output_dir}/Planning.html:	Planning.html
-	@echo "Recreating $@"
-	@cmp Planning.html $@ >/dev/null 2>&1 || cp Planning.html $@
 
 .PHONY:	publish
-publish:	${output_dir}/Planning.html
-
+publish:	Planning.html
+#	This is a hack. Renaming files in the obsidian dir don't reliably trigger
+# 	a rebuild of planning - something is wrong in the dependency graph
+#	Deleting the work dir after the build makes the next scheduled run correct
+	@echo "publish"
+	@cmp Planning.html ${output_dir}/Planning.html >/dev/null 2>&1 || cp Planning.html ${output_dir}/Planning.html
+	@rm -rf $(WORKDIR) Planning.html
 
 clean::
 	rm -f Planning.html
 
 planning: Planning.html
+
