@@ -3,6 +3,11 @@ planning_src := ${obsidian_dir}/PlanningWIP
 output_dir := ${obsidian_dir}/Projects
 WORKDIR := /tmp/.ObsidianXML
 
+project_names := PlanningWIP AMD
+
+
+planning_src := $(addprefix ${obsidian_dir}/,${project_names})
+
 # Considering how to adapt to multiple projects
 # Distinct workdirs has some attraction. Ideally wouldn't require a common directory root.
 
@@ -17,15 +22,14 @@ WORKDIR := /tmp/.ObsidianXML
 # simpler to prefix with a fixed workdir which is subtracted at the corresponding places
 
 SPACE_ESC := +
-SPACE_ESCAPED_SRC := $(shell find "$(planning_src)" -type f -name "*md" | sed 's/ /$(SPACE_ESC)/g')
+SPACE_ESCAPED_SRC := $(shell find $(planning_src) -type f -name "*md" | sed 's/ /$(SPACE_ESC)/g')
 
-# All the directories other than the root
-SPACE_ESCAPED_DIRS_INCLUDING_ROOT := $(shell find "$(planning_src)" -type d | sed 's/ /$(SPACE_ESC)/g')
-SPACE_ESCAPED_DIRS := $(filter $(planning_src)/%,$(SPACE_ESCAPED_DIRS_INCLUDING_ROOT))
+# Want all the directories other than the roots
+SPACE_ESCAPED_DIRS := $(shell find $(planning_src) -mindepth 1 -type d | sed 's/ /$(SPACE_ESC)/g')
 
 # Get names in some corresponding work directory
-WORKDIR_ESCAPED_SRC := $(patsubst $(planning_src)/%,$(WORKDIR)/%,$(SPACE_ESCAPED_SRC))
-WORKDIR_ESCAPED_DIRS := $(patsubst $(planning_src)/%,$(WORKDIR)/%,$(SPACE_ESCAPED_DIRS))
+WORKDIR_ESCAPED_SRC := $(addprefix $(WORKDIR),$(SPACE_ESCAPED_SRC))
+WORKDIR_ESCAPED_DIRS := $(addprefix $(WORKDIR),$(SPACE_ESCAPED_DIRS))
 
 $(WORKDIR):
 	@mkdir -p $(WORKDIR)
@@ -39,36 +43,40 @@ clean::
 
 # Seems to be difficult to rely on a single file containing spaces and easy to depend on all of them
 ALL_SRC_WITH_SPACES := $(subst $(SPACE_ESC),\ ,$(SPACE_ESCAPED_SRC))
-$(WORKDIR_ESCAPED_SRC):	$(WORKDIR)/%.md:	$(ALL_SRC_WITH_SPACES) | $(WORKDIR)
+$(WORKDIR_ESCAPED_SRC):	$(WORKDIR)%.md:	$(ALL_SRC_WITH_SPACES) | $(WORKDIR)
 #	Thus retrieve the specific element in ALL_SRC_WITH_SPACES that is of interest
 #	and copy it to the renamed equivalent in workdir iff newer
 	@mkdir -p $(@D) # todo, fix this
-	$(eval bs_spaces_src := $(planning_src)/$(subst $(SPACE_ESC),\ ,$*.md))
+	$(eval bs_spaces_src := $(subst $(SPACE_ESC),\ ,$*.md))
 	@cmp $(bs_spaces_src) $@ >/dev/null 2>&1 || cp $(bs_spaces_src) $@
 
 # %.md -> %.cmark.html is a known pattern in the root so can depend directly on the cmark.html
-DERIVED_CARDS := $(patsubst $(WORKDIR)/%.md,$(WORKDIR)/%.xml.task,$(WORKDIR_ESCAPED_SRC))
+DERIVED_CARDS := $(WORKDIR_ESCAPED_SRC:.md=.xml.task)
+
 $(DERIVED_CARDS):	%.xml.task:	%.cmark.html
-#	Trims the workdir and retrieves spaces to get the original file name
-	$(eval stem := $(patsubst $(WORKDIR)/%,%,$(subst $(SPACE_ESC), ,$*)))
-	@echo '<task name="$(notdir $(stem))">' > $@
+	@echo '<task name="$(notdir $(subst $(SPACE_ESC), ,$*))">' > $@
 	@cat $< >> $@
 	@echo '</task>' >> $@
-
 
 COLLECTED_TASKS := $(WORKDIR_ESCAPED_DIRS:=.card.xml)
 # can determine the files under the scope of a particular directory
 # depends all all derived cards, so makes all of them, and then pulls out those
 # applicable to the directory identified by the stem
-$(COLLECTED_TASKS):	$(WORKDIR)/%.card.xml:	$(DERIVED_CARDS)
+$(COLLECTED_TASKS):	$(WORKDIR)%.card.xml:	$(DERIVED_CARDS)
 	@mkdir -p $(@D)
 #	echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
 	@echo '' > $@
-	$(eval stem := $(patsubst $(WORKDIR)/%,%,$(subst $(SPACE_ESC), ,$*)))
-	@echo '<card name="$(stem)">' >> $@
+	@echo '<card name="$(notdir $*)">' >> $@
 # cat hangs if the list of files is empty and dev null contributes nothing
-	@cat /dev/null $(sort $(filter $(WORKDIR)/$*/%,$(DERIVED_CARDS))) >> $@
+	@cat /dev/null $(sort $(filter $(WORKDIR)$*/%,$(DERIVED_CARDS))) >> $@
 	@echo '</card>' >> $@
+
+PROJECT_XML := $(addprefix $(WORKDIR)/,$(addsuffix .cards.xml,$(project_names)))
+$(PROJECT_XML):	$(WORKDIR)/%.cards.xml:	$(COLLECTED_TASKS)
+	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
+	@echo '<Project name="$*">' >> $@
+	@cat /dev/null $(sort $(filter $(WORKDIR)${obsidian_dir}/$*/%,$(COLLECTED_TASKS))) >> $@
+	@echo '</Project>' >> $@
 
 $(WORKDIR)/Planning.cards.xml:	$(COLLECTED_TASKS)
 	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
@@ -77,22 +85,28 @@ $(WORKDIR)/Planning.cards.xml:	$(COLLECTED_TASKS)
 	@cat $(sort $(COLLECTED_TASKS)) >> $@
 	@echo '</Project>' >> $@
 
-Planning.html:	$(WORKDIR)/Planning.cards.xml card_to_html.xsl
+
+PROJECT_HTML := $(addprefix Planning/,$(addsuffix .html,$(project_names)))
+
+$(PROJECT_HTML):	Planning/%.html:	$(WORKDIR)/%.cards.xml card_to_html.xsl
 	@xsltproc $(XSLTPROCOPTS) --output "$@" card_to_html.xsl "$<"
 
 # Only copies changed files to not retrigger sync
 
 .PHONY:	publish
-publish:	Planning.html
+publish:	$(PROJECT_HTML)
+#	TODO: derive the copy invocations from the project names
+	@cmp Planning/PlanningWIP.html ${output_dir}/PlanningWIP.html >/dev/null 2>&1 || cp Planning/PlanningWIP.html ${output_dir}/PlanningWIP.html
+	@cmp Planning/AMD.html ${output_dir}/AMD.html >/dev/null 2>&1 || cp Planning/AMD.html ${output_dir}/AMD.html
+
 #	This is a hack. Renaming files in the obsidian dir don't reliably trigger
 # 	a rebuild of planning - something is wrong in the dependency graph
 #	or using time based rebuild across multiple systems is a bad thing
 #	Deleting the work dir after the build makes the next scheduled run correct
-	@cmp Planning.html ${output_dir}/Planning.html >/dev/null 2>&1 || cp Planning.html ${output_dir}/Planning.html
 	@rm -rf $(WORKDIR) Planning.html
 
 clean::
-	@rm -f Planning.html
+	@rm -f $(PROJECT_HTML)
 
 planning: Planning.html
 
