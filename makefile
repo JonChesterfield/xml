@@ -7,6 +7,22 @@ MAKEFLAGS += -r
 
 # SHELL = sh -xv
 
+# Design notes.
+# Slowly moving towards a more framework layout. This file can define
+# various transforms which are usable in subdirectories by referring
+# to the right name - foo.bar from foo.baz assuming the files are to be
+# adjacent to one another.
+#
+# The xml validation fits that pattern really, could pick a common
+# suffix (.xml.prelint?) which is convertible to xml by passing validation
+# e.g. TokenList is a known format, found under common (could be under schemas)
+# %.TokenList.xml.prelint -> %.TokenList.xml involves xmllint followed by cp
+# (possibly copy-if-changed, could break a dependency chain there)
+#
+# Likewise for conversions between known formats, e.g. TokenTree_to_TokenList.xsl
+# exists, that could take a %.TokenTree.xml and build a %.TokenList.xml.prelint
+# which then feeds into the previous.
+
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
