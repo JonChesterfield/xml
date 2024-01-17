@@ -44,10 +44,12 @@ clean::
 
 # Seems to be difficult to rely on a single file containing spaces and easy to depend on all of them
 ALL_SRC_WITH_SPACES := $(subst $(SPACE_ESC),\ ,$(SPACE_ESCAPED_SRC))
+.PHONY: $(WORKDIR_ESCAPED_SRC) # always run these, timestamps not truste don the input
 $(WORKDIR_ESCAPED_SRC):	$(WORKDIR)%.md:	$(ALL_SRC_WITH_SPACES) | $(WORKDIR)
 #	Thus retrieve the specific element in ALL_SRC_WITH_SPACES that is of interest
 #	and copy it to the renamed equivalent in workdir iff newer
 	@mkdir -p $(@D) # todo, fix this
+#	@echo "escaped src: $*"
 	$(eval bs_spaces_src := $(subst $(SPACE_ESC),\ ,$*.md))
 	@cmp $(bs_spaces_src) $@ >/dev/null 2>&1 || cp $(bs_spaces_src) $@
 
@@ -86,20 +88,13 @@ $(PROJECT_HTML):	%.html:	%.cards.xml card_to_html.xsl
 	@xsltproc $(XSLTPROCOPTS) --output "$@" card_to_html.xsl "$<"
 
 # Only copies changed files to not retrigger obsidian sync
+.PHONY:	$(PUBLISH_HTML)
 $(PUBLISH_HTML):	${output_dir}/%.html:	$(WORKDIR)/%.html
+#	@echo "publish html $*"
 	@cmp "$@" "$<" >/dev/null 2>&1 || cp "$<" "$@"
 
-# TODO: Work out if the dependency graph is sound for this to isolate timestamps
-# from errors in this makefile
-projects: $(PUBLISH_HTML)
-#	@echo "Projects: $(project_names)"
 
-publish:	projects
-#	This is a hack. Renaming files in the obsidian dir don't reliably trigger
-# 	a rebuild of planning - something is wrong in the dependency graph
-#	(or using time based rebuild across multiple systems is a bad thing)
-#	Deleting the work dir after the build makes the next scheduled make correct
-	@rm -rf $(WORKDIR)
+publish:	$(PUBLISH_HTML)
 
 clean::
 	@rm -f $(PROJECT_HTML)

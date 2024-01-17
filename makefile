@@ -26,7 +26,11 @@ MAKEFLAGS += -r
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
+.PHONY: all
 all::
+
+.PHONY: clean
+clean::
 
 # uses a global c, c++ compiler
 # apt install trang xsltproc libxml2-utils
