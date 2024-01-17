@@ -5,9 +5,14 @@ output_dir := ${obsidian_dir}/Projects
 WORKDIR := /tmp/.ObsidianXML
 
 # TODO: Read these from somewhere under obsidian_dir
-project_names := PlanningWIP AMD
+project_names := $(file < ${obsidian_dir}/Projects/projects.md)
 
 planning_src := $(addprefix ${obsidian_dir}/,${project_names})
+
+# Timestamp dependency is fixable
+# Make the copy of markdown into escaped src time-independent
+# also make the copy of result into outdir time-independent
+# involves marking some operations as execute-unconditionally
 
 # Considering how to adapt to multiple projects
 # Distinct workdirs has some attraction. Ideally wouldn't require a common directory root.
@@ -20,7 +25,8 @@ planning_src := $(addprefix ${obsidian_dir}/,${project_names})
 # the root
 
 SPACE_ESC := +
-SPACE_ESCAPED_SRC := $(shell find $(planning_src) -type f -name "*md" | sed 's/ /$(SPACE_ESC)/g')
+# Ignores top level markdown
+SPACE_ESCAPED_SRC := $(shell find $(planning_src) -mindepth 2 -type f -name "*md" | sed 's/ /$(SPACE_ESC)/g')
 
 # Want all the directories other than the roots
 SPACE_ESCAPED_DIRS := $(shell find $(planning_src) -mindepth 1 -type d | sed 's/ /$(SPACE_ESC)/g')
@@ -86,6 +92,7 @@ $(PUBLISH_HTML):	${output_dir}/%.html:	$(WORKDIR)/%.html
 # TODO: Work out if the dependency graph is sound for this to isolate timestamps
 # from errors in this makefile
 projects: $(PUBLISH_HTML)
+#	@echo "Projects: $(project_names)"
 
 publish:	projects
 #	This is a hack. Renaming files in the obsidian dir don't reliably trigger
