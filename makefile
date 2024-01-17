@@ -54,6 +54,7 @@ cmark := bin/cmark
 TOOLS_DIR := tools
 TOOLS_DIR_BIN := bin
 
+LIBRARIES_DIR := libraries
 
 include submakefiles/schemas.mk
 
@@ -296,6 +297,18 @@ $(TOOLS_CPP_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.cpp $(TOOLS_HDR)
 	@mkdir -p "$(dir $@)"
 	@$(CXX) $(CXXFLAGS) $< -c -o $@
 
+LIBRARIES_DIR_OBJ := .$(LIBRARIES_DIR).O
+LIBRARIES_C_SRC := $(call rwildcard,$(LIBRARIES_DIR),*.c)
+LIBRARIES_HDR := $(call rwildcard,$(LIBRARIES_DIR),*.h)
+LIBRARIES_C_OBJ := $(LIBRARIES_C_SRC:$(LIBRARIES_DIR)/%.c=$(LIBRARIES_DIR_OBJ)/%.o)
+
+$(LIBRARIES_C_OBJ):	$(LIBRARIES_DIR_OBJ)/%.o:	$(LIBRARIES_DIR)/%.c $(LIBRARIES_HDR)
+	@mkdir -p "$(dir $@)"
+	@$(CC) $(CFLAGS) $< -c -I$(LIBRARIES_DIR)/libxml2/include -o $@ -Wno-format-extra-args
+
+.PHONY: libraries
+libraries:	$(LIBRARIES_C_OBJ)
+
 CMARK_OBJ := $(CMARK_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 $(cmark):	$(CMARK_OBJ)
 	@mkdir -p "$(dir $@)"
@@ -308,7 +321,7 @@ $(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o
 tools:	$(SIMPLE_TOOLS_BIN) $(TOOLS_DIR_BIN)/cmark
 
 clean::
-	rm -rf $(TOOLS_DIR_BIN) $(TOOLS_DIR_OBJ)
+	rm -rf $(TOOLS_DIR_BIN) $(TOOLS_DIR_OBJ) $(LIBRARIES_DIR_OBJ)
 
 
 
