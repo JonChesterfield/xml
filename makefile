@@ -316,6 +316,8 @@ SIMPLE_TOOLS_BIN := $(lemon) $(makeheaders) $(hex_to_binary) $(file_to_cdata)
 # cmark uses multiple source files, specifically all those under the cmark directory
 CMARK_SRC:= $(wildcard $(TOOLS_DIR)/cmark/*.c)
 
+LIBXML2_SRC := $(call rwildcard,$(TOOLS_DIR)/libxml2,*.c)
+
 # All C, C++ get compiled to object files individually
 TOOLS_DIR_OBJ := .$(TOOLS_DIR).O
 TOOLS_C_SRC := $(call rwildcard,$(TOOLS_DIR),*.c)
@@ -334,16 +336,23 @@ $(TOOLS_CPP_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.cpp $(TOOLS_HDR)
 	@mkdir -p "$(dir $@)"
 	@$(CXX) $(CXXFLAGS) $< -c -o $@
 
+# Build the binaries
+$(TOOLS_DIR_BIN):
+	@mkdir -p $(TOOLS_DIR_BIN)
+
 CMARK_OBJ := $(CMARK_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
-$(cmark):	$(CMARK_OBJ)
-	@mkdir -p "$(dir $@)"
+$(cmark):	$(CMARK_OBJ) | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $^ -o $@
 
-$(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o
-	@mkdir -p "$(dir $@)"
+
+LIBXML2_OBJ := $(LIBXML2_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
+$(TOOLS_DIR_BIN)/xmllint:	$(TOOLS_DIR_OBJ)/xmllint.o $(LIBXML2_OBJ) | $(TOOLS_DIR_BIN)
+	@$(CC) $(CFLAGS) $^ -o $@ -lm
+
+$(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $< -o $@
 
-tools:	$(SIMPLE_TOOLS_BIN) $(TOOLS_DIR_BIN)/cmark $(TOOLS_C_OBJ)
+tools:	$(SIMPLE_TOOLS_BIN) $(TOOLS_DIR_BIN)/cmark $(TOOLS_DIR_BIN)/xmllint
 
 clean::
 	rm -rf $(TOOLS_DIR_BIN) $(TOOLS_DIR_OBJ)
