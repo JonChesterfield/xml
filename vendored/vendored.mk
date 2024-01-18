@@ -1,13 +1,16 @@
 $(if $(TOOLS_DIR),,$(error vendored.mk requires tools dir))
 
 .PHONY: vendored
-vendored:	vendored_libxml2 vendored_libxslt
+vendored::	vendored_libxml2 vendored_libxslt
+#	Clean up some unused files across the two
+	@find $(TOOLS_DIR)/libx??? -type f '(' -iname Makefile -o -iname NEWS -o -iname '*.Po' -o -iname '*.Plo' -o -iname '*.in' -o -iname '*.am' -o -iname '*.pl' -o -iname '*.syms' -o -name configure -o -name libtool -o -name ltmain.sh -o -name CMakeLists.txt -o -name INSTALL -o -name missing ')' -delete
+	@find $(TOOLS_DIR)/libx??? -type d -iname .deps -delete
+	@rm -rf $(TOOLS_DIR)/libx???/m4
 
 deepclean::
 	rm -rf $(TOOLS_DIR)/libxml2
 	rm -rf $(TOOLS_DIR)/libxslt
 	rm -f $(TOOLS_DIR)/xmllint.c $(TOOLS_DIR)/xsltproc.c
-
 
 # considering this caching approach instead of fetch.sh, but want the tar checked in
 #vendored/libxml2-2.12.0.tar.xz:
@@ -15,9 +18,11 @@ deepclean::
 
 .PHONY: vendored_libxml2
 vendored_libxml2:	deepclean
+#	extract the tar
 	mkdir $(TOOLS_DIR)/libxml2
 	tar xf vendored/libxml2-2.12.0.tar.xz -C $(TOOLS_DIR)/libxml2 --strip-components=1
 	cd $(TOOLS_DIR)/libxml2 && ./configure --without-iconv --without-icu --without-lzma --without-iso8859x --without-http --without-zlib --without-python
+#	delete docs, tests, python
 	cd $(TOOLS_DIR)/libxml2 && rm -r doc test result python fuzz example *.py
 #	delete some dead architectures
 	cd $(TOOLS_DIR)/libxml2 && rm -r os400 win32 vms
@@ -25,30 +30,26 @@ vendored_libxml2:	deepclean
 	cd $(TOOLS_DIR)/libxml2 && rm runtest.c runsuite.c runxmlconf.c xmlcatalog.c test*.c
 
 #	Adjust includes for xmllint.c and move under tools
-	sed -i 's_#include "libxml.h"_#include "libxml2/libxml.h"_g' $(TOOLS_DIR)/libxml2/xmllint.c
-	sed -i 's_<libxml/\(.*\)>_"libxml2/include/libxml/\1"_g' $(TOOLS_DIR)/libxml2/xmllint.c
-	mv $(TOOLS_DIR)/libxml2/xmllint.c $(TOOLS_DIR)/
+	mv $(TOOLS_DIR)/libxml2/xmllint.c $(TOOLS_DIR)/xmllint.c
+	sed -i 's_#include "libxml.h"_#include "libxml2/libxml.h"_g' $(TOOLS_DIR)/xmllint.c
+	sed -i 's_<libxml/\(.*\)>_"libxml2/include/libxml/\1"_g' $(TOOLS_DIR)/xmllint.c
 
 #	trio.c is missing an include, patch that
 	sed -i 's_#include <float.h>_#include <float.h>\n#include <string.h>_g' $(TOOLS_DIR)/libxml2/trio.c
 #	probably don't want to trust the config script
 	rm $(TOOLS_DIR)/libxml2/xml2-config*
-#	drop the .in pre-configure files too
-	find $(TOOLS_DIR)/libxml2/ -type f -iname '*.in*' -delete 
-#	the .deps directory isn't useful either
-	rm -r $(TOOLS_DIR)/libxml2/.deps
-	sed -i 's_#include <libxml/xmlversion.h>_#include "include/libxml/xmlversion.h"_g' $(TOOLS_DIR)/libxml2/libxml.h
 
-#	Currently thinking of rewriting include paths instead of passing -I flags to the compiler
+#	Rewrite the includes to be relative to the file location, keeps the build-C top level simple
+	sed -i 's_#include <libxml/xmlversion.h>_#include "include/libxml/xmlversion.h"_g' $(TOOLS_DIR)/libxml2/libxml.h
 	sed -i 's_<libxml/\(.*\)>_"\1"_g' $(TOOLS_DIR)/libxml2/include/libxml/*.h
 	sed -i 's_<libxml/\(.*\)>_"../libxml/\1"_g' $(TOOLS_DIR)/libxml2/include/private/*.h
-
 	sed -i 's_<libxml/\(.*\)>_"include/libxml/\1"_g' $(TOOLS_DIR)/libxml2/*.c
 	sed -i 's_"private/\(.*\)"_"include/private/\1"_g' $(TOOLS_DIR)/libxml2/*.c
 
 
 .PHONY: vendored_libxslt
 vendored_libxslt:	deepclean
+#	extract the tar
 	mkdir $(TOOLS_DIR)/libxslt
 	tar xf vendored/libxslt-1.1.39.tar.xz -C $(TOOLS_DIR)/libxslt --strip-components=1
 	cd $(TOOLS_DIR)/libxslt && ./configure --without-python --without-plugins LIBXML_LIBS="skip-test"
@@ -63,7 +64,7 @@ vendored_libxslt:	deepclean
 
 	sed -i 's_<libxslt/\(.*\)>_"\1"_g' $(TOOLS_DIR)/libxslt/libxslt/*.h
 	sed -i 's_<libexslt/\(.*\)>_"\1"_g' $(TOOLS_DIR)/libxslt/libexslt/*.c $(TOOLS_DIR)/libxslt/libexslt/*.h
-
+#	Move xsltproc to tools dir and fix up the includes
 	mv $(TOOLS_DIR)/libxslt/xsltproc/xsltproc.c $(TOOLS_DIR)/xsltproc.c
 	sed -i 's_"libxslt/\(.*\)"_"libxslt/libxslt/\1"_g' $(TOOLS_DIR)/xsltproc.c
 	sed -i 's_"libexslt/\(.*\)"_"libxslt/libexslt/\1"_g' $(TOOLS_DIR)/xsltproc.c
