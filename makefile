@@ -48,6 +48,9 @@ hex_to_binary := bin/hex_to_binary
 lemon := bin/lemon
 makeheaders := bin/makeheaders
 
+xmllint := bin/xmllint
+xsltproc := bin/xsltproc
+
 cmark := bin/cmark
 
 # Source under TOOLS_DIR used to make binaries under TOOLS_DIR_BIN
@@ -119,8 +122,8 @@ create_subproject:
 SUBTRANSFORMS := $(wildcard subtransforms/*.xsl)
 define subtransform_template
 .PHONY: validate/$1
-validate/$1:	$1
-	@xmllint --relaxng xslt.rng "$$<" $$(XMLLINTOPTS) --quiet
+validate/$1:	$1  | $(xmllint)
+	@$(xmllint) --relaxng xslt.rng "$$<" $$(XMLLINTOPTS) --quiet
 endef
 $(foreach t,$(SUBTRANSFORMS), $(eval $(call subtransform_template,$(t))))
 .PHONY: validate/subtransforms
@@ -144,27 +147,27 @@ define XML_Pipeline_Template_Precise
 # Multiple definitions of the same target is a hazard here
 # Would be better to use a single rule for any schema validation
 .PHONY: validateA/$1/$4
-validateA/$1/$4:	$4
-	@xmllint --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
+validateA/$1/$4:	$4  | $(xmllint)
+	@$(xmllint) --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
 
 .PHONY: validateB/$1/$5
-validateB/$1/$5:	$5
-	@xmllint --relaxng xslt.rng "$$<" $(XMLLINTOPTS) --quiet
+validateB/$1/$5:	$5  | $(xmllint)
+	@$(xmllint) --relaxng xslt.rng "$$<" $(XMLLINTOPTS) --quiet
 
 .PHONY: validateC/$1/$6
-validateC/$1/$6:	$6
-	@xmllint --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
+validateC/$1/$6:	$6 | $(xmllint)
+	@$(xmllint) --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
 
-$1/%.$3.prelint.xml:	$1/%.$2.xml $4 $5 $6 validateA/$1/$4 validateB/$1/$5 validateC/$1/$6 validate/subtransforms
+$1/%.$3.prelint.xml:	$1/%.$2.xml $4 $5 $6 validateA/$1/$4 validateB/$1/$5 validateC/$1/$6 validate/subtransforms  | $(xmllint) $(xsltproc)
 	@mkdir -p "$$(dir $$@)"
-	@xmllint --relaxng $4 "$$<" $(XMLLINTOPTS) --quiet
-	@xsltproc $(XSLTPROCOPTS) --output "$$@" $5 "$$<"
+	@$(xmllint) --relaxng $4 "$$<" $(XMLLINTOPTS) --quiet
+	@$(xsltproc) $(XSLTPROCOPTS) --output "$$@" $5 "$$<"
 
-$1/%.$3.pretty.xml:	$1/%.$3.prelint.xml
-	@xsltproc $(XSLTPROCOPTS) --output "$$@" subtransforms/pretty.xsl "$$<"
+$1/%.$3.pretty.xml:	$1/%.$3.prelint.xml | $(xsltproc)
+	@$(xsltproc) $(XSLTPROCOPTS) --output "$$@" subtransforms/pretty.xsl "$$<"
 
-$1/%.$3.xml:	$1/%.$3.pretty.xml
-	@xmllint --relaxng $6 "$$<" $(XMLLINTOPTS) --quiet
+$1/%.$3.xml:	$1/%.$3.pretty.xml | $(xmllint)
+	@$(xmllint) --relaxng $6 "$$<" $(XMLLINTOPTS) --quiet
 	@cp "$$<" "$$@"
 endef
 
@@ -193,10 +196,10 @@ XMLPipelineWorkDir := .pipeline
 include $(SELF_DIR)raw_sexpr_to_expressions/raw_sexpr_to_expressions.mk
 
 # Create the input file
-$(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.raw_sexpr.xml: Lisp/%.scm $(file_to_cdata)
+$(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.raw_sexpr.xml: Lisp/%.scm | $(file_to_cdata) $(xmllint)
 	@mkdir -p "$(dir $@)"
 	@$(file_to_cdata) < "$<" > "$@"
-	@xmllint --relaxng $(call get_schema_name, %raw_sexpr_to_expressions/raw_sexpr.rng) "$@" $(XMLLINTOPTS) --quiet
+	@$(xmllint) --relaxng $(call get_schema_name, %raw_sexpr_to_expressions/raw_sexpr.rng) "$@" $(XMLLINTOPTS) --quiet
 
 
 # Copy the output file out
@@ -214,10 +217,10 @@ $(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.expressions.xml: LispExpression
 	@cp "$<" "$@"
 
 # Extract the sexpr
-LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml validate/subtransforms
+LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml validate/subtransforms | $(xmllint) $(xsltproc)
 	@mkdir -p "$(dir $@)"
-	@xmllint --relaxng $(call get_schema_name, %expressions_to_raw_sexpr/raw_sexpr.rng) "$<" $(XMLLINTOPTS) --quiet
-	@xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
+	@$(xmllint) --relaxng $(call get_schema_name, %expressions_to_raw_sexpr/raw_sexpr.rng) "$<" $(XMLLINTOPTS) --quiet
+	@$(xsltproc) $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
 
 
 include $(SELF_DIR)ctree_to_csyntax/ctree_to_csyntax.mk
@@ -234,10 +237,10 @@ $(XMLPipelineWorkDir)/ctree_to_csyntax/%.ctree.xml: CTree/%.xml $(foreach f,$(EX
 	@mkdir -p "$(dir $@)"
 	@cp "$<" "$@"
 
-$(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml validate/subtransforms
+$(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml validate/subtransforms | $(xmllint) $(xsltproc)
 	@mkdir -p "$(dir $@)"
-	@xmllint --relaxng $(call get_schema_name, %ctree_to_csyntax/csyntax.rng) "$<" $(XMLLINTOPTS) --quiet
-	@xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
+	@$(xmllint) --relaxng $(call get_schema_name, %ctree_to_csyntax/csyntax.rng) "$<" $(XMLLINTOPTS) --quiet
+	@$(xsltproc) $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
 
 clean::
 	rm -rf CSyntax
@@ -265,9 +268,9 @@ $(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,md,$(call get_sc
 
 $(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,html,$(call get_schema_name, %common/cmark.rng),common/cmark_to_html.xsl,$(call get_schema_name, %common/html.rng)))
 
-%.html:	%.html.xml
-	@xmllint --relaxng $(call get_schema_name, %common/html.rng) "$<" $(XMLLINTOPTS) --quiet
-	@xsltproc $(XSLTPROCOPTS) --output "$@" xml_to_html.xsl "$<"
+%.html:	%.html.xml | $(xmllint) $(xsltproc)
+	@$(xmllint) --relaxng $(call get_schema_name, %common/html.rng) "$<" $(XMLLINTOPTS) --quiet
+	@$(xsltproc) $(XSLTPROCOPTS) --output "$@" xml_to_html.xsl "$<"
 
 # Building auxilary tools out of C.
 
@@ -277,7 +280,6 @@ deepclean:: clean
 include $(SELF_DIR)vendored/vendored.mk
 
 
-
 # Simple binaries are some single file C files at top level
 SIMPLE_TOOLS_BIN := $(lemon) $(makeheaders) $(hex_to_binary) $(file_to_cdata)
 
@@ -285,6 +287,7 @@ SIMPLE_TOOLS_BIN := $(lemon) $(makeheaders) $(hex_to_binary) $(file_to_cdata)
 CMARK_SRC:= $(wildcard $(TOOLS_DIR)/cmark/*.c)
 
 LIBXML2_SRC := $(call rwildcard,$(TOOLS_DIR)/libxml2,*.c)
+LIBXSLT_SRC := $(call rwildcard,$(TOOLS_DIR)/libxslt,*.c)
 
 # All C, C++ get compiled to object files individually
 TOOLS_DIR_OBJ := .$(TOOLS_DIR).O
@@ -314,19 +317,21 @@ $(cmark):	$(CMARK_OBJ) | $(TOOLS_DIR_BIN)
 
 
 LIBXML2_OBJ := $(LIBXML2_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
+LIBXSLT_OBJ := $(LIBXSLT_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
+
 $(TOOLS_DIR_BIN)/xmllint:	$(TOOLS_DIR_OBJ)/xmllint.o $(LIBXML2_OBJ) | $(TOOLS_DIR_BIN)
+	@$(CC) $(CFLAGS) $^ -o $@ -lm
+
+$(TOOLS_DIR_BIN)/xsltproc:	$(TOOLS_DIR_OBJ)/xsltproc.o $(LIBXSLT_OBJ) $(LIBXML2_OBJ) | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $^ -o $@ -lm
 
 $(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $< -o $@
 
-tools:	$(SIMPLE_TOOLS_BIN) $(TOOLS_DIR_BIN)/cmark $(TOOLS_DIR_BIN)/xmllint
+tools:	$(SIMPLE_TOOLS_BIN) $(TOOLS_DIR_BIN)/cmark $(TOOLS_DIR_BIN)/xmllint $(TOOLS_DIR_BIN)/xsltproc
 
 clean::
 	rm -rf $(TOOLS_DIR_BIN) $(TOOLS_DIR_OBJ)
-
-
-
 
 
 # At the end to depend on the included makefiles as well as this one

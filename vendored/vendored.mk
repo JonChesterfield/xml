@@ -6,7 +6,7 @@ vendored:	vendored_libxml2 vendored_libxslt
 deepclean::
 	rm -rf $(TOOLS_DIR)/libxml2
 	rm -rf $(TOOLS_DIR)/libxslt
-	rm -f $(TOOLS_DIR)/xmllint.c
+	rm -f $(TOOLS_DIR)/xmllint.c $(TOOLS_DIR)/xsltproc.c
 
 
 # considering this caching approach instead of fetch.sh, but want the tar checked in
@@ -51,3 +51,22 @@ vendored_libxml2:	deepclean
 vendored_libxslt:	deepclean
 	mkdir $(TOOLS_DIR)/libxslt
 	tar xf vendored/libxslt-1.1.39.tar.xz -C $(TOOLS_DIR)/libxslt --strip-components=1
+	cd $(TOOLS_DIR)/libxslt && ./configure --without-python --without-plugins LIBXML_LIBS="skip-test"
+	cd $(TOOLS_DIR)/libxslt && rm -r doc python tests examples
+	cd $(TOOLS_DIR)/libxslt && rm -r win32 vms
+	rm $(TOOLS_DIR)/libxslt/xsltproc/testThreads.c
+
+	cd $(TOOLS_DIR)/libxslt && sed -i 's_<libxml/\(.*\)>_"../../libxml2/include/libxml/\1"_g' libexslt/*.c libexslt/*.h libxslt/*.c libxslt/*.h
+	sed -i 's_<libxslt/\(.*\)>_"../libxslt/\1"_g' $(TOOLS_DIR)/libxslt/libexslt/*.c $(TOOLS_DIR)/libxslt/libexslt/*.h
+	sed -i 's_#include "libexslt/libexslt.h"_#include "libexslt.h"_g' $(TOOLS_DIR)/libxslt/libexslt/*.c
+	sed -i 's_#include "config.h"_#include "../config.h"_g' $(TOOLS_DIR)/libxslt/libxslt/libxslt.h $(TOOLS_DIR)/libxslt/libexslt/libexslt.h
+
+	sed -i 's_<libxslt/\(.*\)>_"\1"_g' $(TOOLS_DIR)/libxslt/libxslt/*.h
+	sed -i 's_<libexslt/\(.*\)>_"\1"_g' $(TOOLS_DIR)/libxslt/libexslt/*.c $(TOOLS_DIR)/libxslt/libexslt/*.h
+
+	mv $(TOOLS_DIR)/libxslt/xsltproc/xsltproc.c $(TOOLS_DIR)/xsltproc.c
+	sed -i 's_"libxslt/\(.*\)"_"libxslt/libxslt/\1"_g' $(TOOLS_DIR)/xsltproc.c
+	sed -i 's_"libexslt/\(.*\)"_"libxslt/libexslt/\1"_g' $(TOOLS_DIR)/xsltproc.c
+	sed -i 's_<libxml/\(.*\)>_"libxml2/include/libxml/\1"_g' $(TOOLS_DIR)/xsltproc.c
+	sed -i 's_<libxslt/\(.*\)>_"libxslt/libxslt/\1"_g' $(TOOLS_DIR)/xsltproc.c
+	sed -i 's_<libexslt/\(.*\)>_"libxslt/libexslt/\1"_g' $(TOOLS_DIR)/xsltproc.c
