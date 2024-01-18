@@ -54,8 +54,6 @@ cmark := bin/cmark
 TOOLS_DIR := tools
 TOOLS_DIR_BIN := bin
 
-LIBRARIES_DIR := libraries
-
 include submakefiles/schemas.mk
 
 # This doens't work as it should - dropdtd does not suppress the warning
@@ -273,6 +271,45 @@ $(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,html,$(call get_
 
 # Building auxilary tools out of C.
 
+.PHONY: deepclean
+deepclean: clean
+	rm -rf tools/libxml2
+	rm -f tools/xmllint.c
+
+.PHONY: vendored
+vendored:	deepclean
+	mkdir tools/libxml2
+	tar xf vendored/libxml2-2.12.0.tar.xz -C tools/libxml2 --strip-components=1
+	cd tools/libxml2 && ./configure --without-iconv --without-icu --without-lzma --without-iso8859x --without-http --without-zlib
+	cd tools/libxml2 && rm -r doc test result python fuzz example *.py
+#	delete some dead architectures
+	cd tools/libxml2 && rm -r os400 win32 vms
+#	delete various tests and standalone tools
+	cd tools/libxml2 && rm runtest.c runsuite.c runxmlconf.c xmlcatalog.c test*.c
+
+#	Adjust includes for xmllint.c and move under tools
+	sed -i 's_#include "libxml.h"_#include "libxml2/libxml.h"_g' tools/libxml2/xmllint.c
+	sed -i 's_<libxml/\(.*\)>_"libxml2/include/libxml/\1"_g' tools/libxml2/xmllint.c
+	mv tools/libxml2/xmllint.c tools/
+
+#	trio.c is missing an include, patch that
+	sed -i 's_#include <float.h>_#include <float.h>\n#include <string.h>_g' tools/libxml2/trio.c
+#	probably don't want to trust the config script
+	rm tools/libxml2/xml2-config*
+#	drop the .in pre-configure files too
+	find tools/libxml2/ -type f -iname '*.in*' -delete 
+#	the .deps directory isn't useful either
+	rm -r tools/libxml2/.deps
+	sed -i 's_#include <libxml/xmlversion.h>_#include "include/libxml/xmlversion.h"_g' tools/libxml2/libxml.h
+
+#	Currently thinking of rewriting include paths instead of passing -I flags to the compiler
+	sed -i 's_<libxml/\(.*\)>_"\1"_g' tools/libxml2/include/libxml/*.h
+	sed -i 's_<libxml/\(.*\)>_"../libxml/\1"_g' tools/libxml2/include/private/*.h
+
+
+	sed -i 's_<libxml/\(.*\)>_"include/libxml/\1"_g' tools/libxml2/*.c
+	sed -i 's_"private/\(.*\)"_"include/private/\1"_g' tools/libxml2/*.c
+
 # Simple binaries are some single file C files at top level
 SIMPLE_TOOLS_BIN := $(lemon) $(makeheaders) $(hex_to_binary) $(file_to_cdata)
 
@@ -297,18 +334,6 @@ $(TOOLS_CPP_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.cpp $(TOOLS_HDR)
 	@mkdir -p "$(dir $@)"
 	@$(CXX) $(CXXFLAGS) $< -c -o $@
 
-LIBRARIES_DIR_OBJ := .$(LIBRARIES_DIR).O
-LIBRARIES_C_SRC := $(call rwildcard,$(LIBRARIES_DIR),*.c)
-LIBRARIES_HDR := $(call rwildcard,$(LIBRARIES_DIR),*.h)
-LIBRARIES_C_OBJ := $(LIBRARIES_C_SRC:$(LIBRARIES_DIR)/%.c=$(LIBRARIES_DIR_OBJ)/%.o)
-
-$(LIBRARIES_C_OBJ):	$(LIBRARIES_DIR_OBJ)/%.o:	$(LIBRARIES_DIR)/%.c $(LIBRARIES_HDR)
-	@mkdir -p "$(dir $@)"
-	@$(CC) $(CFLAGS) $< -c -I$(LIBRARIES_DIR)/libxml2/include -o $@ -Wno-format-extra-args
-
-.PHONY: libraries
-libraries:	$(LIBRARIES_C_OBJ)
-
 CMARK_OBJ := $(CMARK_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 $(cmark):	$(CMARK_OBJ)
 	@mkdir -p "$(dir $@)"
@@ -318,10 +343,10 @@ $(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o
 	@mkdir -p "$(dir $@)"
 	@$(CC) $(CFLAGS) $< -o $@
 
-tools:	$(SIMPLE_TOOLS_BIN) $(TOOLS_DIR_BIN)/cmark
+tools:	$(SIMPLE_TOOLS_BIN) $(TOOLS_DIR_BIN)/cmark $(TOOLS_C_OBJ)
 
 clean::
-	rm -rf $(TOOLS_DIR_BIN) $(TOOLS_DIR_OBJ) $(LIBRARIES_DIR_OBJ)
+	rm -rf $(TOOLS_DIR_BIN) $(TOOLS_DIR_OBJ)
 
 
 
