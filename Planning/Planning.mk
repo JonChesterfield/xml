@@ -75,6 +75,7 @@ $(COLLECTED_TASKS):	$(WORKDIR)%.card.xml:	$(DERIVED_CARDS)
 
 PROJECT_XML := $(addprefix $(WORKDIR)/,$(addsuffix .cards.xml,$(project_names)))
 $(PROJECT_XML):	$(WORKDIR)/%.cards.xml:	$(COLLECTED_TASKS)
+	@mkdir -p $(@D)
 	@echo '<?xml version="1.0" encoding="UTF-8"?>' > $@
 	@echo '<Project name="$*">' >> $@
 	@cat /dev/null $(sort $(filter $(WORKDIR)${obsidian_dir}/$*/%,$(COLLECTED_TASKS))) >> $@
@@ -91,6 +92,7 @@ $(PROJECT_HTML):	%.html:	%.cards.xml card_to_html.xsl | $(xsltproc)
 .PHONY:	$(PUBLISH_HTML)
 $(PUBLISH_HTML):	${output_dir}/%.html:	$(WORKDIR)/%.html
 #	@echo "publish html $*"
+	@mkdir -p $(@D)
 	@cmp "$@" "$<" >/dev/null 2>&1 || cp "$<" "$@"
 
 
