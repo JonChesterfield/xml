@@ -48,6 +48,7 @@ hex_to_binary := bin/hex_to_binary
 lemon := bin/lemon
 makeheaders := bin/makeheaders
 
+# These aren't very single source but are still compilable
 xmllint := bin/xmllint
 xsltproc := bin/xsltproc
 
@@ -68,16 +69,35 @@ XMLLINTOPTS := --nonet --huge --noout --dropdtd
 # novalid stops it looking for .dtd files, notably CommonMark.dtd
 XSLTPROCOPTS := --huge  --maxdepth 40000 --novalid
 
+
+#
+# Global transform rules. Make a file next to the current file with a different suffix.
+#
+
+# Any .md file to commonmark xml or html
+%.cmark.xml:	%.md | $(cmark)
+	@./$(cmark) --to xml $^ > $@
+
+%.cmark.html:	%.md | $(cmark)
+	@./$(cmark) --to html $^ > $@
+
+
+#
+# make functions
+#
+
+rwildcard = $(foreach d,$(wildcard $(1)*),$(call rwildcard,$(d)/,$(2)) $(filter $(subst *,%,$(2)),$(d)))
+
+
+
+
+
 # Slightly messy. The main user of the schema files in this context
 # is xmllint, which wants the xml syntax .rng file.
 # If the rng is edited directly, that tends to mess up the timestamp
 # tracking in make. Therefore going to have schema.xml and schema.rnc as
 # the pair of synchronised files, derive schema.rng from whichever is newer
 # in a fashion that updates the other, then use the .rng output for linting
-
-rwildcard = $(foreach d,$(wildcard $(1)*),$(call rwildcard,$(d)/,$(2)) $(filter $(subst *,%,$(2)),$(d)))
-
-RAW_SCHEME := $(call rwildcard,Lisp/,*.scm)
 
 
 # Pretty hacky. "make create_subproject foo bar" will create a directory
@@ -248,21 +268,13 @@ clean::
 clean::
 	rm -rf LispExpressions $(XMLPipelineWorkDir) LispChecked
 
+
 all::	$(CSYNTAX)
 
+RAW_SCHEME := $(call rwildcard,Lisp/,*.scm)
 all::	$(RAW_SCHEME:Lisp/%.scm=LispChecked/%.scm) $(RAW_SCHEME:Lisp/%.scm=LispExpressions/%.xml) $(CSYNTAX)
 
 include $(SELF_DIR)Planning/Planning.mk
-
-
-# Global transform rules. Make a file next to the current file with a different suffix.
-
-# Any .md file to commonmark xml
-%.cmark.xml:	%.md | $(cmark)
-	@./$(cmark) --to xml $^ > $@
-
-%.cmark.html:	%.md | $(cmark)
-	@./$(cmark) --to html $^ > $@
 
 $(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,md,$(call get_schema_name, %common/cmark.rng),common/cmark_to_md.xsl,$(call get_schema_name, %common/md.rng)))
 
@@ -279,13 +291,13 @@ deepclean:: clean
 
 include $(SELF_DIR)vendored/vendored.mk
 
-
 # Simple binaries are some single file C files at top level
 SIMPLE_TOOLS_BIN := $(lemon) $(makeheaders) $(hex_to_binary) $(file_to_cdata)
 
 # cmark uses multiple source files, specifically all those under the cmark directory
 CMARK_SRC:= $(wildcard $(TOOLS_DIR)/cmark/*.c)
 
+# these have been mangled by the vendored makefile to build as below
 LIBXML2_SRC := $(call rwildcard,$(TOOLS_DIR)/libxml2,*.c)
 LIBXSLT_SRC := $(call rwildcard,$(TOOLS_DIR)/libxslt,*.c)
 
@@ -315,7 +327,7 @@ CMARK_OBJ := $(CMARK_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 $(cmark):	$(CMARK_OBJ) | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $^ -o $@
 
-
+# Doesnt construct a library, directly links against the objects
 LIBXML2_OBJ := $(LIBXML2_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 LIBXSLT_OBJ := $(LIBXSLT_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 
@@ -326,7 +338,6 @@ $(TOOLS_DIR_BIN)/xsltproc:	$(TOOLS_DIR_OBJ)/xsltproc.o $(LIBXSLT_OBJ) $(LIBXML2_
 	@$(CC) $(CFLAGS) $^ -o $@ -lm
 
 $(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o | $(TOOLS_DIR_BIN)
-	@mkdir -p "$(dir $@)"
 	@$(CC) $(CFLAGS) $< -o $@
 
 tools:	$(SIMPLE_TOOLS_BIN) $(TOOLS_DIR_BIN)/cmark $(TOOLS_DIR_BIN)/xmllint $(TOOLS_DIR_BIN)/xsltproc
