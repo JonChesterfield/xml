@@ -284,6 +284,47 @@ $(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,html,$(call get_
 	@$(xmllint) --relaxng $(call get_schema_name, %common/html.rng) "$<" $(XMLLINTOPTS) --quiet
 	@$(xsltproc) $(XSLTPROCOPTS) --output "$@" xml_to_html.xsl "$<"
 
+
+
+# TODO: automatically detect this
+RE2LIB := /usr/lib/x86_64-linux-gnu/libre2.a
+RE2LIB :=
+
+# WIP lexer/parser constructions. Very much a prototype at present.
+arith_tmp := .arith.O
+$(arith_tmp):
+	@mkdir -p $@
+clean::
+	rm -rf $(arith_tmp)
+include $(SELF_DIR)arith/arith.mk
+
+arith.lexer:	$(arith_tmp)/arith.lexer.o
+	$(CXX) $(CXXFLAGS) $^ $(RE2LIB) -o $@
+
+arith.main:	$(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.main.o
+	$(CC) $(CFLAGS) $^ -o $@
+
+arith.stdin_to_tree:	$(arith_tmp)/stdin_to_tree.o $(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.definitions.o .tools.O/lexer.posix.o .tools.O/lexer.re2.o
+	$(CXX) $(CXXFLAGS) $^ $(RE2LIB) -o $@
+clean::
+	rm -f arith.lemon.c arith.lemon.h arith.lemon.out
+	rm -f arith.lexer.xml arith.lexer.cpp arith.lexer.o arith.lexer
+	rm -f arith.main arith.stdin_to_tree
+
+$(arith_tmp)/arith.prelint.xml:	arith.lexer $(call get_schema_name, %common/TokenList.rng)
+	echo "1 + 2 / 1 * (7 % 3)" | ./arith.lexer > $@
+
+$(arith_tmp)/arith.xml:	$(arith_tmp)/arith.prelint.xml
+	xmllint --relaxng $(call get_schema_name, %common/TokenList.rng) "$<"
+	@cp "$<" "$@"
+
+# Don't want to be using this xsl
+arith.txt:	TokenList_to_bytes.xsl $(arith_tmp)/arith.xml
+	xsltproc --output $@ $^
+
+clean::
+	rm -f arith.txt
+
 # Building auxilary tools out of C.
 
 .PHONY: deepclean

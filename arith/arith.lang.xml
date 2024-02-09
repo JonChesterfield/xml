@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Language>
+  <LanguageName>arith</LanguageName>
+  <Lexer>
+    <!-- Currently posix, re2 or multi -->
+    <!-- considering re2c and lex -->
+    <!-- Multi is set up to run all the engines that lexer.h says are available -->    
+    <Engine value="multi" />
+  </Lexer>
+
+  <Tokens>
+    <Token name="PLUS" regex="[+]" />
+    <Token name="MINUS" regex="[-]" />
+    <Token name="TIMES" regex="[*]" />
+    <Token name="DIVIDE" regex="[/]" />
+    <Token name="MODULO" regex="[%]" />
+    <Token name="LPAREN" literal="(" />
+    <Token name="RPAREN" literal=")" />
+    <Token name="INTEGER" regex="0|-*[1-9]+[0-9]*" />
+    <Token name="WHITESPACE" regex="[[:space:]]+" />
+  </Tokens>
+
+  <Groupings>
+    <Grouping name="expr" type="list" />
+  </Groupings>
+
+  <Precedences>
+    <Left>
+      <Token name="PLUS" />
+      <Token name="MINUS" />
+    </Left>
+    <Left>
+      <Token name="TIMES" />
+      <Token name="DIVIDE" />
+      <Token name="MODULO" />
+    </Left>
+    <Nonassoc>
+      <Token name="WHITESPACE" />
+    </Nonassoc>
+  </Precedences>
+
+  <!-- Undecided whether to go with 0 or 1 indexing on position -->
+  <!-- leaning towards 1 based for more obvious correspondance with bison -->
+  <Productions>
+    <ListProduction label="BinOpPlus" type="expr" >
+      <Argument type="expr" position="1" />
+      <Token name="PLUS" />
+      <Argument type="expr" position="2" />
+    </ListProduction>
+
+    <ListProduction label="BinOpMinus" type="expr" >
+      <Argument type="expr" position="1" />
+      <Token name="MINUS" />
+      <Argument type="expr" position="2" />
+    </ListProduction>
+
+    <ListProduction label="BinOpTimes" type="expr" >
+      <Argument type="expr" position="1" />
+      <Token name="TIMES" />
+      <Argument type="expr" position="2" />
+    </ListProduction>
+
+    <ListProduction label="BinOpDivide" type="expr" >
+      <Argument type="expr" position="1" />
+      <Token name="DIVIDE" />
+      <Argument type="expr" position="2" />
+    </ListProduction>
+
+    <ListProduction label="BinOpModulo" type="expr" >
+      <Argument type="expr" position="1" />
+      <Token name="MODULO" />
+      <Argument type="expr" position="2" />
+    </ListProduction>
+
+    <ListProduction label="Parenthesised" type="expr" >
+      <Token name="LPAREN" />
+      <Argument type="expr" position="1" />
+      <Token name="RPAREN" />
+    </ListProduction>
+
+    <AssignProduction label="FromInteger" type="expr" >
+      <Token name="INTEGER" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="DiscardWSLeft" type="expr" >
+      <Token name="WHITESPACE" />
+      <Argument type="expr" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="DiscardWSRight" type="expr" >
+      <Argument type="expr" position="1" />
+      <Token name="WHITESPACE" />
+    </AssignProduction>
+
+    
+  </Productions>
+</Language>
