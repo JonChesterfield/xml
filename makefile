@@ -326,6 +326,7 @@ $(TOOLS_DIR_BIN)/xsltproc:	$(TOOLS_DIR_OBJ)/xsltproc.o $(LIBXSLT_OBJ) $(LIBXML2_
 	@$(CC) $(CFLAGS) $^ -o $@ -lm
 
 $(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o | $(TOOLS_DIR_BIN)
+	@mkdir -p "$(dir $@)"
 	@$(CC) $(CFLAGS) $< -o $@
 
 tools:	$(SIMPLE_TOOLS_BIN) $(TOOLS_DIR_BIN)/cmark $(TOOLS_DIR_BIN)/xmllint $(TOOLS_DIR_BIN)/xsltproc
