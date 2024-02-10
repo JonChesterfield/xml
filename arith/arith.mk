@@ -57,6 +57,10 @@ $(arith_tmp)/arith_declarations.TokenTree.xml:	lang_to_declarations_TokenTree.xs
 $(arith_tmp)/arith_definitions.TokenTree.xml:	lang_to_definitions_TokenTree.xsl arith/arith.lang.xml  | $(arith_tmp)
 	xsltproc --output $@ $^
 
+$(arith_tmp)/arith_re2c_iterator.TokenTree.xml:	lang_to_lexer_re2c_iterator_definition_TokenTree.xsl arith/arith.lang.xml  | $(arith_tmp)
+	xsltproc --output $@ $^
+
+
 $(arith_tmp)/arith_parser.lemon.TokenTree.xml:	lang_to_parser_lemon_TokenTree.xsl arith/arith.lang.xml  | $(arith_tmp)
 	xsltproc --output $@ $^
 
@@ -75,19 +79,25 @@ arith/arith.declarations.h:	$(arith_tmp)/arith_declarations.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"
 	clang-format -i $@
 
-arith/arith.definitions.c:	$(arith_tmp)/arith_definitions.hex $(hex_to_binary)
+
+$(arith_tmp)/arith.re2c_iterator.c.re2c:	$(arith_tmp)/arith_re2c_iterator.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"
 	clang-format -i $@
 
-arith/arith_lexer_re2c.c:	arith/arith_lexer_re2c.re2c
-	re2c $^ --output $@ --no-debug-info -W
+# Put this next to arith.definitions, is #included by it
+arith/arith_lexer_re2c_iterator_step.data :	$(arith_tmp)/arith.re2c_iterator.c.re2c
+	re2c $^ --output $@ $(RE2COPTS)
+	clang-format -i $@
+
+arith/arith.definitions.c:	$(arith_tmp)/arith_definitions.hex arith/arith_lexer_re2c_iterator_step.data $(hex_to_binary)
+	./$(hex_to_binary) < "$<" > "$@"
 	clang-format -i $@
 
 arith/arith_parser.lemon.y:	$(arith_tmp)/arith_parser.lemon.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"
 
 clean::
-	rm -f arith/arith.declarations.h arith/arith.definitions.c arith/arith_lexer_re2c.c arith/arith_parser.lemon.y
+	rm -f arith/arith.declarations.h arith/arith.definitions.c arith/arith_lexer_re2c_iterator_step.data arith/arith_lexer_re2c.c arith/arith_parser.lemon.y
 
 $(arith_tmp)/arith_lexer_re2c.o:	arith/arith_lexer_re2c.c
 	$(CC) $(CFLAGS) -c $< -o $@

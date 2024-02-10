@@ -125,15 +125,12 @@
   <Comment value="// Lexer instantiations" />
   <xsl:call-template name="LexerInstantiate">
     <xsl:with-param name="variant">posix</xsl:with-param>
-    <xsl:with-param name="iterator">true</xsl:with-param>
   </xsl:call-template>
   <xsl:call-template name="LexerInstantiate">
     <xsl:with-param name="variant">re2</xsl:with-param>
-    <xsl:with-param name="iterator">true</xsl:with-param>
   </xsl:call-template>
   <xsl:call-template name="LexerInstantiate">
     <xsl:with-param name="variant">re2c</xsl:with-param>
-    <xsl:with-param name="iterator">false</xsl:with-param>
   </xsl:call-template>
 
   <Lexer>
@@ -141,16 +138,16 @@
     <Comment value="// Lexer using engine {$RegexEngine}" />
     <NL hexvalue="0a" />
 
-    <Defn value="lexer_t {$LangName}_lexer_create(void) {{ return lexer_{$RegexEngine}_create({$LangName}_token_count, {$LangName}_regexes); }}" />
+    <Defn value="lexer_t {$LangName}_lexer_create(void) {{ return {$LangName}_lexer_{$RegexEngine}_create(); }}" />
     <NL hexvalue="0a" />
     
-    <Defn value="void {$LangName}_lexer_destroy(lexer_t lex) {{ lexer_{$RegexEngine}_destroy(lex); }}" />
+    <Defn value="void {$LangName}_lexer_destroy(lexer_t lex) {{ {$LangName}_lexer_{$RegexEngine}_destroy(lex); }}" />
     <NL hexvalue="0a" />
     
-    <Defn value="bool {$LangName}_lexer_valid(lexer_t lex) {{ return lexer_{$RegexEngine}_valid(lex); }}" />
+    <Defn value="bool {$LangName}_lexer_valid(lexer_t lex) {{ return {$LangName}_lexer_{$RegexEngine}_valid(lex); }}" />
     <NL hexvalue="0a" />
     
-    <Defn value="lexer_token_t {$LangName}_lexer_iterator_step(lexer_t lex, lexer_iterator_t *iter) {{ return lexer_{$RegexEngine}_iterator_step(lex, iter); }}" />
+    <Defn value="lexer_token_t {$LangName}_lexer_iterator_step(lexer_t lex, lexer_iterator_t *iter) {{ return {$LangName}_lexer_{$RegexEngine}_iterator_step(lex, iter); }}" />
     <NL hexvalue="0a" />
 
     <NL hexvalue="0a" />
@@ -246,7 +243,6 @@
 
 <xsl:template name="LexerInstantiate" >
   <xsl:param name="variant"/>
-  <xsl:param name="iterator"/>
 
   <xsl:variable name="upcase-variant" >
     <xsl:value-of select="translate($variant,$lowercase,$uppercase)" />
@@ -255,7 +251,7 @@
 <LexerInstantiation>
   <NL hexvalue = "0a" />  
   <Pre value="#if LEXER_{$upcase-variant}_ENABLE" />
-  <NL hexvalue = "0a" />  
+
 <Majority>
   <xsl:attribute name="value">
 lexer_t <xsl:value-of select='$LangName' />_lexer_<xsl:value-of select='$variant' />_create(void)
@@ -263,29 +259,36 @@ lexer_t <xsl:value-of select='$LangName' />_lexer_<xsl:value-of select='$variant
   return lexer_<xsl:value-of select='$variant' />_create(<xsl:value-of select='$LangName' />_token_count, <xsl:value-of select='$LangName' />_regexes); 
 }
 
-void <xsl:value-of select='$LangName' />_<xsl:value-of select='$variant' />_lexer_destroy(lexer_t lex)
+void <xsl:value-of select='$LangName' />_lexer_<xsl:value-of select='$variant' />_destroy(lexer_t lex)
 {
   lexer_<xsl:value-of select='$variant' />_destroy(lex);
 }
 
-bool <xsl:value-of select='$LangName' />_<xsl:value-of select='$variant' />_lexer_valid(lexer_t lex)
+bool <xsl:value-of select='$LangName' />_lexer_<xsl:value-of select='$variant' />_valid(lexer_t lex)
 {
   return lexer_<xsl:value-of select='$variant' />_valid(lex); 
 }
   </xsl:attribute>
 </Majority>
 
-<xsl:if test="$iterator = 'true'" >
   <Iterator>
-    <xsl:attribute name="value">
-lexer_token_t <xsl:value-of select='$LangName' />_<xsl:value-of select='$variant' />_lexer_iterator_step(lexer_t lex, lexer_iterator_t *iter)
+    <xsl:choose>
+      <xsl:when test="$variant = 're2c'" >
+        <xsl:attribute name="value">
+#include "<xsl:value-of select='$LangName' />_lexer_re2c_iterator_step.data"
+        </xsl:attribute>        
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:attribute name="value">
+lexer_token_t <xsl:value-of select='$LangName' />_lexer_<xsl:value-of select='$variant' />_iterator_step(lexer_t lex, lexer_iterator_t *iter)
 {
   return lexer_<xsl:value-of select='$variant' />_iterator_step(lex, iter);
   }
-    </xsl:attribute>
+        </xsl:attribute>
+      </xsl:otherwise>
+    </xsl:choose>
   </Iterator>
-</xsl:if>
-
+  <NL hexvalue = "0a" />  
 <Post value="#endif" />
 <NL hexvalue = "0a" />  
 </LexerInstantiation>

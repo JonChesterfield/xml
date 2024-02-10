@@ -69,6 +69,7 @@ XMLLINTOPTS := --nonet --huge --noout --dropdtd
 # novalid stops it looking for .dtd files, notably CommonMark.dtd
 XSLTPROCOPTS := --huge  --maxdepth 40000 --novalid
 
+RE2COPTS := --no-debug-info -W --no-generation-date
 
 #
 # Global transform rules. Make a file next to the current file with a different suffix.
@@ -304,7 +305,7 @@ arith.lexer:	$(arith_tmp)/arith.lexer.o
 arith.main:	$(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.main.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-arith.stdin_to_tree:	$(arith_tmp)/stdin_to_tree.o $(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.definitions.o .tools.O/lexer.posix.o .tools.O/lexer.re2.o
+arith.stdin_to_tree:	$(arith_tmp)/stdin_to_tree.o $(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.definitions.o .tools.O/lexer.posix.o .tools.O/lexer.re2.o .tools.O/lexer.re2c.o
 	$(CXX) $(CXXFLAGS) $^ $(RE2LIB) -o $@
 clean::
 	rm -f arith.lemon.c arith.lemon.h arith.lemon.out

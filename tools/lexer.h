@@ -19,7 +19,7 @@ enum lexer_engines
   lexer_engines_multi,
   lexer_engines_posix,
   lexer_engines_re2,
-  lexer_engines_re2c, // unimplemented
+  lexer_engines_re2c,
 };
 
 // Defines here controls which lexers are used by the multiple engine
@@ -35,6 +35,8 @@ enum lexer_engines
 #else
 #define LEXER_RE2_ENABLE 0
 #endif
+
+#define LEXER_RE2C_ENABLE 1
 
 typedef struct
 {

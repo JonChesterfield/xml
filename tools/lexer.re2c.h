@@ -8,4 +8,5 @@ void lexer_re2c_destroy(lexer_t lex);
 bool lexer_re2c_valid(lexer_t lex);
 // Iterator step is generated per-regex-list for re2c
 
+
 #endif

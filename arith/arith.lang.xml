@@ -5,7 +5,7 @@
     <!-- Currently posix, re2 or multi -->
     <!-- considering re2c and lex -->
     <!-- Multi is set up to run all the engines that lexer.h says are available -->    
-    <Engine value="multi" />
+    <Engine value="posix" />
   </Lexer>
 
   <Tokens>

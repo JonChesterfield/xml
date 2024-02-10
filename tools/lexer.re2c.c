@@ -1,4 +1,6 @@
 #include "lexer.re2c.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef struct
 {
@@ -49,8 +51,10 @@ static re2c_lexer* to_re2c(lexer_t l)
   return lexer;
 }
 
-lexer_t lexer_re2c_create(void)
+lexer_t lexer_re2c_create(size_t N, const char** regexes)
 {
+  (void)N;
+  (void)regexes;
   static re2c_lexer only = {0};
   set_engine(&only);
   check_engine(&only);
