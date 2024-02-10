@@ -2,8 +2,8 @@
 <Language>
   <LanguageName>arith</LanguageName>
   <Lexer>
-    <!-- Currently posix, re2 or multi -->
-    <!-- considering re2c and lex -->
+    <!-- Currently posix, re2, re2c or multi -->
+    <!-- considering lex and the posix from musl -->
     <!-- Multi is set up to run all the engines that lexer.h says are available -->    
     <Engine value="multi" />
   </Lexer>
@@ -16,12 +16,10 @@
     <Token name="MODULO" literal="%" />
     <Token name="LPAREN" literal="(" />
     <Token name="RPAREN" literal=")" />
-    <Token name="INTEGER" regex="0|-*[1-9]+[0-9]*" />
+    <Token name="INTEGER" regex="[-]?[0-9]+[0-9]*" />
 
-    <!-- I think re2c is failing to recognise [[:space:]] -->
+    <!-- Haven't persuaded re2c to recognise [[:space:]] yet -->
     <Token name="WHITESPACE" regex="[ \f\n\r\t\v]+" />
-
-    <!-- <Token name="WHITESPACE" regex="[[:space:]]+" /> -->
   </Tokens>
 
   <Groupings>

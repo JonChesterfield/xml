@@ -85,11 +85,12 @@ failure:
   YYCURSOR = iter->cursor;
 
 match:;
-  size_t width = YYCURSOR - iter->cursor;
-  *iter = (lexer_iterator_t){.cursor = iter->cursor + width, .end = iter->end};
+  const char * initial_cursor = iter->cursor;
+  size_t width = YYCURSOR - initial_cursor;
+  *iter = (lexer_iterator_t){.cursor = initial_cursor + width, .end = iter->end};
   return (lexer_token_t){
       .id = (size_t)id,
-      .value = iter->cursor,
+      .value = initial_cursor,
       .width = width,
   };
 }
@@ -98,30 +99,21 @@ match:;
 
 </xsl:template>
 
-<!-- This is subtle.
-     re2c wants quotes around some things and strongly does not want
-     them around others.
-     "0|-*[1-9]+[0-9]*"
-     but
-     [ \f\n\r\t\v]+
-     Haven't been able to guess the ruleset
+<!-- re2c has different quoting rules to other regex engines
+     and doesn't need string literal escaping
+     There's reasonable chance 'literal' with single quotes is right
+     Need to escape ' values within the literal. Can optionally escape
+     other values. Probably need to special case the */ sequence to avoid
+     early-exit the comment from C's perspective.
 -->
 <xsl:template match="Token" mode="Names">  
   <ID value="  RE2C_{@name} = " />
   <xsl:choose>
     <xsl:when test="@regex" >
-      <Regex value='{@regex};' />
+      <Regex value="{@regex};" />
     </xsl:when>
     <xsl:when test="@literal" >
-      <LiteralRegex>
-        <xsl:attribute name="value">
-          <xsl:text>"</xsl:text>
-          <xsl:call-template name="quotemeta">
-            <xsl:with-param name="str" select="@literal"/>
-          </xsl:call-template>
-          <xsl:text>";</xsl:text>
-        </xsl:attribute>
-      </LiteralRegex>
+      <LiteralRegex value="'{@literal}';" />
     </xsl:when>
     <xsl:otherwise>
       <Error value="$^" /> 
