@@ -168,6 +168,27 @@
              <xsl:value-of select="$char"/>
            </xsl:when>
            <xsl:otherwise>
+             <xsl:value-of select="concat('\',$char)"/>
+           </xsl:otherwise>
+         </xsl:choose>
+         <xsl:call-template name="quotemeta">
+            <xsl:with-param name="str" select="substring($str, 2)"/>
+         </xsl:call-template>       
+     </xsl:if>     
+   </xsl:template>
+
+   <xsl:template name="doublequotemeta">
+     <!-- Same as above but \\, the obvious factoring out fails with "invalid xpath" -->
+     <xsl:param name="str"/>
+     <xsl:if test="$str">
+       <xsl:variable name="char" select="substring($str, 1, 1)"/>
+
+         <xsl:choose>
+           <!-- If string is a single _, discard it -->
+           <xsl:when test="contains($alpha,$char)">
+             <xsl:value-of select="$char"/>
+           </xsl:when>
+           <xsl:otherwise>
              <xsl:value-of select="concat('\\',$char)"/>
            </xsl:otherwise>
          </xsl:choose>

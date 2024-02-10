@@ -42,8 +42,6 @@
     <NL hexvalue="0a" />
     <Include value='#include "../tools/lexer.re2c.h"' />
     <NL hexvalue="0a" />
-    <Include value='#include "../tools/lexer.multi.h"' />
-    <NL hexvalue="0a" />
   </Header>
   
   <TokenNames>
@@ -132,6 +130,11 @@
   <xsl:call-template name="LexerInstantiate">
     <xsl:with-param name="variant">re2c</xsl:with-param>
   </xsl:call-template>
+
+
+  <Def value="#define LEXER_LANGUAGE {$LangName}" />
+  <NL hexvalue="0a" />
+  <Include value='#include "../tools/lexer.multi.h"' />
 
   <Lexer>
     <NL hexvalue="0a" />
@@ -223,7 +226,7 @@
         <LiteralRegex>
           <xsl:attribute name="value">
             <xsl:text>"</xsl:text>
-            <xsl:call-template name="quotemeta">
+            <xsl:call-template name="doublequotemeta">
               <xsl:with-param name="str" select="@literal"/>
             </xsl:call-template>
             <xsl:text>",</xsl:text>

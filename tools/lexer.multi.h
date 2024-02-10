@@ -1,17 +1,21 @@
-#ifndef LEXER_MULTI_H_INCLUDED
-#define LEXER_MULTI_H_INCLUDED
+// Not a normal header file
 
-#include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 
-#include "lexer.h"
+// This file needs to be instantiated with a language prefix
+#ifndef LEXER_LANGUAGE
+#error "Require macro LEXER_LANGUAGE"
+#endif
 
-// Presently implemented in this header
-static inline lexer_t lexer_multi_create(size_t N, const char **regexes);
-static inline void lexer_multi_destroy(lexer_t lex);
-static inline bool lexer_multi_valid(lexer_t lex);
-static inline lexer_token_t lexer_multi_iterator_step(lexer_t l,
+#define LEXER_PASTE2(X, Y) X##Y
+#define LEXER_PASTE(X, Y) LEXER_PASTE2(X, Y)
+
+lexer_t LEXER_PASTE(LEXER_LANGUAGE, _lexer_multi_create)(void);
+void LEXER_PASTE(LEXER_LANGUAGE, _lexer_multi_destroy)(lexer_t lex);
+bool LEXER_PASTE(LEXER_LANGUAGE, _lexer_multi_valid)(lexer_t lex);
+
+lexer_token_t LEXER_PASTE(LEXER_LANGUAGE,
+                          _lexer_multi_iterator_step)(lexer_t l,
                                                       lexer_iterator_t *iter);
 
 #ifndef LEXER_POSIX_ENABLE
@@ -22,8 +26,17 @@ static inline lexer_token_t lexer_multi_iterator_step(lexer_t l,
 #error "Require macro LEXER_RE2_ENABLE"
 #endif
 
-#define LEXER_MULTI_COUNT() \
-  (LEXER_POSIX_ENABLE ? 1 : 0) + (LEXER_RE2_ENABLE ? 1 : 0)
+#ifndef LEXER_RE2C_ENABLE
+#error "Require macro LEXER_RE2C_ENABLE"
+#endif
+
+#define LEXER_MULTI_COUNT()                                                    \
+  (LEXER_POSIX_ENABLE ? 1 : 0) + (LEXER_RE2_ENABLE ? 1 : 0) +                  \
+      (LEXER_RE2C_ENABLE ? 1 : 0)
+
+#if LEXER_MULTI_COUNT() == 0
+#error "Require at least one lexer to compose into a multi lexer"
+#endif
 
 #if LEXER_POSIX_ENABLE
 #include "lexer.posix.h"
@@ -33,8 +46,11 @@ static inline lexer_token_t lexer_multi_iterator_step(lexer_t l,
 #include "lexer.re2.h"
 #endif
 
-typedef struct
-{
+#if LEXER_RE2C_ENABLE
+#include "lexer.re2c.h"
+#endif
+
+typedef struct {
   enum lexer_engines engine;
 #if LEXER_POSIX_ENABLE
   lexer_t posix;
@@ -42,115 +58,135 @@ typedef struct
 #if LEXER_RE2_ENABLE
   lexer_t re2;
 #endif
+#if LEXER_RE2C_ENABLE
+  lexer_t re2c;
+#endif
 } lexer_multi_t;
 
-static inline lexer_t lexer_multi_create(size_t N, const char **regexes)
-{
+static const char * lexer_multi_components[LEXER_MULTI_COUNT()] = {
+#if LEXER_POSIX_ENABLE
+  "posix",
+#endif
+#if LEXER_RE2_ENABLE
+  "re2",
+#endif
+#if LEXER_RE2C_ENABLE
+  "re2c",
+#endif
+};
+
+lexer_t LEXER_PASTE(LEXER_LANGUAGE, _lexer_multi_create)(void) {
   lexer_multi_t *multi = malloc(sizeof(lexer_multi_t));
   lexer_t result = {
       .data = multi,
   };
-  if (!multi)
-    {
-      return result;
-    }
+  if (!multi) {
+    return result;
+  }
   multi->engine = lexer_engines_multi;
 
 #if LEXER_POSIX_ENABLE
-  multi->posix = lexer_posix_create(N, regexes);
+  multi->posix = LEXER_PASTE(LEXER_LANGUAGE, _lexer_posix_create)();
 #endif
 #if LEXER_RE2_ENABLE
-  multi->re2 = lexer_re2_create(N, regexes);
+  multi->re2 = LEXER_PASTE(LEXER_LANGUAGE, _lexer_re2_create)();
+#endif
+#if LEXER_RE2C_ENABLE
+  multi->re2c = LEXER_PASTE(LEXER_LANGUAGE, _lexer_re2c_create)();
 #endif
 
   return result;
 }
 
-static inline void lexer_multi_destroy(lexer_t lex)
-{
+void LEXER_PASTE(LEXER_LANGUAGE, _lexer_multi_destroy)(lexer_t lex) {
   lexer_multi_t *multi = lex.data;
-  if (!multi)
-    {
-      return;
-    }
+  if (!multi) {
+    return;
+  }
   assert(multi->engine == lexer_engines_multi);
 
 #if LEXER_POSIX_ENABLE
-  lexer_posix_destroy(multi->posix);
+  LEXER_PASTE(LEXER_LANGUAGE, _lexer_posix_destroy)(multi->posix);
 #endif
 #if LEXER_RE2_ENABLE
-  lexer_re2_destroy(multi->re2);
+  LEXER_PASTE(LEXER_LANGUAGE, _lexer_re2_destroy)(multi->re2);
+#endif
+#if LEXER_RE2C_ENABLE
+  LEXER_PASTE(LEXER_LANGUAGE, _lexer_re2c_destroy)(multi->re2c);
 #endif
 }
 
-static inline bool lexer_multi_valid(lexer_t lex)
-{
+bool LEXER_PASTE(LEXER_LANGUAGE, _lexer_multi_valid)(lexer_t lex) {
   lexer_multi_t *multi = lex.data;
-  if (!multi)
-    {
-      return false;
-    }
+  if (!multi) {
+    return false;
+  }
   assert(multi->engine == lexer_engines_multi);
   bool valid = true;
 
 #if LEXER_POSIX_ENABLE
-  valid &= lexer_posix_valid(multi->posix);
+  valid &= LEXER_PASTE(LEXER_LANGUAGE, _lexer_posix_valid)(multi->posix);
 #endif
 #if LEXER_RE2_ENABLE
-  valid &= lexer_re2_valid(multi->re2);
+  valid &= LEXER_PASTE(LEXER_LANGUAGE, _lexer_re2_valid)(multi->re2);
+#endif
+#if LEXER_RE2C_ENABLE
+  valid &= LEXER_PASTE(LEXER_LANGUAGE, _lexer_re2c_valid)(multi->re2c);
 #endif
 
   return valid;
 }
 
-static inline lexer_token_t lexer_multi_iterator_step(lexer_t l,
-                                                      lexer_iterator_t *iter)
-{
-  enum
-  {
-    N = LEXER_MULTI_COUNT()
-  };
-  assert(lexer_multi_valid(l));
+lexer_token_t LEXER_PASTE(LEXER_LANGUAGE,
+                          _lexer_multi_iterator_step)(lexer_t l,
+                                                      lexer_iterator_t *iter) {
+  enum { N = LEXER_MULTI_COUNT() };
+  assert(LEXER_PASTE(LEXER_LANGUAGE, _lexer_multi_valid)(l));
   lexer_multi_t *multi = l.data;
   assert(multi);
   assert(multi->engine == lexer_engines_multi);
   lexer_iterator_t iters[N];
   lexer_token_t tokens[N];
-  for (unsigned i = 0; i < N; i++)
-    {
-      iters[i] = *iter;
-    }
+  for (unsigned i = 0; i < N; i++) {
+    iters[i] = *iter;
+  }
   unsigned i = 0;
 
 #if LEXER_POSIX_ENABLE
-  tokens[i] = lexer_posix_iterator_step(multi->posix, &iters[i]);
+  tokens[i] = LEXER_PASTE(LEXER_LANGUAGE,
+                          _lexer_posix_iterator_step)(multi->posix, &iters[i]);
   i++;
 #endif
 #if LEXER_RE2_ENABLE
-  tokens[i] = lexer_re2_iterator_step(multi->re2, &iters[i]);
+  tokens[i] = LEXER_PASTE(LEXER_LANGUAGE, _lexer_re2_iterator_step)(multi->re2,
+                                                                    &iters[i]);
+  i++;
+#endif
+#if LEXER_RE2C_ENABLE
+  tokens[i] = LEXER_PASTE(LEXER_LANGUAGE,
+                          _lexer_re2c_iterator_step)(multi->re2c, &iters[i]);
   i++;
 #endif
 
-  for (unsigned i = 1; i < N; i++)
-    {
-      bool iter_cursor_ok = iters[i].cursor == iters[0].cursor;
-      bool iter_end_ok = iters[i].end == iters[0].end;
+  for (unsigned i = 1; i < N; i++) {
+    bool iter_cursor_ok = iters[i].cursor == iters[0].cursor;
+    bool iter_end_ok = iters[i].end == iters[0].end;
 
-      bool token_id_ok = tokens[i].id == tokens[0].id;
-      bool token_value_ok = tokens[i].value == tokens[0].value;
-      bool token_width_ok = tokens[i].width == tokens[0].width;
+    bool token_id_ok = tokens[i].id == tokens[0].id;
+    bool token_value_ok = tokens[i].value == tokens[0].value;
+    bool token_width_ok = tokens[i].width == tokens[0].width;
 
-      bool all_ok = iter_cursor_ok & iter_end_ok & token_id_ok &
-                    token_value_ok & token_width_ok;
+    bool all_ok = iter_cursor_ok & iter_end_ok & token_id_ok & token_value_ok &
+                  token_width_ok;
 
-      if (!all_ok)
-        {
-          fprintf(stderr, "Inconsistent lexers\n");
-        }
+    if (!all_ok) {
+      fprintf(stdout, "Inconsistent lexer %s [%u %u %u %u %u]\n",lexer_multi_components[i],iter_cursor_ok,iter_end_ok,token_id_ok,token_value_ok,token_width_ok);
+      lexer_token_dump(tokens[0]);
+      lexer_token_dump(tokens[i]);      
     }
+  }
 
+  // first enabled one wins on mismatch
   *iter = iters[0];
   return tokens[0];
 }
-
-#endif

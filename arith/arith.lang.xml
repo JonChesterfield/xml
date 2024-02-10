@@ -5,19 +5,23 @@
     <!-- Currently posix, re2 or multi -->
     <!-- considering re2c and lex -->
     <!-- Multi is set up to run all the engines that lexer.h says are available -->    
-    <Engine value="posix" />
+    <Engine value="multi" />
   </Lexer>
 
   <Tokens>
-    <Token name="PLUS" regex="[+]" />
-    <Token name="MINUS" regex="[-]" />
-    <Token name="TIMES" regex="[*]" />
-    <Token name="DIVIDE" regex="[/]" />
-    <Token name="MODULO" regex="[%]" />
+    <Token name="PLUS" literal="+" />
+    <Token name="MINUS" literal="-" />
+    <Token name="TIMES" literal="*" />
+    <Token name="DIVIDE" literal="/" />
+    <Token name="MODULO" literal="%" />
     <Token name="LPAREN" literal="(" />
     <Token name="RPAREN" literal=")" />
     <Token name="INTEGER" regex="0|-*[1-9]+[0-9]*" />
-    <Token name="WHITESPACE" regex="[[:space:]]+" />
+
+    <!-- I think re2c is failing to recognise [[:space:]] -->
+    <Token name="WHITESPACE" regex="[ \f\n\r\t\v]+" />
+
+    <!-- <Token name="WHITESPACE" regex="[[:space:]]+" /> -->
   </Tokens>
 
   <Groupings>

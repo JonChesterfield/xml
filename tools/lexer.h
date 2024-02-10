@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 // Expects the regex of interest to be enumerated from 1, with the
 // zeroth index reserved for an unknown/non-match, which is returned
@@ -85,6 +86,19 @@ typedef struct
 static inline bool lexer_token_t_empty(lexer_token_t token)
 {
   return token.width == 0;
+}
+
+static inline void lexer_token_dump(lexer_token_t s)
+{
+  printf("<LexerToken ID = \"%zu\" value = \"", s.id);
+  const char *c = s.value;
+  size_t w = s.width;
+  for (size_t i = 0; i < w; i++)
+    {
+      printf("%c", *c++);
+    }
+
+  printf("\" />\n");
 }
 
 #endif

@@ -24,6 +24,8 @@
     <Lang value="// -*-c-*-" />
     <NL hexvalue = "0a" />
     <Include value='#include "{$LangName}.declarations.h"' />
+    <NL hexvalue="0a" />
+    <Assert value="#include &lt;assert.h&gt;" />
   </Header>
 
   <Prefix>
@@ -70,9 +72,9 @@ lexer_token_t <xsl:value-of select='$LangName' />_lexer_re2c_iterator_step(lexer
 <Suffix>
   <xsl:attribute name="value">
   // Start of common suffix
-  "." { id = <xsl:value-of select='$LangName' />_token_UNKNOWN; goto match; }
-   *    { goto failure; }
-   $    { goto failure; }
+  . { id = <xsl:value-of select='$LangName' />_token_UNKNOWN; goto match; }
+  *    { goto failure; }
+  $    { goto failure; }
   */
   // re2c finish
 
@@ -96,11 +98,19 @@ match:;
 
 </xsl:template>
 
+<!-- This is subtle.
+     re2c wants quotes around some things and strongly does not want
+     them around others.
+     "0|-*[1-9]+[0-9]*"
+     but
+     [ \f\n\r\t\v]+
+     Haven't been able to guess the ruleset
+-->
 <xsl:template match="Token" mode="Names">  
   <ID value="  RE2C_{@name} = " />
   <xsl:choose>
     <xsl:when test="@regex" >
-      <Regex value='"{@regex}";' />
+      <Regex value='{@regex};' />
     </xsl:when>
     <xsl:when test="@literal" >
       <LiteralRegex>
