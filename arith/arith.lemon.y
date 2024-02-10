@@ -35,8 +35,17 @@
 %token_type { token }
 %token_prefix TOKEN_ID_
 
-%token PLUS MINUS TIMES DIVIDE MODULO.
-%token LPAREN RPAREN INTEGER.
+ // Listing the tokens in the same order the lexer defines them means
+ // the integer ids lemon uses are equal to those the lexer uses
+%token PLUS.
+%token MINUS.
+%token TIMES.
+%token DIVIDE.
+%token MODULO.
+%token LPAREN.
+%token RPAREN.
+%token One.
+%token INTEGER.
 %token WHITESPACE.
 
 // Precedences
@@ -58,10 +67,29 @@ program ::= expr(A). {
    printf("\n");
 }
 
+
+// These would be easier to read/debug in the generated output if they
+// were all typed functions that lemon merely builds the dispatch to
+
+%include
+{
+  list PLUS_ctor(list B, list C)
+  {
+    list A = list_make_uninitialised("BinOpPlus", 2);
+    A.elts[0] = B;
+    A.elts[1] = C;
+    return A;
+  }
+}
+
 expr(A) ::= expr(B) PLUS expr(C). {
+  #if 0
+  A = PLUS_ctor(B, C);
+  #else
   A = list_make_uninitialised("BinOpPlus", 2);
   A.elts[0] = B;
   A.elts[1] = C;
+  #endif
 }
   
 expr(A) ::= expr(B) MINUS expr(C). {

@@ -37,6 +37,12 @@ enum lexer_engines
 #define LEXER_RE2_ENABLE 0
 #endif
 
+// Disabling it while using valgrind to debug something else
+// because it does clever things with uninitialised memory
+#undef LEXER_RE2_ENABLE
+#define LEXER_RE2_ENABLE 0
+
+
 #define LEXER_RE2C_ENABLE 1
 
 typedef struct
