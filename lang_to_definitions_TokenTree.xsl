@@ -36,7 +36,13 @@
     <Include value='#include "{$LangName}.declarations.h"' />
     <NL hexvalue="0a" />
     <NL hexvalue="0a" />
-    <Include value='#include "../tools/lexer.{$RegexEngine}.h"' />
+    <Include value='#include "../tools/lexer.posix.h"' />
+    <NL hexvalue="0a" />
+    <Include value='#include "../tools/lexer.re2.h"' />
+    <NL hexvalue="0a" />
+    <Include value='#include "../tools/lexer.re2c.h"' />
+    <NL hexvalue="0a" />
+    <Include value='#include "../tools/lexer.multi.h"' />
     <NL hexvalue="0a" />
   </Header>
   
@@ -115,6 +121,20 @@
     <NL hexvalue="0a" />
   </LiteralsTable>
 
+  <NL hexvalue="0a" />
+  <Comment value="// Lexer instantiations" />
+  <xsl:call-template name="LexerInstantiate">
+    <xsl:with-param name="variant">posix</xsl:with-param>
+    <xsl:with-param name="iterator">true</xsl:with-param>
+  </xsl:call-template>
+  <xsl:call-template name="LexerInstantiate">
+    <xsl:with-param name="variant">re2</xsl:with-param>
+    <xsl:with-param name="iterator">true</xsl:with-param>
+  </xsl:call-template>
+  <xsl:call-template name="LexerInstantiate">
+    <xsl:with-param name="variant">re2c</xsl:with-param>
+    <xsl:with-param name="iterator">false</xsl:with-param>
+  </xsl:call-template>
 
   <Lexer>
     <NL hexvalue="0a" />
@@ -218,10 +238,59 @@
         <Error value="$^" /> 
       </xsl:otherwise>
   </xsl:choose>
-  <NL hexvalue = "0a" />
-  
+  <NL hexvalue = "0a" />  
 </xsl:template>
 
+
+
+
+<xsl:template name="LexerInstantiate" >
+  <xsl:param name="variant"/>
+  <xsl:param name="iterator"/>
+
+  <xsl:variable name="upcase-variant" >
+    <xsl:value-of select="translate($variant,$lowercase,$uppercase)" />
+  </xsl:variable>
+
+<LexerInstantiation>
+  <NL hexvalue = "0a" />  
+  <Pre value="#if LEXER_{$upcase-variant}_ENABLE" />
+  <NL hexvalue = "0a" />  
+<Majority>
+  <xsl:attribute name="value">
+lexer_t <xsl:value-of select='$LangName' />_lexer_<xsl:value-of select='$variant' />_create(void)
+{
+  return lexer_<xsl:value-of select='$variant' />_create(<xsl:value-of select='$LangName' />_token_count, <xsl:value-of select='$LangName' />_regexes); 
+}
+
+void <xsl:value-of select='$LangName' />_<xsl:value-of select='$variant' />_lexer_destroy(lexer_t lex)
+{
+  lexer_<xsl:value-of select='$variant' />_destroy(lex);
+}
+
+bool <xsl:value-of select='$LangName' />_<xsl:value-of select='$variant' />_lexer_valid(lexer_t lex)
+{
+  return lexer_<xsl:value-of select='$variant' />_valid(lex); 
+}
+  </xsl:attribute>
+</Majority>
+
+<xsl:if test="$iterator = 'true'" >
+  <Iterator>
+    <xsl:attribute name="value">
+lexer_token_t <xsl:value-of select='$LangName' />_<xsl:value-of select='$variant' />_lexer_iterator_step(lexer_t lex, lexer_iterator_t *iter)
+{
+  return lexer_<xsl:value-of select='$variant' />_iterator_step(lex, iter);
+  }
+    </xsl:attribute>
+  </Iterator>
+</xsl:if>
+
+<Post value="#endif" />
+<NL hexvalue = "0a" />  
+</LexerInstantiation>
+
+</xsl:template>
 
 
 <xsl:template match="@*">
