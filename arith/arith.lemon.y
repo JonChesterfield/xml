@@ -129,10 +129,12 @@ expr(A) ::= INTEGER(B).
 }
 
 // Using this as a hack to check precedence rules in the lexer
+#if 0
 expr(A) ::= ONE(B).
 {
   A = list_from_token(B);
 }
+#endif
   
 // Fun. Can discard whitespace in the parse instead of in the lexer.
 expr(A) ::= WHITESPACE expr(B). { A = B; }
