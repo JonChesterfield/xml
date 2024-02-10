@@ -11,10 +11,6 @@ lemon_tmp := $(arith_tmp)/lemon
 $(lemon_tmp):	$(arith_tmp)
 	@mkdir -p $(lemon_tmp)
 
-$(info "thing")
-$(info $(lemon_tmp)/%.lemon.c)
-$(info $(lemon_tmp)/arith.lemon.c)
-
 $(lemon_tmp)/%.lemon.c:	arith/%.lemon.y $(lemon) tools/lempar.data arith/arith.lang.xml | $(lemon_tmp)
 	cp "$<" "$(lemon_tmp)/$*.lemon.y"
 	cd $(lemon_tmp) && ./../../$(lemon) -l -T../../tools/lempar.data -m "$*.lemon.y" || rm -f $@
@@ -41,6 +37,12 @@ $(arith_tmp)/stdin_to_tree.o:	arith/stdin_to_tree.c arith/arith.lemon.h arith/ar
 clean::
 	rm -f arith/arith.lemon.h arith/arith.lemon.c
 	rm -f arith/arith_parser.lemon.h arith/arith_parser.lemon.c
+
+$(arith_tmp)/arith.ptree.o:	arith/arith.ptree.c arith/arith.ptree.h tools/ptree.h | $(arith_tmp)
+	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
+
+$(arith_tmp)/arith.tests.o:	arith/arith.tests.c arith/arith.ptree.h tools/ptree.h arith/arith.declarations.h | $(arith_tmp)
+	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
 
 $(arith_tmp)/arith.lemon.o:	arith/arith.lemon.c arith/arith.lemon.h
 	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@

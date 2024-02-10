@@ -35,10 +35,10 @@ clean::
 # uses a global c, c++ compiler
 # apt install trang xsltproc libxml2-utils
 
-CC := gcc
-CXX := g++
+CC := clang
+CXX := clang++
 
-C_OR_CXX_FLAGS := -Wall -Wextra -g
+C_OR_CXX_FLAGS := -Wall -Wextra -g -gdwarf-4
 CFLAGS := -std=c11 $(C_OR_CXX_FLAGS)
 CXXFLAGS := -std=c++14 -Wno-c99-designator $(C_OR_CXX_FLAGS)
 
@@ -308,6 +308,10 @@ arith.main:	$(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.main.o
 
 arith.stdin_to_tree:	$(arith_tmp)/stdin_to_tree.o $(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.definitions.o .tools.O/lexer.posix.o .tools.O/lexer.re2.o .tools.O/lexer.re2c.o
 	$(CXX) $(CXXFLAGS) $^ $(RE2LIB) -o $@
+
+arith.tests:	$(arith_tmp)/arith.tests.o $(arith_tmp)/arith.ptree.o
+	$(CXX) $(CXXFLAGS) $^ $(RE2LIB) -o $@
+
 clean::
 	rm -f arith.lemon.c arith.lemon.h arith.lemon.out
 	rm -f arith.lexer.xml arith.lexer.cpp arith.lexer.o arith.lexer
@@ -335,7 +339,7 @@ deepclean:: clean
 include $(SELF_DIR)vendored/vendored.mk
 
 # Simple binaries are some single file C files at top level
-SIMPLE_TOOLS_BIN := $(lemon) $(makeheaders) $(hex_to_binary) $(file_to_cdata)
+SIMPLE_TOOLS_BIN := $(lemon) $(makeheaders) $(hex_to_binary) $(file_to_cdata) bin/ptree.tests
 
 # cmark uses multiple source files, specifically all those under the cmark directory
 CMARK_SRC:= $(wildcard $(TOOLS_DIR)/cmark/*.c)

@@ -23,6 +23,8 @@
 %name arith_Lemon
 %start_symbol program // explicit
 %type expr { list }
+%type secondexpr { list }
+
 %extra_argument {list* external_context}
 
 %syntax_error { fprintf(stderr, "Syntax error\n"); }
@@ -128,13 +130,6 @@ expr(A) ::= INTEGER(B).
   A = list_from_token(B);
 }
 
-// Using this as a hack to check precedence rules in the lexer
-#if 0
-expr(A) ::= ONE(B).
-{
-  A = list_from_token(B);
-}
-#endif
   
 // Fun. Can discard whitespace in the parse instead of in the lexer.
 expr(A) ::= WHITESPACE expr(B). { A = B; }

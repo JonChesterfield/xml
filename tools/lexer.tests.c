@@ -1,6 +1,6 @@
 #include "lexer.h"
 
-#include "../../../evilunit/EvilUnit.h"
+#include "EvilUnit/EvilUnit.h"
 
 typedef struct
 {
