@@ -166,25 +166,31 @@ lexer_token_t lexer_posix_iterator_step(lexer_t l, lexer_iterator_t* iter)
 
   size_t N = lexer->size;
   assert(N > 0);
-  assert(ith_regex_matches_start(lexer, iter->cursor, iter->end, 0));
+  // Zeroth regex matches anything and returns width one
+  assert(ith_regex_matches_start(lexer, iter->cursor, iter->end, 0) == 1);
 
+  // Looking for longest match wins, with earliest match on tie break
+
+  lexer_token_t result = {
+    .id = 0,
+    .value = iter->cursor,
+    .width = 1,
+  };
+    
   for (size_t i = 1; i < N; i++)
     {
-      {
-        size_t w = ith_regex_matches_start(lexer, iter->cursor, iter->end, i);
-        if (w != 0)
-          {
-            lexer_token_t res =
-                (lexer_token_t){.id = i, .value = iter->cursor, .width = w};
-            iter->cursor += w;
-            return res;
-          }
+      size_t w = ith_regex_matches_start(lexer, iter->cursor, iter->end, i);
+      if (w == 0) continue; // no match
+
+      bool is_first_match = result.id == 0;
+      bool is_longer_match = w > result.width;
+      if (is_first_match | is_longer_match) {
+        result.id = i;
+        result.width = w;
       }
     }
-
-  return (lexer_token_t){
-      .id = 0,
-      .value = iter->cursor,
-      .width = 1,
-  };
+  
+  assert(result.value == iter->cursor);
+  iter->cursor += result.width;
+  return result;
 }

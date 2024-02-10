@@ -16,6 +16,9 @@
     <Token name="MODULO" literal="%" />
     <Token name="LPAREN" literal="(" />
     <Token name="RPAREN" literal=")" />
+    <!-- One should match over integer, and over things like 12 -->
+    <Token name="One" literal="1" />
+
     <Token name="INTEGER" regex="[-]?[0-9]+[0-9]*" />
 
     <!-- Haven't persuaded re2c to recognise [[:space:]] yet -->

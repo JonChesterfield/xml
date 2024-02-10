@@ -169,9 +169,27 @@ bool lexer_re2_valid(lexer_t lex)
     }
 }
 
+static size_t ith_regex_matches_start(re2_lexer* lexer, const char* start,
+                                      const char* end, size_t i)
+{
+  re2::StringPiece cursor(start, end - start);
+    re2::StringPiece submatch[1];  
+    re2::RE2 const& tmp = *(lexer->regex_engines[i]);
+    bool C = tmp.Match(cursor, 0, cursor.size(), RE2::ANCHOR_START, submatch, 1);
+    if (!C)
+      {
+        return 0;
+      }
+
+    return submatch[0].size();  
+}
+
 
 lexer_token_t lexer_re2_iterator_step(lexer_t lex, lexer_iterator_t* iter)
 {
+  // Does an initial call to check all the regex at the same time
+  // then works out which of the matches is the longest/earliest
+  
   re2_lexer* lexer = to_re2(lex);
   lexer_token_t failure = {.id = 0, .value = "", .width = 0};
 
@@ -183,85 +201,51 @@ lexer_token_t lexer_re2_iterator_step(lexer_t lex, lexer_iterator_t* iter)
   RE2::Set::ErrorInfo err;
   if (!lexer->set_of_all_regexes->Match(cursor, &matches, &err))
     {
+      // Should be unreachable, regex[0] is '.'
       fprintf(stderr, "Match failed (%u)\n", err.kind);
       return failure;
     }
 
-  // Unknown is always going to match and is token zero
+  // Matches aren't necessarily in order
   std::sort(matches.begin(), matches.end());
+
+  // Unknown is always going to match and is token zero
   assert(matches.size() > 0);
-  if (matches.size() == 1)
-    {
-      // Not generally a good sign
-      assert(matches[0] == TOKEN_ID_UNKNOWN);
-    }
-
-  // Kind of messy rearranging. Want the lowest index other than
-  // unknown, unless only unknown hits.
   assert(matches[0] == TOKEN_ID_UNKNOWN);
-  int winning = matches.size() > 1 ? matches[1] : matches[0];
-  if (winning < 0)
-    {
-      return failure;
-    }
-  size_t size_before = cursor.size();
 
-  // Original game plan was:
-  // std::string var;
-  // bool C = RE2::Consume(&cursor, regexes[winning], &var);
-  // However that isn't working on escaped regexes, e.g. trying to match +
+  lexer_token_t result = {
+    .id = TOKEN_ID_UNKNOWN,
+    .value = start,
+    .width = 1,
+  };
+    
+  for (int i : matches) {
+    assert(i >= 0);
+    if (i == TOKEN_ID_UNKNOWN) continue;
+    assert((size_t)i < lexer->regex_engines.size());
+    
+    bool is_first_match = result.id == TOKEN_ID_UNKNOWN;
 
-  size_t token_length = 0;
-
-  bool C;
-  {
-    // TODO: This here is dubious. There are N regex strings and building a
-    // RE2 instance for one is probably expensive, should build the N RE2
-    // instances in the constructor.
-    re2::StringPiece submatch[1];
-    // Reproducibly quicker to reuse previously build regex instances
-    // instead of building from scratch, probably worth the complexity.
-    // Would be much simpler if the C interface is dropped, which is
-    // probably a reasonable improvement in itself.
-    re2::RE2 const& tmp = *(lexer->regex_engines[winning]);
-    C = tmp.Match(cursor, 0, cursor.size(), RE2::ANCHOR_START, submatch, 1);
-    if (verbose) printf("Match %d ret %s\n", winning, (C ? "true" : "false"));
-    if (C)
+    size_t w = ith_regex_matches_start(lexer, start, end, (size_t)i);
+    
+    if (w == 0)
       {
-        token_length = submatch[0].size();
+        fprintf(stderr, "regex %d matched the first time and not the second\n", i);
+        continue;
       }
-    cursor.remove_prefix(token_length);
+
+    bool is_longer_match = w > result.width;
+
+    if (is_first_match | is_longer_match) {
+      result.id = i;
+      result.width = w;
+    }
   }
 
-  if (verbose && !C)
-    {
-      printf("Consume returned false\n");
-    }
-
-  size_t size_after = cursor.size();
-
-  if (size_after >= size_before)
-    {
-      fprintf(stderr, "Cursor size did not decrease, %zu -> %zu\n", size_before,
-              size_after);
-      exit(1);
-    }
-  else
-    {
-      if (verbose)
-        printf("Cursor size decreased, %zu -> %zu\n", size_before, size_after);
-    }
-
-  assert((start + token_length) <= end);
-
-  // token needs a pointer into the original buffer
-  lexer_token_t res = {.id = static_cast<size_t>(winning),
-                       .value = start,
-                       .width = token_length};
-  start += token_length;
-
-  *iter = {.cursor = start, .end = end};
-  return res;
+  assert(result.value == start);
+  assert(result.value == iter->cursor);
+  iter->cursor += result.width;
+  return result;  
 }
 
 #endif

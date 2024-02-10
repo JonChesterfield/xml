@@ -36,7 +36,7 @@ lexer_token_t <xsl:value-of select='$LangName' />_lexer_re2c_iterator_step(lexer
   (void)lex;
   const char* YYCURSOR = iter->cursor;
   const char* YYLIMIT = iter->end;
-  const char* YYMARKER;
+  const char* YYMARKER; (void)YYMARKER;
 
   enum <xsl:value-of select='$LangName' />_token id = <xsl:value-of select='$LangName' />_token_UNKNOWN;
 

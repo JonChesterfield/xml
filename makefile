@@ -288,8 +288,9 @@ $(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,html,$(call get_
 
 
 # TODO: automatically detect this
+# apt install libre2-dev puts it here under debian
+# set to the empty string to disable
 RE2LIB := /usr/lib/x86_64-linux-gnu/libre2.a
-RE2LIB :=
 
 # WIP lexer/parser constructions. Very much a prototype at present.
 arith_tmp := .arith.O
