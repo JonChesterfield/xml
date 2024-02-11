@@ -339,7 +339,7 @@ deepclean:: clean
 include $(SELF_DIR)vendored/vendored.mk
 
 # Simple binaries are some single file C files at top level
-SIMPLE_TOOLS_BIN := $(lemon) $(makeheaders) $(hex_to_binary) $(file_to_cdata) bin/ptree.tests
+SIMPLE_TOOLS_BIN := $(lemon) $(makeheaders) $(hex_to_binary) $(file_to_cdata) bin/ptree.tests bin/stack
 
 # cmark uses multiple source files, specifically all those under the cmark directory
 CMARK_SRC:= $(wildcard $(TOOLS_DIR)/cmark/*.c)

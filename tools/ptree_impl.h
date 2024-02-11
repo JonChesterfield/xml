@@ -14,7 +14,7 @@ static inline void ptree_require_func(bool expr, const char *name, int line) {
   const bool contract = PTREE_CONTRACT();
   if (contract & !expr) {
 #if PTREE_CONTRACT()
-    fprintf(stderr, "Contract failed L%u: %s\n", line, name);
+    fprintf(stderr, "ptree contract failed L%u: %s\n", line, name);
     abort();
 #else
     (void)name;
