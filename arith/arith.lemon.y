@@ -14,10 +14,23 @@
   
 #include "../tools/token.h"
 #include "../tools/list.h"
-#endif
 
+// Removes LemonAlloc/LemonFree
+#define arith_Lemon_ENGINEALWAYSONSTACK 1
+  
+#endif
+  
 #include "arith.lemon.h"
 
+}
+
+%code
+{
+  // Exposing the actual type is a nuisance.
+  // However I suspect having a single instance is useful in itself.
+  // That's sufficient to define the ALWAYSONSTACK macro which removes
+  // the alloc/free interface.
+  struct yyParser arith_global_lemon_parser;
 }
 
 %name arith_Lemon

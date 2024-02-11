@@ -36,8 +36,9 @@ int main()
       return 41;
     }
 
-  void *pParser = (void *)arith_LemonAlloc(malloc);
-
+  void *pParser = &arith_global_lemon_parser;
+  arith_LemonInit(pParser);
+  
   printf("calling file to io buffer\n");
   io_buffer *toplevel = file_to_io_buffer(f);
   if (!toplevel)
@@ -93,7 +94,8 @@ int main()
   printf("\n");
 
   // Will call deallocate on nodes
-  arith_LemonFree(pParser, free);
+  arith_LemonFinalize(pParser);
+
   arith_lexer_destroy(lexer);
   free(toplevel);
 
