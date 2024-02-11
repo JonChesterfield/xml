@@ -309,13 +309,13 @@ arith.main:	$(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.main.o
 arith.stdin_to_tree:	$(arith_tmp)/stdin_to_tree.o $(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.definitions.o .tools.O/lexer.posix.o .tools.O/lexer.re2.o .tools.O/lexer.re2c.o
 	$(CXX) $(CXXFLAGS) $^ $(RE2LIB) -o $@
 
-arith.tests:	$(arith_tmp)/arith.tests.o $(arith_tmp)/arith.ptree.o
+arith.tests:	$(arith_tmp)/arith.tests.o $(arith_tmp)/arith.ptree.o .tools.O/generic_ptree.o
 	$(CXX) $(CXXFLAGS) $^ $(RE2LIB) -o $@
 
 clean::
 	rm -f arith.lemon.c arith.lemon.h arith.lemon.out
 	rm -f arith.lexer.xml arith.lexer.cpp arith.lexer.o arith.lexer
-	rm -f arith.main arith.stdin_to_tree
+	rm -f arith.main arith.stdin_to_tree arith.tests
 
 $(arith_tmp)/arith.prelint.xml:	arith.lexer $(call get_schema_name, %common/TokenList.rng)
 	echo "1 + 2 / 1 * (7 % 3)" | ./arith.lexer > $@

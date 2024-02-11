@@ -38,7 +38,7 @@ clean::
 	rm -f arith/arith.lemon.h arith/arith.lemon.c
 	rm -f arith/arith_parser.lemon.h arith/arith_parser.lemon.c
 
-$(arith_tmp)/arith.ptree.o:	arith/arith.ptree.c arith/arith.ptree.h tools/ptree.h | $(arith_tmp)
+$(arith_tmp)/arith.ptree.o:	arith/arith.ptree.c arith/arith.ptree.h tools/ptree.h arith/arith.declarations.h | $(arith_tmp)
 	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
 
 $(arith_tmp)/arith.tests.o:	arith/arith.tests.c arith/arith.ptree.h tools/ptree.h arith/arith.declarations.h | $(arith_tmp)
