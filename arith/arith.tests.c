@@ -5,6 +5,8 @@
 
 #include "../tools/generic_ptree.h"
 
+#include "../tools/stack.libc.h"
+
 MODULE(ptree)
 {
     ptree_context ctx = arith_ptree_create_context();
@@ -51,7 +53,7 @@ MODULE(ptree)
         generic_ptree_destroy_context(gctx);                                                     
       }
 
-      arith_ptree_as_xml(stdout, expr);
+      arith_ptree_as_xml(&stack_libc, stdout, expr);
       fprintf(stdout, "\n");
     }
   
@@ -85,11 +87,9 @@ MODULE(ptree)
                                            quads[2],
                                            quads[3]);
 
-      arith_ptree_as_xml(stdout, root);
+      arith_ptree_as_xml(&stack_libc, stdout, root);
       fprintf(stdout, "\n");
 
-      ptree_traverse_debugging(arith_ptree_retrieve_module(), root);
-      fprintf(stdout, "\n");
     }
   
   arith_ptree_destroy_context(ctx);

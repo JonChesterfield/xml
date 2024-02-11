@@ -10,76 +10,10 @@
 
 #include "EvilUnit/EvilUnit.h"
 
-enum {
-  size_offset = 1,
-  cap_offset = 0,
-};
-
-static size_t stack_impl_size(void *s) {
-  uint64_t *stack = (uint64_t *)s;
-  return stack[size_offset];
-}
-
-static size_t stack_impl_capacity(void *s) {
-  uint64_t *stack = (uint64_t *)s;
-  return stack[cap_offset];
-}
-
-static void stack_impl_push(void *s, uint64_t v) {
-  uint64_t *stack = (uint64_t *)s;
-  size_t sz = stack_impl_size(s);
-  stack[2 + sz] = v;
-  stack[size_offset] = sz + 1;
-}
-
-static uint64_t stack_impl_peek(void *s) {
-  uint64_t *stack = (uint64_t *)s;
-  size_t sz = stack_impl_size(s);
-  return stack[2 + sz - 1];
-}
-
-static void stack_impl_drop(void *s) {
-  uint64_t *stack = (uint64_t *)s;
-  size_t sz = stack_impl_size(s);
-  stack[size_offset] = sz - 1;
-}
+#include "stack.common.h"
 
 #if !STACK_FREESTANDING()
-#include <stdlib.h>
-
-static void *stack_libc_create(void) {
-  uint64_t *res = malloc(2 * sizeof(uint64_t));
-  if (res) {
-    res[cap_offset] = 0;
-    res[size_offset] = 0;
-  }
-  return res;
-}
-
-static void stack_libc_destroy(void *s) { free(s); }
-
-static void *stack_libc_reserve(void *s, size_t N) {
-  if (N <= stack_impl_capacity(s)) {
-    return s;
-  }
-  uint64_t *r = realloc(s, (2 + N) * sizeof(uint64_t));
-  if (r) {
-    r[cap_offset] = N;
-  }
-  return r;
-}
-
-const struct stack_module_ty stack_libc = {
-    .create = stack_libc_create,
-    .destroy = stack_libc_destroy,
-    .size = stack_impl_size,
-    .capacity = stack_impl_capacity,
-    .reserve = stack_libc_reserve,
-    .push = stack_impl_push,
-    .peek = stack_impl_peek,
-    .drop = stack_impl_drop,
-};
-
+#include "stack.libc.h"
 #endif
 
 static uint64_t syscall6(uint64_t n, uint64_t a0, uint64_t a1, uint64_t a2,
@@ -162,7 +96,7 @@ static void *stack_brk_reserve(void *s, size_t N) {
   return r;
 }
 
-const struct stack_module_ty stack_brk = {
+static const struct stack_module_ty stack_brk = {
     .create = stack_brk_create,
     .destroy = stack_brk_destroy,
     .size = stack_impl_size,

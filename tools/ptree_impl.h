@@ -291,12 +291,9 @@ static inline ptree ptree_expression8(const ptree_module *mod,
   return res;
 }
 
-static inline int ptree_impl_as_xml_pre(const ptree_module *mod,
-                                        ptree tree,
-                                        uint64_t depth,
-                                        void *voidfile)
-{
-  FILE *file = (FILE*)voidfile;
+static inline int ptree_impl_as_xml_pre(const ptree_module *mod, ptree tree,
+                                        uint64_t depth, void *voidfile) {
+  FILE *file = (FILE *)voidfile;
   if (ptree_is_expression(mod, tree)) {
     uint64_t id = ptree_identifier(mod, tree);
     const char *name = ptree_identifier_expression_maybe_name(mod, id);
@@ -311,18 +308,16 @@ static inline int ptree_impl_as_xml_pre(const ptree_module *mod,
   return 0;
 }
 
-static inline int ptree_impl_as_xml_elt(const ptree_module *mod,
-                                        ptree tree,
-                                        uint64_t depth,
-                                        void *voidfile) {
-  FILE *file = (FILE*)voidfile;
+static inline int ptree_impl_as_xml_elt(const ptree_module *mod, ptree tree,
+                                        uint64_t depth, void *voidfile) {
+  FILE *file = (FILE *)voidfile;
   if (ptree_is_token(mod, tree)) {
     uint64_t id = ptree_identifier(mod, tree);
     const char *name = ptree_identifier_token_maybe_name(mod, id);
 
     const char *value = ptree_token_value(mod, tree);
     size_t width = ptree_token_width(mod, tree);
-    
+
     fprintf(file, "%*s", (int)depth, "");
     if (name) {
       fprintf(file, "<%s", name);
@@ -340,12 +335,9 @@ static inline int ptree_impl_as_xml_elt(const ptree_module *mod,
   return 0;
 }
 
-static inline int ptree_impl_as_xml_post(const ptree_module *mod,
-                                        ptree tree,
-                                         uint64_t depth,
-                                        void *voidfile)
-{
-  FILE *file = (FILE*)voidfile;
+static inline int ptree_impl_as_xml_post(const ptree_module *mod, ptree tree,
+                                         uint64_t depth, void *voidfile) {
+  FILE *file = (FILE *)voidfile;
   if (ptree_is_expression(mod, tree)) {
     uint64_t id = ptree_identifier(mod, tree);
     const char *name = ptree_identifier_expression_maybe_name(mod, id);
@@ -360,22 +352,99 @@ static inline int ptree_impl_as_xml_post(const ptree_module *mod,
   return 0;
 }
 
-static inline void ptree_as_xml(const ptree_module *mod, FILE *file,
-                                ptree tree) {
+static inline void ptree_as_xml(const ptree_module *mod, stack_module stackmod,
+                                FILE *file, ptree tree) {
   if (ptree_is_failure(tree)) {
     fprintf(file, "<Failure/>");
     return;
   }
 
-  ptree_traverse(mod,
-                 tree,
-                 0u,
-                 ptree_impl_as_xml_pre,
-                 file,
-                 ptree_impl_as_xml_elt,
-                 file,
-                 ptree_impl_as_xml_post,
-                 file);
+  ptree_traverse(mod, stackmod, tree, 0u, ptree_impl_as_xml_pre, file,
+                 ptree_impl_as_xml_elt, file, ptree_impl_as_xml_post, file);
+}
+
+static inline int ptree_traverse(
+    const ptree_module *mod, stack_module stackmod, ptree tree, uint64_t depth,
+    int (*pre)(const ptree_module *mod, ptree tree, uint64_t, void *),
+    void *pre_data,
+    int (*elt)(const ptree_module *mod, ptree tree, uint64_t, void *),
+    void *elt_data,
+    int (*post)(const ptree_module *mod, ptree tree, uint64_t, void *),
+    void *post_data) {
+  ptree_require(!ptree_is_failure(tree));
+
+  if (ptree_is_token(mod, tree)) {
+    return elt(mod, tree, depth, elt_data);
+  }
+
+  void *stack = stack_create(stackmod, 4);
+  if (!stack) {
+    return 1;
+  }
+  stack_push_assuming_capacity(stackmod, stack, tree.state);
+
+  for (uint64_t size = 1; size = stack_size(stackmod, stack), size != 0;) {
+
+    uint64_t top = stack_pop(stackmod, stack);
+    size = size - 1; // keep the local variable accurate
+
+    // Clear the low bit when recreating the tree instance
+    ptree t = {.state = top & ~UINT64_C(1)};
+
+    bool low_set = top & 1;
+
+    if (low_set) {
+      ptree_require(ptree_is_expression(mod, t));
+      depth--;
+      int a = post(mod, t, depth, post_data);
+      if (a != 0) {
+        stack_destroy(stackmod, stack);
+        return a;
+      }
+      continue;
+    }
+
+    if (ptree_is_token(mod, t)) {
+      int e = elt(mod, t, depth, elt_data);
+      if (e != 0) {
+        stack_destroy(stackmod, stack);
+        return e;
+      }
+      continue;
+    }
+
+    if (ptree_is_expression(mod, t)) {
+      size_t N = ptree_expression_elements(mod, t);
+      {
+        void *s2 = stack_reserve(stackmod, stack, size + N + 1);
+        if (!s2) {
+          stack_destroy(stackmod, stack);
+          return 1;
+        }
+        stack = s2;
+      }
+
+      // Current with the bit set
+      stack_push_assuming_capacity(stackmod, stack, t.state | (UINT64_C(1)));
+
+      // Then all the elements
+      for (size_t i = N; i-- > 0;) {
+        ptree p = ptree_expression_element(mod, t, i);
+        stack_push_assuming_capacity(stackmod, stack, p.state);
+      }
+
+      int b = pre(mod, t, depth, pre_data);
+      if (b != 0) {
+        stack_destroy(stackmod, stack);
+        return b;
+      }
+
+      depth++;
+    }
+  }
+
+  stack_destroy(stackmod, stack);
+  return 0;
 }
 
 #endif
