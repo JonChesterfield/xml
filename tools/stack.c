@@ -1,75 +1,185 @@
 #include "stack.h"
 
+#define STACK_FREESTANDING() 0
+
+#if STACK_FREESTANDING()
+#define EVILUNIT_USE_STDIO 0
+#else
 #define EVILUNIT_USE_STDIO 1
+#endif
+
 #include "EvilUnit/EvilUnit.h"
 
+enum {
+  size_offset = 1,
+  cap_offset = 0,
+};
+
+static size_t stack_impl_size(void *s) {
+  uint64_t *stack = (uint64_t *)s;
+  return stack[size_offset];
+}
+
+static size_t stack_impl_capacity(void *s) {
+  uint64_t *stack = (uint64_t *)s;
+  return stack[cap_offset];
+}
+
+static void stack_impl_push(void *s, uint64_t v) {
+  uint64_t *stack = (uint64_t *)s;
+  size_t sz = stack_impl_size(s);
+  stack[2 + sz] = v;
+  stack[size_offset] = sz + 1;
+}
+
+static uint64_t stack_impl_peek(void *s) {
+  uint64_t *stack = (uint64_t *)s;
+  size_t sz = stack_impl_size(s);
+  return stack[2 + sz - 1];
+}
+
+static void stack_impl_drop(void *s) {
+  uint64_t *stack = (uint64_t *)s;
+  size_t sz = stack_impl_size(s);
+  stack[size_offset] = sz - 1;
+}
+
+#if !STACK_FREESTANDING()
 #include <stdlib.h>
 
 static void *stack_libc_create(void) {
   uint64_t *res = malloc(2 * sizeof(uint64_t));
   if (res) {
-    res[0] = 0;
-    res[1] = 0;
+    res[cap_offset] = 0;
+    res[size_offset] = 0;
   }
   return res;
 }
 
 static void stack_libc_destroy(void *s) { free(s); }
 
-static size_t stack_libc_size(void *s) {
-  uint64_t *stack = (uint64_t *)s;
-  return stack[1];
-}
-
-static size_t stack_libc_capacity(void *s) {
-  uint64_t *stack = (uint64_t *)s;
-  return stack[0];
-}
-
 static void *stack_libc_reserve(void *s, size_t N) {
-  if (N <= stack_libc_capacity(s)) {
+  if (N <= stack_impl_capacity(s)) {
     return s;
   }
   uint64_t *r = realloc(s, (2 + N) * sizeof(uint64_t));
   if (r) {
-    r[0] = N;
+    r[cap_offset] = N;
   }
   return r;
-}
-
-static void stack_libc_push(void *s, uint64_t v) {
-  uint64_t *stack = (uint64_t *)s;
-  size_t sz = stack_libc_size(s);
-  stack[2 + sz] = v;
-  stack[1] = sz + 1;
-}
-
-static uint64_t stack_libc_peek(void *s) {
-  uint64_t *stack = (uint64_t *)s;
-  size_t sz = stack_libc_size(s);
-  return stack[2 + sz - 1];
-}
-
-static void stack_libc_drop(void *s) {
-  uint64_t *stack = (uint64_t *)s;
-  size_t sz = stack_libc_size(s);
-  stack[1] = sz - 1;
 }
 
 const struct stack_module_ty stack_libc = {
     .create = stack_libc_create,
     .destroy = stack_libc_destroy,
-    .size = stack_libc_size,
-    .capacity = stack_libc_capacity,
+    .size = stack_impl_size,
+    .capacity = stack_impl_capacity,
     .reserve = stack_libc_reserve,
-    .push = stack_libc_push,
-    .peek = stack_libc_peek,
-    .drop = stack_libc_drop,
-
+    .push = stack_impl_push,
+    .peek = stack_impl_peek,
+    .drop = stack_impl_drop,
 };
 
+#endif
+
+static uint64_t syscall6(uint64_t n, uint64_t a0, uint64_t a1, uint64_t a2,
+                         uint64_t a3, uint64_t a4, uint64_t a5) {
+  uint64_t ret = 0;
+  register uint64_t r10 __asm__("r10") = a3;
+  register uint64_t r8 __asm__("r8") = a4;
+  register uint64_t r9 __asm__("r9") = a5;
+
+  __asm__ volatile("syscall"
+                   : "=a"(ret)
+                   : "a"(n), "D"(a0), "S"(a1), "d"(a2), "r"(r10), "r"(r8),
+                     "r"(r9)
+                   : "rcx", "r11", "memory");
+
+  return ret;
+}
+
+static void *brk(void *addr) {
+  uint64_t x;
+  __builtin_memcpy(&x, &addr, 8);
+  uint64_t n = 12;
+  uint64_t u;
+  u = *(&u); // suppress the uninitialized warning
+  uint64_t r = syscall6(n, x, u, u, u, u, u);
+  __builtin_memcpy(&addr, &r, 8);
+  return addr;
+}
+
+static void *brk_realloc(void *b, size_t n) {
+  void *request = (char *)b + n;
+  void *got = brk(request);
+  if (got == request) {
+    return got;
+  }
+  // Otherwise brk failed
+  return 0;
+}
+
+static void *brk_malloc(size_t n) {
+  void *base = brk(0);
+  if (base == 0) {
+    return 0;
+  }
+  return brk_realloc(base, n);
+}
+
+static void brk_free(void *b, size_t n) {
+  void *request = (char *)b - n;
+  void *got = brk(request);
+  if (got == request) {
+  }
+}
+
+static void *stack_brk_create(void) {
+  uint64_t *alloc = brk_malloc(2 * sizeof(uint64_t));
+  if (alloc) {
+    alloc[cap_offset] = 0;
+    alloc[size_offset] = 0;
+  }
+  return alloc;
+}
+
+static void stack_brk_destroy(void *s) {
+
+  size_t cap = stack_impl_capacity(s);
+  size_t bytes = 8 * (cap + 2);
+  brk_free(s, bytes);
+}
+
+static void *stack_brk_reserve(void *s, size_t N) {
+  if (N <= stack_impl_capacity(s)) {
+    return s;
+  }
+
+  uint64_t *r = brk_realloc(s, (2 + N) * sizeof(uint64_t));
+  if (r) {
+    r[cap_offset] = N;
+  }
+  return r;
+}
+
+const struct stack_module_ty stack_brk = {
+    .create = stack_brk_create,
+    .destroy = stack_brk_destroy,
+    .size = stack_impl_size,
+    .capacity = stack_impl_capacity,
+    .reserve = stack_brk_reserve,
+    .push = stack_impl_push,
+    .peek = stack_impl_peek,
+    .drop = stack_impl_drop,
+};
+
+#if STACK_FREESTANDING()
+static const stack_module mod = &stack_brk;
+#else
+static const stack_module mod = &stack_libc;
+#endif
+
 static MODULE(create_destroy) {
-  const stack_module mod = &stack_libc;
   TEST("size 0") {
     void *s = stack_create(mod, 0);
     CHECK(stack_size(mod, s) == 0);
@@ -93,7 +203,6 @@ static MODULE(create_destroy) {
 }
 
 static MODULE(push_pop_sequence) {
-  const stack_module mod = &stack_libc;
   void *s = stack_create(mod, 0);
 
   TEST("check size/cap") {
