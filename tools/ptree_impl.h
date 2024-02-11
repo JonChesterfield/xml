@@ -291,17 +291,39 @@ static inline ptree ptree_expression8(const ptree_module *mod,
   return res;
 }
 
-// TODO:
-// Review codegen for this - it might be over the size threshold for inlining,
-// in which case the macro specialisation could be split up.
-static inline void ptree_impl_token_as_xml(const ptree_module *mod, FILE *file,
-                                           ptree tree) {
+static inline int ptree_impl_as_xml_pre(const ptree_module *mod,
+                                        ptree tree,
+                                        uint64_t depth,
+                                        void *voidfile)
+{
+  FILE *file = (FILE*)voidfile;
+  if (ptree_is_expression(mod, tree)) {
+    uint64_t id = ptree_identifier(mod, tree);
+    const char *name = ptree_identifier_expression_maybe_name(mod, id);
+
+    fprintf(file, "%*s", (int)depth, "");
+    if (name) {
+      fprintf(file, "<%s>\n", name);
+    } else {
+      fprintf(file, "<e%zu>\n", id);
+    }
+  }
+  return 0;
+}
+
+static inline int ptree_impl_as_xml_elt(const ptree_module *mod,
+                                        ptree tree,
+                                        uint64_t depth,
+                                        void *voidfile) {
+  FILE *file = (FILE*)voidfile;
   if (ptree_is_token(mod, tree)) {
     uint64_t id = ptree_identifier(mod, tree);
     const char *name = ptree_identifier_token_maybe_name(mod, id);
 
     const char *value = ptree_token_value(mod, tree);
     size_t width = ptree_token_width(mod, tree);
+    
+    fprintf(file, "%*s", (int)depth, "");
     if (name) {
       fprintf(file, "<%s", name);
     } else {
@@ -309,40 +331,33 @@ static inline void ptree_impl_token_as_xml(const ptree_module *mod, FILE *file,
     }
     fprintf(file, " \"value\"=\"");
     // todo - buffer / %s, deal with non-ascii  etc
-
     for (size_t i = 0; i < width; i++) {
       fprintf(file, "%c", value[i]);
     }
-    fprintf(file, "\">");
+    fprintf(file, "\" />\n");
   }
+
+  return 0;
 }
 
-static inline void ptree_impl_expression_as_xml(const ptree_module *mod,
-                                                FILE *file, ptree tree) {
+static inline int ptree_impl_as_xml_post(const ptree_module *mod,
+                                        ptree tree,
+                                         uint64_t depth,
+                                        void *voidfile)
+{
+  FILE *file = (FILE*)voidfile;
   if (ptree_is_expression(mod, tree)) {
     uint64_t id = ptree_identifier(mod, tree);
-    size_t N = ptree_expression_elements(mod, tree);
     const char *name = ptree_identifier_expression_maybe_name(mod, id);
 
+    fprintf(file, "%*s", (int)depth, "");
     if (name) {
-      fprintf(file, "<%s>", name);
+      fprintf(file, "</%s>\n", name);
     } else {
-      fprintf(file, "<e%zu>", id);
+      fprintf(file, "</e%zu>\n", id);
     }
-
-    for (size_t i = 0; i < N; i++) {
-      ptree p = ptree_expression_element(mod, tree, i);
-      ptree_as_xml(mod, file, p);
-    }
-
-    if (name) {
-      fprintf(file, "</%s>", name);
-    } else {
-      fprintf(file, "</e%zu>", id);
-    }
-
-    return;
   }
+  return 0;
 }
 
 static inline void ptree_as_xml(const ptree_module *mod, FILE *file,
@@ -352,15 +367,15 @@ static inline void ptree_as_xml(const ptree_module *mod, FILE *file,
     return;
   }
 
-  if (ptree_is_token(mod, tree)) {
-    ptree_impl_token_as_xml(mod, file, tree);
-    return;
-  }
-
-  if (ptree_is_expression(mod, tree)) {
-    ptree_impl_expression_as_xml(mod, file, tree);
-    return;
-  }
+  ptree_traverse(mod,
+                 tree,
+                 0u,
+                 ptree_impl_as_xml_pre,
+                 file,
+                 ptree_impl_as_xml_elt,
+                 file,
+                 ptree_impl_as_xml_post,
+                 file);
 }
 
 #endif

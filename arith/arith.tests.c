@@ -55,7 +55,43 @@ MODULE(ptree)
       fprintf(stdout, "\n");
     }
   
+  TEST("traverse debug")
+    {
+      ptree tokens[16];
+      const char * toks = "abcd""efgh""ijkl""mnop";
+      for (unsigned i = 0; i < 16; i++)
+        {
+          tokens[i] = arith_ptree_from_token(ctx, 1 + i/2 , &toks[i], 1);
+        }
 
+      ptree quads[4];
+      for (unsigned i = 0; i < 4; i++)
+        {
+          quads[i] = arith_ptree_expression4(ctx,
+                                             i,
+                                             tokens[4*i+0],
+                                             tokens[4*i+1],
+                                             tokens[4*i+2],
+                                             tokens[4*i+3]);
+                                             
+                                             
+        }
+
+      ptree root = arith_ptree_expression5(ctx,
+                                           101,
+                                           quads[0],
+                                           quads[1],
+                                           arith_ptree_from_token(ctx, 4, "life", 4),
+                                           quads[2],
+                                           quads[3]);
+
+      arith_ptree_as_xml(stdout, root);
+      fprintf(stdout, "\n");
+
+      ptree_traverse_debugging(arith_ptree_retrieve_module(), root);
+      fprintf(stdout, "\n");
+    }
+  
   arith_ptree_destroy_context(ctx);
 }
 

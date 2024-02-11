@@ -127,6 +127,58 @@ static inline ptree ptree_expression8(const ptree_module *mod,
 static inline void
 ptree_as_xml(const ptree_module *mod, FILE *f, ptree tree);
 
+// Traverse the parse tree. Calls pre on the node, then elt on each element
+// of that node (if any), then calls post on the node.
+// If any of the callbacks return non-zero, entire traversal gives up and
+// returns that value. Returns zero on complete traversal.
+//
+// Invariants on the tree on failure depend on the implementation, let's
+// see how well it can be done.
+static inline int
+ptree_traverse(const ptree_module *mod,
+               ptree tree,
+               uint64_t depth,
+               int (*pre)(const ptree_module *mod, ptree tree, uint64_t, void*),
+               void* pre_data,
+               int (*elt)(const ptree_module *mod, ptree tree, uint64_t, void*),
+               void* elt_data,
+               int (*post)(const ptree_module *mod, ptree tree, uint64_t, void*),
+               void* post_data)
+{
+  // todo, make this a contract
+  if (ptree_is_failure(tree)) { return 1; }
+
+  if (ptree_is_token(mod, tree))
+    {
+      return elt(mod, tree, depth, elt_data);
+    }
+  
+  if (ptree_is_expression(mod, tree))
+    {
+      int b = pre(mod, tree, depth, pre_data);
+      if (b != 0)
+        {
+          return b;
+        }
+
+      size_t N = ptree_expression_elements(mod, tree);
+      for (size_t i = 0 ; i < N; i++)
+        {
+          ptree p = ptree_expression_element(mod, tree, i);
+          int r = ptree_traverse(mod, p, depth+1, pre, pre_data, elt, elt_data, post, post_data);
+          if (r != 0) { return r; }
+        }
+
+      int a = post(mod, tree, depth, pre_data);
+      if (a != 0)
+        {
+          return a;
+        }
+    }
+  
+  return 0;
+}
+
 struct ptree_module_ty {
   ptree_context (*const create_context)(void);
   void (*const destroy_context)(ptree_context);
