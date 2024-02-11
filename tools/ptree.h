@@ -51,6 +51,15 @@ static inline bool ptree_identifier_valid_token(const ptree_module *mod,
 static inline bool ptree_identifier_valid_expression(const ptree_module *mod,
                                                      uint64_t id);
 
+// Returns a null terminated name if available, otherwise null
+static inline
+const char *
+ptree_identifier_token_maybe_name(const ptree_module *mod,uint64_t id);
+
+static inline
+const char *
+ptree_identifier_expression_maybe_name(const ptree_module *mod,uint64_t id);
+
 // TODO: Probably don't want max/min elements in the external API
 static inline size_t ptree_identifier_minimum_elements(const ptree_module *mod,
                                                        uint64_t id);
@@ -115,6 +124,9 @@ static inline ptree ptree_expression8(const ptree_module *mod,
                                       ptree x1, ptree x2, ptree x3, ptree x4,
                                       ptree x5, ptree x6, ptree x7);
 
+static inline void
+ptree_as_xml(const ptree_module *mod, FILE *f, ptree tree);
+
 struct ptree_module_ty {
   ptree_context (*const create_context)(void);
   void (*const destroy_context)(ptree_context);
@@ -122,6 +134,12 @@ struct ptree_module_ty {
   bool (*const identifier_valid_token)(uint64_t);
   bool (*const identifier_valid_expression)(uint64_t);
 
+  const char *
+  (*identifier_token_maybe_name)(uint64_t id);
+  const char *
+  (*identifier_expression_maybe_name)(uint64_t id);
+
+  
   // A given expression identifier might have hard constraints on the number
   // of elements it can have, e.g. exactly 2 or at most 4
   // Maximum is UINT64_MAX for no limit.

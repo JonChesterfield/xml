@@ -45,6 +45,30 @@ static bool arith_impl_ptree_identifier_valid_expression(uint64_t id) {
   return true;
 }
 
+static const char * arith_impl_ptree_identifier_token_maybe_name(uint64_t id) {
+  switch (id) {
+  case arith_token_PLUS: return "PLUS";
+  case arith_token_MINUS: return "MINUS";
+  case arith_token_TIMES: return "TIMES";
+  case arith_token_DIVIDE: return "DIVIDE";
+  case arith_token_MODULO: return "MODULO";
+  case arith_token_LPAREN: return "LPAREN";
+  case arith_token_RPAREN: return "RPAREN";
+  case arith_token_INTEGER: return "INTEGER";
+  case arith_token_WHITESPACE: return "WHITESPACE";
+  default: {
+    return 0;
+  }
+  }
+}
+
+static const char * arith_impl_ptree_identifier_expression_maybe_name(uint64_t id) {
+  if (arith_impl_ptree_identifier_valid_expression(id)) {    
+    return "expr";
+  }
+  return 0;
+}
+
 static size_t arith_impl_ptree_identifier_minimum_elements(uint64_t id) {
   return 0;
 }

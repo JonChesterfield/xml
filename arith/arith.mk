@@ -30,7 +30,7 @@ arith/arith_parser.lemon.c:	$(lemon_tmp)/arith_parser.lemon.c
 arith/arith_parser.lemon.h:	$(lemon_tmp)/arith_parser.lemon.h
 	@cp "$<" "$@"
 
-arith/arith.ptree.h:	arith/arith.ptree.h.in
+arith/arith.ptree.h:	arith/arith.ptree.h.in tools/ptree_macro_wrapper.h
 	$(CC) -E -C -P -xc $< -ffreestanding -o $@
 	clang-format -i $@
 

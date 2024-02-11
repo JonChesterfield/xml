@@ -21,6 +21,16 @@ static bool generic_impl_ptree_identifier_valid_expression(uint64_t id) {
   return true;
 }
 
+static const char * generic_impl_ptree_identifier_token_maybe_name(uint64_t id) {
+  (void)id;
+  return 0;
+}
+
+static const char * generic_impl_ptree_identifier_expression_maybe_name(uint64_t id) {
+  (void)id;
+  return 0;
+}
+
 static size_t generic_impl_ptree_identifier_minimum_elements(uint64_t id) {
   (void)id;
   return 0;

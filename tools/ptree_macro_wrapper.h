@@ -20,6 +20,9 @@
   bool PTREE_CONCAT(PREFIX, identifier_is_failure)(uint64_t id);               \
   bool PTREE_CONCAT(PREFIX, identifier_valid_token)(uint64_t id);              \
   bool PTREE_CONCAT(PREFIX, identifier_valid_expression)(uint64_t id);         \
+  const char *PTREE_CONCAT(PREFIX, identifier_token_maybe_name)(uint64_t id);  \
+  const char *PTREE_CONCAT(PREFIX,                                             \
+                           identifier_expression_maybe_name)(uint64_t id);     \
   size_t PTREE_CONCAT(PREFIX, identifier_minimum_elements)(uint64_t id);       \
   size_t PTREE_CONCAT(PREFIX, identifier_maximum_elements)(uint64_t id);       \
   uint64_t PTREE_CONCAT(PREFIX, identifier)(ptree p);                          \
@@ -57,7 +60,8 @@
       ptree x4, ptree x5, ptree x6);                                           \
   ptree PTREE_CONCAT(PREFIX, expression8)(                                     \
       ptree_context ctx, uint64_t id, ptree x0, ptree x1, ptree x2, ptree x3,  \
-      ptree x4, ptree x5, ptree x6, ptree x7);
+      ptree x4, ptree x5, ptree x6, ptree x7);                                 \
+  void PTREE_CONCAT(PREFIX, as_xml)(FILE * file, ptree tree);
 
 #define PTREE_INSTANTIATE_DEFINE(PREFIX, MODULE)                               \
   PTREE_INSTANTIATE_DECLARE(PREFIX);                                           \
@@ -75,6 +79,13 @@
   }                                                                            \
   bool PTREE_CONCAT(PREFIX, identifier_valid_expression)(uint64_t id) {        \
     return ptree_identifier_valid_expression(&MODULE, id);                     \
+  }                                                                            \
+  const char *PTREE_CONCAT(PREFIX, identifier_token_maybe_name)(uint64_t id) { \
+    return ptree_identifier_token_maybe_name(&MODULE, id);                     \
+  }                                                                            \
+  const char *PTREE_CONCAT(PREFIX,                                             \
+                           identifier_expression_maybe_name)(uint64_t id) {    \
+    return ptree_identifier_expression_maybe_name(&MODULE, id);                \
   }                                                                            \
   size_t PTREE_CONCAT(PREFIX, identifier_minimum_elements)(uint64_t id) {      \
     return ptree_identifier_minimum_elements(&MODULE, id);                     \
@@ -161,6 +172,9 @@
       ptree x4, ptree x5, ptree x6, ptree x7) {                                \
     return ptree_expression8(&MODULE, ctx, id, x0, x1, x2, x3, x4, x5, x6,     \
                              x7);                                              \
+  }                                                                            \
+  void PTREE_CONCAT(PREFIX, as_xml)(FILE * file, ptree tree) {                 \
+    return ptree_as_xml(&MODULE, file, tree);                                  \
   }
 
 #if 0
@@ -176,6 +190,10 @@
     .identifier_valid_token = PTREE_CONCAT(PREFIX, identifier_valid_token),    \
     .identifier_valid_expression =                                             \
         PTREE_CONCAT(PREFIX, identifier_valid_expression),                     \
+    .identifier_token_maybe_name =                                             \
+        PTREE_CONCAT(PREFIX, identifier_token_maybe_name),                     \
+    .identifier_expression_maybe_name =                                        \
+        PTREE_CONCAT(PREFIX, identifier_expression_maybe_name),                \
     .identifier_minimum_elements =                                             \
         PTREE_CONCAT(PREFIX, identifier_minimum_elements),                     \
     .identifier_maximum_elements =                                             \
