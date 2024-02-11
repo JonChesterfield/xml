@@ -30,11 +30,17 @@ arith/arith_parser.lemon.c:	$(lemon_tmp)/arith_parser.lemon.c
 arith/arith_parser.lemon.h:	$(lemon_tmp)/arith_parser.lemon.h
 	@cp "$<" "$@"
 
+arith/arith.ptree.h:	arith/arith.ptree.h.in
+	$(CC) -E -C -P -xc $< -ffreestanding -o $@
+	clang-format -i $@
+
+
 $(arith_tmp)/stdin_to_tree.o:	arith/stdin_to_tree.c arith/arith.lemon.h arith/arith.lexer.h arith/arith.declarations.h | $(arith_tmp)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
 clean::
+	rm -f arith/arith.ptree.h
 	rm -f arith/arith.lemon.h arith/arith.lemon.c
 	rm -f arith/arith_parser.lemon.h arith/arith_parser.lemon.c
 
