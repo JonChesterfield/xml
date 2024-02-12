@@ -34,6 +34,8 @@ arith/arith.ptree.h:	arith/arith.ptree.h.in tools/ptree_macro_wrapper.h
 	$(CC) -E -C -P -xc $< -ffreestanding -o $@
 	clang-format -i $@
 
+arith/freestanding.o:	arith/freestanding.c arith/arith.lemon.h arith/arith.lexer.h arith/arith.declarations.h
+	$(CC) $(CFLAGS) -c $< -ffreestanding -o $@
 
 $(arith_tmp)/stdin_to_tree.o:	arith/stdin_to_tree.c arith/arith.lemon.h arith/arith.lexer.h arith/arith.declarations.h | $(arith_tmp)
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -51,7 +53,7 @@ $(arith_tmp)/arith.tests.o:	arith/arith.tests.c arith/arith.ptree.h tools/ptree.
 	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
 
 $(arith_tmp)/arith.lemon.o:	arith/arith.lemon.c arith/arith.lemon.h
-	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
+	$(CC) $(CFLAGS) -ffreestanding -Wno-unused-parameter -c $< -o $@
 
 $(arith_tmp)/arith.main.o:	arith/arith.main.c arith/arith.lang.xml $(arith_tmp)
 	$(CC) $(CFLAGS) -c $< -o $@

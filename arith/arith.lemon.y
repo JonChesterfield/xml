@@ -6,7 +6,9 @@
 #include <stdio.h> // parsetrace uses FILE
 #include <stdlib.h>
 
+  
 #if INTERFACE
+  
 // Things to inject into makeheaders exported interface
 #ifndef YYMALLOCARGTYPE
 #define YYMALLOCARGTYPE size_t
@@ -22,6 +24,7 @@
   
 #include "arith.lemon.h"
 
+  
 }
 
 %code
