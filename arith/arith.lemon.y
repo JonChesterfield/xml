@@ -29,13 +29,7 @@
 // todo: make lemon.c self contained
 #include "arith.lemon.h"
 
-  enum {expr_BinOpPlus = 20, // todo
-        expr_BinOpMinus,
-        expr_BinOpTimes,
-        expr_BinOpDivide,
-        expr_BinOpModulo,
-        expr_BinOpParenthesised,
-  };
+
 }
 
 %code
@@ -95,6 +89,11 @@
 %start_symbol program // explicit
 %type expr { ptree }
 
+// Giving these different types plus a conversion to expr
+// does lead to an annotated tree (with the conversions in place)
+%type plusexpr {ptree}
+%type minusexpr {ptree}
+
 %extra_argument {ptree* external_context}
 
 %extra_context {ptree_context arith_ptree_context}
@@ -117,7 +116,6 @@
 %token MODULO.
 %token LPAREN.
 %token RPAREN.
-%token One.
 %token INTEGER.
 %token WHITESPACE.
 
@@ -154,15 +152,26 @@ program ::= expr(A). {
 
 // BinopPlus
 // 
-expr(A) ::= expr(B) PLUS expr(C). {
-  #if 0
-  A = PLUS_ctor(arith_ptree_context, B, C);
-  #else
+plusexpr(A) ::= expr(B) PLUS(Op) expr(C). {
+  ptree Opt = arith_ptree_from_token(arith_ptree_context, TOKEN_ID_PLUS, Op.value, Op.width);
+
+  // Adding in + doesn't change the output tree as much as expected
+  // A = arith_ptree_expression3(arith_ptree_context, expr_BinOpPlus, Opt, B, C);
   A = arith_ptree_expression2(arith_ptree_context, expr_BinOpPlus, B, C);
-  #endif
 }
+
+expr(A) ::= plusexpr(B).
+{
+  A = B;
+}
+
+expr(A) ::= minusexpr(B).
+{
+  A = B;
+}
+
   
-expr(A) ::= expr(B) MINUS expr(C). {
+minusexpr(A) ::= expr(B) MINUS expr(C). {
   A = arith_ptree_expression2(arith_ptree_context, expr_BinOpMinus, B, C);
 }
   
@@ -186,9 +195,10 @@ expr(A) ::= LPAREN expr(B) RPAREN.
 
 expr(A) ::= INTEGER(B).
 {
-  token local_token = B;
-  A = arith_ptree_from_token(arith_ptree_context, TOKEN_ID_INTEGER, local_token.value, local_token.width);
+  // doesn't seem to be recording the value of the integers
+  A = arith_ptree_from_token(arith_ptree_context, TOKEN_ID_INTEGER, B.value, B.width);
 }
+
 
   
 // Fun. Can discard whitespace in the parse instead of in the lexer.

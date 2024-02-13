@@ -1,4 +1,6 @@
 #include "arith.ptree.h"
+#include "arith.parse.h"
+
 #include "arith.declarations.h"
 #include "../tools/ptree_malloc_allocator.h"
 
@@ -63,6 +65,17 @@ static const char * arith_impl_ptree_identifier_token_maybe_name(uint64_t id) {
 }
 
 static const char * arith_impl_ptree_identifier_expression_maybe_name(uint64_t id) {
+  switch(id)
+    {
+    case expr_BinOpPlus: return "+";
+    case expr_BinOpMinus: return "+";
+    case expr_BinOpTimes: return "*";
+    case expr_BinOpDivide: return "/";
+    case expr_BinOpModulo: return "%";
+    case expr_BinOpParenthesised: return "parens";
+    }
+  
+  
   if (arith_impl_ptree_identifier_valid_expression(id)) {    
     return "expr";
   }

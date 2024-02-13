@@ -32,5 +32,12 @@ void arith_parser_parse(arith_parser_type*, int, token); // maybe implicit init
 ptree arith_parser_tree(arith_parser_type*); // maybe fold with finalize
 
 
+  enum {expr_BinOpPlus = 42,
+        expr_BinOpMinus = 43,
+        expr_BinOpTimes = 44,
+        expr_BinOpDivide = 45,
+        expr_BinOpModulo = 46,
+        expr_BinOpParenthesised = 47,
+  };
 
 #endif

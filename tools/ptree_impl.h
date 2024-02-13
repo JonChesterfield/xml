@@ -291,12 +291,12 @@ static inline ptree ptree_expression8(const ptree_module *mod,
   return res;
 }
 
-static inline int ptree_impl_as_xml_pre(const ptree_module *mod, ptree tree,
-                                        uint64_t depth, void *voidfile) {
+static inline int ptree_impl_as_xml_pre_impl(const ptree_module *mod, ptree tree,
+                                             uint64_t depth, bool pretty, void *voidfile) {
   FILE *file = (FILE *)voidfile;
   if (ptree_is_expression(mod, tree)) {
     uint64_t id = ptree_identifier(mod, tree);
-    const char *name = ptree_identifier_expression_maybe_name(mod, id);
+    const char *name = pretty ? ptree_identifier_expression_maybe_name(mod, id) : 0;
 
     fprintf(file, "%*s", (int)depth, "");
     if (name) {
@@ -308,12 +308,12 @@ static inline int ptree_impl_as_xml_pre(const ptree_module *mod, ptree tree,
   return 0;
 }
 
-static inline int ptree_impl_as_xml_elt(const ptree_module *mod, ptree tree,
-                                        uint64_t depth, void *voidfile) {
+static inline int ptree_impl_as_xml_elt_impl(const ptree_module *mod, ptree tree,
+                                        uint64_t depth, bool pretty, void *voidfile) {
   FILE *file = (FILE *)voidfile;
   if (ptree_is_token(mod, tree)) {
     uint64_t id = ptree_identifier(mod, tree);
-    const char *name = ptree_identifier_token_maybe_name(mod, id);
+    const char *name = pretty ? ptree_identifier_token_maybe_name(mod, id) : 0;
 
     const char *value = ptree_token_value(mod, tree);
     size_t width = ptree_token_width(mod, tree);
@@ -335,12 +335,12 @@ static inline int ptree_impl_as_xml_elt(const ptree_module *mod, ptree tree,
   return 0;
 }
 
-static inline int ptree_impl_as_xml_post(const ptree_module *mod, ptree tree,
-                                         uint64_t depth, void *voidfile) {
+static inline int ptree_impl_as_xml_post_impl(const ptree_module *mod, ptree tree,
+                                         uint64_t depth, bool pretty, void *voidfile) {
   FILE *file = (FILE *)voidfile;
   if (ptree_is_expression(mod, tree)) {
     uint64_t id = ptree_identifier(mod, tree);
-    const char *name = ptree_identifier_expression_maybe_name(mod, id);
+    const char *name = pretty ? ptree_identifier_expression_maybe_name(mod, id) : 0;
 
     fprintf(file, "%*s", (int)depth, "");
     if (name) {
@@ -352,6 +352,35 @@ static inline int ptree_impl_as_xml_post(const ptree_module *mod, ptree tree,
   return 0;
 }
 
+static inline int ptree_impl_as_xml_pre(const ptree_module *mod, ptree tree,
+                                        uint64_t depth, void *voidfile) {
+  return ptree_impl_as_xml_pre_impl(mod,tree,depth,true,voidfile);
+}
+static inline int ptree_impl_as_xml_elt(const ptree_module *mod, ptree tree,
+                                        uint64_t depth, void *voidfile) {
+  return ptree_impl_as_xml_elt_impl(mod,tree,depth,true,voidfile);
+}
+static inline int ptree_impl_as_xml_post(const ptree_module *mod, ptree tree,
+                                        uint64_t depth, void *voidfile) {
+  return ptree_impl_as_xml_post_impl(mod,tree,depth,true,voidfile);
+}
+
+static inline int ptree_impl_as_raw_xml_pre(const ptree_module *mod, ptree tree,
+                                        uint64_t depth, void *voidfile) {
+  return ptree_impl_as_xml_pre_impl(mod,tree,depth,false,voidfile);
+}
+static inline int ptree_impl_as_raw_xml_elt(const ptree_module *mod, ptree tree,
+                                        uint64_t depth, void *voidfile) {
+  return ptree_impl_as_xml_elt_impl(mod,tree,depth,false,voidfile);
+}
+static inline int ptree_impl_as_raw_xml_post(const ptree_module *mod, ptree tree,
+                                        uint64_t depth, void *voidfile) {
+  return ptree_impl_as_xml_post_impl(mod,tree,depth,false,voidfile);
+}
+
+
+
+
 static inline void ptree_as_xml(const ptree_module *mod, stack_module stackmod,
                                 FILE *file, ptree tree) {
   if (ptree_is_failure(tree)) {
@@ -361,6 +390,17 @@ static inline void ptree_as_xml(const ptree_module *mod, stack_module stackmod,
 
   ptree_traverse(mod, stackmod, tree, 0u, ptree_impl_as_xml_pre, file,
                  ptree_impl_as_xml_elt, file, ptree_impl_as_xml_post, file);
+}
+
+static inline void ptree_as_raw_xml(const ptree_module *mod, stack_module stackmod,
+                                FILE *file, ptree tree) {
+  if (ptree_is_failure(tree)) {
+    fprintf(file, "<Failure/>");
+    return;
+  }
+
+  ptree_traverse(mod, stackmod, tree, 0u, ptree_impl_as_raw_xml_pre, file,
+                 ptree_impl_as_raw_xml_elt, file, ptree_impl_as_raw_xml_post, file);
 }
 
 static inline int ptree_traverse(

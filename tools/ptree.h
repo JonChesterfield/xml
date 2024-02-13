@@ -128,6 +128,8 @@ static inline ptree ptree_expression8(const ptree_module *mod,
                                       ptree x5, ptree x6, ptree x7);
 
 static inline void
+ptree_as_raw_xml(const ptree_module *mod, stack_module stackmod, FILE *f, ptree tree);
+static inline void
 ptree_as_xml(const ptree_module *mod, stack_module stackmod, FILE *f, ptree tree);
 
 // Traverse the parse tree. Calls pre on the node, then elt on each element
