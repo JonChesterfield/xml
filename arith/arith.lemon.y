@@ -6,7 +6,6 @@
 #include <stdio.h> // parsetrace uses FILE
 #include <stdlib.h>
 
-  
 #if INTERFACE
   
 // Things to inject into makeheaders exported interface
@@ -17,14 +16,19 @@
 #include "../tools/token.h"
 #include "../tools/list.h"
 
+// Manual header should be consistent with this one
+#include "arith.parse.h"
+  
 // Removes LemonAlloc/LemonFree
 #define arith_Lemon_ENGINEALWAYSONSTACK 1
-  
+
+
+ 
 #endif
-  
+
+// todo: make lemon.c self contained
 #include "arith.lemon.h"
 
-  
 }
 
 %code
@@ -33,7 +37,48 @@
   // However I suspect having a single instance is useful in itself.
   // That's sufficient to define the ALWAYSONSTACK macro which removes
   // the alloc/free interface.
-  struct yyParser arith_global_lemon_parser;
+  //  struct yyParser arith_global_lemon_parser;
+
+
+  _Static_assert(sizeof(struct yyParser) == arith_parser_type_size,"");
+  _Static_assert(_Alignof(struct yyParser) == arith_parser_type_align,"");
+
+  _Static_assert(sizeof(struct arith_parser_s) == arith_parser_type_size,"");
+  _Static_assert(_Alignof(struct arith_parser_s) == arith_parser_type_align,"");
+
+  union arith_parser_u
+  {
+    struct yyParser lemon;
+    struct arith_parser_s state;
+  };
+
+  _Static_assert(sizeof(union arith_parser_u) == arith_parser_type_size,"");
+  _Static_assert(_Alignof(union arith_parser_u) == arith_parser_type_align,"");
+
+  void arith_parser_initialize(arith_parser_type*p)
+  {
+    arith_LemonInit(&p->lemon);
+  }
+  
+  void arith_parser_finalize(arith_parser_type*p)
+  {
+    arith_LemonFinalize(&p->lemon);
+  }
+
+  void arith_parser_parse(arith_parser_type*p, int id, token t)
+  {
+    assert(id > 0);
+    arith_Lemon(&p->lemon, id, t, 0);
+  }
+
+  list arith_parser_tree(arith_parser_type*p)
+  {
+    list tmp;
+    token tok = token_create_novalue("");
+    arith_Lemon(&p->lemon, 0, tok, &tmp);
+    return tmp;
+  }
+
 }
 
 %name arith_Lemon
@@ -100,6 +145,8 @@ program ::= expr(A). {
   }
 }
 
+// BinopPlus
+// 
 expr(A) ::= expr(B) PLUS expr(C). {
   #if 0
   A = PLUS_ctor(B, C);
