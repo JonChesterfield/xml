@@ -8,8 +8,10 @@
 #include "arith.declarations.h"
 #include "arith.parse.h"
 
-#include "../tools/list.h"
+#include "arith.ptree.h"
 #include "../tools/io_buffer.h"
+
+#include "../tools/stack.libc.h"
 
 #include <sys/mman.h>
 #include <unistd.h>
@@ -67,7 +69,8 @@ int main()
       return 41;
     }
 
-  arith_parser_initialize(arith_global_parser());
+  ptree_context ptree_context = arith_ptree_create_context();
+  arith_parser_initialize(arith_global_parser(), ptree_context);
   
   printf("calling file to io buffer\n");
   io_buffer *toplevel = file_to_io_buffer(f);
@@ -114,16 +117,16 @@ int main()
     }
 
   printf("lexer done\n");
-  list res = arith_parser_tree(arith_global_parser());
+  ptree res = arith_parser_tree(arith_global_parser());
 
   printf("parser done\n");
 
-  list_as_xml(stdout, res);
+  arith_ptree_as_xml(&stack_libc, stdout, res);
   printf("\n");
 
   // Will call deallocate on nodes
   arith_parser_finalize(arith_global_parser());
-  
+  arith_ptree_destroy_context(ptree_context);  
   arith_lexer_destroy(lexer);
   free(toplevel);
 

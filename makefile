@@ -306,7 +306,7 @@ arith.lexer:	$(arith_tmp)/arith.lexer.o
 arith.main:	$(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.main.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-arith.stdin_to_tree:	$(arith_tmp)/stdin_to_tree.o $(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.definitions.o .tools.O/lexer.posix.o .tools.O/lexer.re2.o .tools.O/lexer.re2c.o
+arith.stdin_to_tree:	$(arith_tmp)/stdin_to_tree.o $(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.ptree.o $(arith_tmp)/arith.definitions.o .tools.O/lexer.posix.o .tools.O/lexer.re2.o .tools.O/lexer.re2c.o 
 	$(CXX) $(CXXFLAGS) $^ $(RE2LIB) -o $@
 
 arith.tests:	$(arith_tmp)/arith.tests.o $(arith_tmp)/arith.ptree.o .tools.O/generic_ptree.o

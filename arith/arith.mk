@@ -21,7 +21,7 @@ $(lemon_tmp)/%.lemon.h:	$(lemon_tmp)/%.lemon.c $(makeheaders) | $(lemon_tmp)
 arith/arith.lemon.c:	$(lemon_tmp)/arith.lemon.c
 	@cp "$<" "$@"
 
-arith/arith.lemon.h:	$(lemon_tmp)/arith.lemon.h
+arith/arith.lemon.h:	$(lemon_tmp)/arith.lemon.h arith/arith.ptree.h
 	@cp "$<" "$@"
 
 arith/arith_parser.lemon.c:	$(lemon_tmp)/arith_parser.lemon.c

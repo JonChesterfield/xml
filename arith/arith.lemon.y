@@ -14,7 +14,7 @@
 #endif
   
 #include "../tools/token.h"
-#include "../tools/list.h"
+#include "arith.ptree.h"
 
 // Manual header should be consistent with this one
 #include "arith.parse.h"
@@ -29,6 +29,13 @@
 // todo: make lemon.c self contained
 #include "arith.lemon.h"
 
+  enum {expr_BinOpPlus = 20, // todo
+        expr_BinOpMinus,
+        expr_BinOpTimes,
+        expr_BinOpDivide,
+        expr_BinOpModulo,
+        expr_BinOpParenthesised,
+  };
 }
 
 %code
@@ -39,7 +46,10 @@
   // the alloc/free interface.
   //  struct yyParser arith_global_lemon_parser;
 
-
+  // crude bisection by changing these values
+  _Static_assert(sizeof(struct yyParser) >= 3240, "");
+  _Static_assert(sizeof(struct yyParser) <= 3240, "");
+    
   _Static_assert(sizeof(struct yyParser) == arith_parser_type_size,"");
   _Static_assert(_Alignof(struct yyParser) == arith_parser_type_align,"");
 
@@ -55,9 +65,9 @@
   _Static_assert(sizeof(union arith_parser_u) == arith_parser_type_size,"");
   _Static_assert(_Alignof(union arith_parser_u) == arith_parser_type_align,"");
 
-  void arith_parser_initialize(arith_parser_type*p)
+  void arith_parser_initialize(arith_parser_type*p, ptree_context arith_ptree_context)
   {
-    arith_LemonInit(&p->lemon);
+    arith_LemonInit(&p->lemon, arith_ptree_context);
   }
   
   void arith_parser_finalize(arith_parser_type*p)
@@ -71,9 +81,9 @@
     arith_Lemon(&p->lemon, id, t, 0);
   }
 
-  list arith_parser_tree(arith_parser_type*p)
+  ptree arith_parser_tree(arith_parser_type*p)
   {
-    list tmp;
+    ptree tmp;
     token tok = token_create_novalue("");
     arith_Lemon(&p->lemon, 0, tok, &tmp);
     return tmp;
@@ -83,11 +93,11 @@
 
 %name arith_Lemon
 %start_symbol program // explicit
-%type expr { list }
-%type secondexpr { list }
+%type expr { ptree }
 
-%extra_argument {list* external_context}
+%extra_argument {ptree* external_context}
 
+%extra_context {ptree_context arith_ptree_context}
 %syntax_error { fprintf(stderr, "Syntax error\n"); }
 
 // This is whatever object the lexer thinks a token should be
@@ -136,12 +146,9 @@ program ::= expr(A). {
 
 %include
 {
-  list PLUS_ctor(list B, list C)
+  ptree PLUS_ctor(ptree_context arith_ptree_context, ptree B, ptree C)
   {
-    list A = list_make_uninitialised("BinOpPlus", 2);
-    A.elts[0] = B;
-    A.elts[1] = C;
-    return A;
+    return arith_ptree_expression2(arith_ptree_context, expr_BinOpPlus, B, C);
   }
 }
 
@@ -149,48 +156,38 @@ program ::= expr(A). {
 // 
 expr(A) ::= expr(B) PLUS expr(C). {
   #if 0
-  A = PLUS_ctor(B, C);
+  A = PLUS_ctor(arith_ptree_context, B, C);
   #else
-  A = list_make_uninitialised("BinOpPlus", 2);
-  A.elts[0] = B;
-  A.elts[1] = C;
+  A = arith_ptree_expression2(arith_ptree_context, expr_BinOpPlus, B, C);
   #endif
 }
   
 expr(A) ::= expr(B) MINUS expr(C). {
-  A = list_make_uninitialised("BinOpMinus", 2);
-  A.elts[0] = B;
-  A.elts[1] = C;
+  A = arith_ptree_expression2(arith_ptree_context, expr_BinOpMinus, B, C);
 }
   
 expr(A) ::= expr(B) TIMES expr(C). {
-  A = list_make_uninitialised("BinOpTimes", 2);
-  A.elts[0] = B;
-  A.elts[1] = C;
+  A = arith_ptree_expression2(arith_ptree_context, expr_BinOpTimes, B, C);
 }
 
 expr(A) ::= expr(B) DIVIDE expr(C). {
-  A = list_make_uninitialised("BinOpDivide", 2);
-  A.elts[0] = B;
-  A.elts[1] = C;
+  A = arith_ptree_expression2(arith_ptree_context, expr_BinOpDivide, B, C);
 } 
 
 expr(A) ::= expr(B) MODULO expr(C).
 {
-  A = list_make_uninitialised("BinOpModulo", 2);
-  A.elts[0] = B;
-  A.elts[1] = C;
+  A = arith_ptree_expression2(arith_ptree_context, expr_BinOpModulo, B, C);
 }
 
 expr(A) ::= LPAREN expr(B) RPAREN.
 {
-  A = list_make_uninitialised("Parenthesised", 1);
-  A.elts[0] = B;
+  A = arith_ptree_expression1(arith_ptree_context, expr_BinOpParenthesised, B);
 }
 
 expr(A) ::= INTEGER(B).
 {
-  A = list_from_token(B);
+  token local_token = B;
+  A = arith_ptree_from_token(arith_ptree_context, TOKEN_ID_INTEGER, local_token.value, local_token.width);
 }
 
   
