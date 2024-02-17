@@ -87,6 +87,11 @@
 
 %name arith_Lemon
 %start_symbol program // explicit
+
+%extra_argument {ptree* external_context}
+%extra_context {ptree_context arith_ptree_context}
+
+
 %type expr { ptree }
 
 // Giving these different types plus a conversion to expr
@@ -94,9 +99,6 @@
 %type plusexpr {ptree}
 %type minusexpr {ptree}
 
-%extra_argument {ptree* external_context}
-
-%extra_context {ptree_context arith_ptree_context}
 %syntax_error { fprintf(stderr, "Syntax error\n"); }
 
 // This is whatever object the lexer thinks a token should be
@@ -153,7 +155,7 @@ program ::= expr(A). {
 // BinopPlus
 // 
 plusexpr(A) ::= expr(B) PLUS(Op) expr(C). {
-  ptree Opt = arith_ptree_from_token(arith_ptree_context, TOKEN_ID_PLUS, Op.value, Op.width);
+  // ptree Opt = arith_ptree_from_token(arith_ptree_context, TOKEN_ID_PLUS, Op.value, Op.width);
 
   // Adding in + doesn't change the output tree as much as expected
   // A = arith_ptree_expression3(arith_ptree_context, expr_BinOpPlus, Opt, B, C);
