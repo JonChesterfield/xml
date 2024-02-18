@@ -2,6 +2,7 @@
 #define ARENA_LIBC_H_INCLUDED
 
 #include "arena.h"
+#include "contract.h"
 
 #include <stdlib.h>
 
@@ -88,6 +89,6 @@ static  uint64_t arena_libc_allocate_into_existing_capacity(arena_t *a, uint64_t
 }
 
 
-static const struct arena_module_ty arena_libc = ARENA_MODULE_INIT(arena_libc);
+static const struct arena_module_ty arena_libc = ARENA_MODULE_INIT(arena_libc, 0, 0);
 
 #endif

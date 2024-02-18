@@ -6,26 +6,13 @@
 
 #include "arena.libc.h"
 
-static const arena_module mod = &arena_libc;
 
-static _Thread_local jmp_buf death_buffer;
+static jmp_buf death_buffer;
 
-void jump_to_death(void) {
-  // passing 0 here is probably UB but might be treated as passing 1
-  longjmp(death_buffer, 1);
-}
+static const struct arena_module_ty arena_libc_jmp = ARENA_MODULE_INIT(arena_libc, contract_active, &death_buffer);
 
-#define DEATH(X)                                                               \
-  if (setjmp(death_buffer) == 0) {                                             \
-    /* Jump frame is set up. Do the task:*/                                    \
-    int check_resolved_to_this = (X);                                          \
-    (void)check_resolved_to_this;                                              \
-    /* If we get here it failed to jump through the death buffer */            \
-    evilunit_implementation_check(evilunit_internal_state, 0, __LINE__, #X);   \
-  } else {                                                                     \
-    /* If we got here, indicate success*/                                      \
-    evilunit_implementation_check(evilunit_internal_state, 1, __LINE__, #X);   \
-  }
+static const arena_module mod = &arena_libc_jmp;
+
 
 static MODULE(create_destroy) {
   TEST("size 0") {
@@ -36,11 +23,6 @@ static MODULE(create_destroy) {
     arena_destroy(mod, a);
   }
 
-  TEST("try dying") {
-    //     DEATH(1);// should fail, didn't jump to death
-
-    DEATH((jump_to_death(), 1));
-  }
 
   TEST("non-zero") {
     arena_t a = arena_create(mod, 4);
@@ -57,6 +39,21 @@ static MODULE(create_destroy) {
     CHECK(arena_capacity(mod, a) == 5);
     arena_destroy(mod, a);
   }
+
+  #if 0
+  TEST("fail a precondition")
+    {
+      arena_t a = {0};
+      DEATH(death_buffer, arena_destroy(mod, a));
+    }
+  #endif
+
+  TEST("fail without the death macro")
+    {
+      arena_t a = {0};
+      arena_destroy(mod, a);
+    }
+
 }
 
 MAIN_MODULE() { DEPENDS(create_destroy); }

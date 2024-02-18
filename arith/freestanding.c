@@ -15,13 +15,13 @@ enum {
 int64_t read(int fd, void *buf, size_t count) {
   uint64_t ubuf;
   __builtin_memcpy(&ubuf, &buf, 8);
-  return syscall6(__NR_read, fd, ubuf, count, 0, 0, 0);
+  return syscall3(__NR_read, fd, ubuf, count);
 }
 
 int64_t write(int fd, void *buf, size_t count) {
   uint64_t ubuf;
   __builtin_memcpy(&ubuf, &buf, 8);
-  return syscall6(__NR_write, fd, ubuf, count, 0, 0, 0);
+  return syscall3(__NR_write, fd, ubuf, count);
 }
 
 void *read_all_stdin(void *base) {

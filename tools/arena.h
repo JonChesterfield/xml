@@ -4,6 +4,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <unistd.h>
+#include <stdlib.h>
+
+#include "contract.h"
+
 // Interface sketch only so far.
 // Thinking a pointer to contiguous memory, where allocate is bump pointer
 // Exceeding the initial allocated size could be an error or allocate more
@@ -26,27 +31,17 @@
 // Alignment could be treated as a separate allocation of a few bytes,
 // put it in the public API but not in the implementation API
 
-#define ARENA_CONTRACT() 0
+#define ARENA_CONTRACT() 1
+
+#if ARENA_CONTRACT()
+#include <setjmp.h>
+#endif
 
 struct arena_module_ty;
 typedef const struct arena_module_ty *arena_module;
 
-// todo: drop printf from require in favour of write,
-// probably factor the contract machinery into a header
-#define arena_require(X) arena_require_func(mod, X, #X, __LINE__)
-static inline void arena_require_func(arena_module mod, bool expr, const char *name, int line) {
-  (void)mod;
-  const bool contract = ARENA_CONTRACT();
-  if (contract & !expr) {
-#if ARENA_CONTRACT()
-    fprintf(stderr, "arena contract failed L%u: %s\n", line, name);
-    abort();
-#else
-    (void)name;
-    (void)line;
-#endif
-  }
-}
+
+#define arena_require(X) do {if (arena_contract_active(mod)) { mod->maybe_contract(X, mod->maybe_jmp_buf, contract_message(X), sizeof(contract_message(X))-1); }} while (0)
 
 
 //
@@ -89,6 +84,9 @@ static inline bool arena_base_address_constant(arena_module mod);
 
 // True if all calls to limit_address return the same value
 static inline bool arena_limit_address_constant(arena_module mod);
+
+// True if the module has a non-null contract handler
+static inline bool arena_contract_active(arena_module mod);
 
 //
 // Arena level queries
@@ -149,13 +147,16 @@ struct arena_module_ty {
   bool (*const change_capacity)(arena_t *a, uint64_t bytes);
 
   uint64_t (*const allocate_into_existing_capacity)(arena_t *a, uint64_t bytes);
+
+  // The maybe prefixed ones can be 0
+  void (*const maybe_contract)(bool, void*, const char * message, size_t message_length);
+  jmp_buf * maybe_jmp_buf;
 };
 
 #define ARENA_CONCAT2(X, Y) X##_##Y
 #define ARENA_CONCAT(X, Y) ARENA_CONCAT2(X, Y)
 
-
-#define ARENA_MODULE_INIT(PREFIX) {\
+#define ARENA_MODULE_INIT(PREFIX, CONTRACT, JMPBUF) {    \
     .create = ARENA_CONCAT(PREFIX, create), \
     .destroy = ARENA_CONCAT(PREFIX, destroy), \
     .valid = ARENA_CONCAT(PREFIX, valid), \
@@ -168,18 +169,44 @@ struct arena_module_ty {
     .limit_address = ARENA_CONCAT(PREFIX, limit_address), \
     .change_capacity = ARENA_CONCAT(PREFIX, change_capacity), \
     .allocate_into_existing_capacity = ARENA_CONCAT(PREFIX, allocate_into_existing_capacity), \
+      .maybe_contract = CONTRACT,                                       \
+      .maybe_jmp_buf = JMPBUF,                                          \
     }
+
+
+static inline void arena_require_func(arena_module mod, bool expr, const char *message, size_t message_length) {
+  (void)mod;
+
+  const bool contract = ARENA_CONTRACT();
+  if (contract & !expr) {
+#if ARENA_CONTRACT()
+
+    write(STDERR_FILENO, message, message_length);
+    if (mod->maybe_jmp_buf) {
+      jmp_buf * buf = mod->maybe_jmp_buf;
+      longjmp(*buf, 1);
+    }
+    //    fprintf(stderr, "arena contract failed L%u: %s\n", line, name);
+    abort();
+#else
+    (void)name;
+    (void)line;
+#endif
+  }
+}
 
 
 static inline arena_t arena_create(arena_module mod, uint64_t N)
 {
   return mod->create(N);
 }
+
 static inline void arena_destroy(arena_module mod, arena_t a)
 {
   arena_require(arena_valid(mod, a));
   mod->destroy(a);
 }
+
 static inline bool arena_valid(arena_module mod, arena_t a)
 {
   if (!mod->valid(a)) { return false; }
@@ -189,13 +216,20 @@ static inline bool arena_valid(arena_module mod, arena_t a)
   uint64_t limit = (uint64_t) mod->limit_address( a);
   return (base <= next) && (next <= limit);
 }
+
 static inline bool arena_base_address_constant(arena_module mod)
 {
   return mod->base_address_constant();
 }
+
 static inline bool arena_limit_address_constant(arena_module mod)
 {
   return mod->limit_address_constant();
+}
+
+static inline bool arena_contract_active(arena_module mod)
+{
+  return mod->maybe_contract != 0;
 }
 
 static inline uint64_t arena_size(arena_module mod, arena_t a)

@@ -9,9 +9,7 @@ static void *brk(void *addr) {
   uint64_t x;
   __builtin_memcpy(&x, &addr, 8);
   uint64_t n = 12;
-  uint64_t u;
-  u = *(&u); // suppress the uninitialized warning
-  uint64_t r = syscall6(n, x, u, u, u, u, u);
+  uint64_t r = syscall1(n, x);
   __builtin_memcpy(&addr, &r, 8);
   return addr;
 }
