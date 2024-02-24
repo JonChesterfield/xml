@@ -13,6 +13,12 @@ static const struct arena_module_ty arena_libc_jmp = ARENA_MODULE_INIT(arena_lib
 
 static const arena_module mod = &arena_libc_jmp;
 
+uint64_t codegen_sanity_check_allocate(arena_t *a, uint64_t bytes)
+{
+  static const arena_module m = &arena_libc;
+
+  return arena_allocate_into_existing_capacity(m, a, bytes);
+}
 
 static MODULE(create_destroy) {
 
@@ -51,6 +57,8 @@ static MODULE(create_destroy) {
   TEST("fail a precondition")
     {
       arena_t a = {0};
+      CHECK(!arena_valid(mod, a));
+      // Destroy requires a valid arena as a precondition
       DEATH(death_buffer, arena_destroy(mod, a));
     }
 
@@ -61,6 +69,9 @@ static MODULE(create_destroy) {
       // to wrap it in DEATH() - previously segv, now a stderr message that
       // a jmp_buf is zero and an early exit 1
       arena_t a = {0};
+      CHECK(!arena_valid(mod, a));
+
+      // Destroy has valid 
       arena_destroy(mod, a);
     }
 #endif

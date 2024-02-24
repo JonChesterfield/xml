@@ -131,6 +131,11 @@ static inline void contract_exit(bool expr, void* maybe_jmp_buf, const char *mes
 
 static inline void contract_longjmp(bool expr, void* maybe_jmp_buf, const char *message, size_t message_length)
 {
+#ifdef CONTRACT_SETJMP_ERR_MSG
+#error "Unexpected macro CONTRACT_SETJMP_ERR_MSG"
+#endif
+#define CONTRACT_SETJMP_ERR_MSG() "Warning: Zero jmp_buf at contract, missing setjmp!\n"
+
 #if __STDC_HOSTED__
   (void)message;
   (void)message_length;
@@ -138,7 +143,7 @@ static inline void contract_longjmp(bool expr, void* maybe_jmp_buf, const char *
     {
       if (contract_jmpbuf_is_zero(maybe_jmp_buf))
         {
-          contract_write(false, 0, "Warning: Zero jmp_buf\n", sizeof("Warning: Zero jmp_buf\n")-1);
+          contract_write(false, 0, CONTRACT_SETJMP_ERR_MSG(), sizeof(CONTRACT_SETJMP_ERR_MSG())-1);
           contract_write(expr, 0, message, message_length);
           return;
         }
@@ -158,6 +163,8 @@ static inline void contract_longjmp(bool expr, void* maybe_jmp_buf, const char *
 #else
   contract_discard(expr, maybe_jmp_buf, message, message_length);  
 #endif
+
+#undef CONTRACT_SETJMP_ERR_MSG  
 }
 
 #endif
