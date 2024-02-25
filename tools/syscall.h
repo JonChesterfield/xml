@@ -1,59 +1,65 @@
 #ifndef SYSCALL_H_INCLUDED
 #define SYSCALL_H_INCLUDED
 
-#include <stdint.h>
+#if __x86_64__
 
-static inline uint64_t syscall6(uint64_t n, uint64_t a0, uint64_t a1, uint64_t a2,
-                                uint64_t a3, uint64_t a4, uint64_t a5);
+_Static_assert(sizeof(unsigned long) == 8, "");
 
-static inline uint64_t syscall0(uint64_t n)
-{
-  uint64_t u;
+static inline unsigned long syscall6(unsigned long n, unsigned long a0,
+                                     unsigned long a1, unsigned long a2,
+                                     unsigned long a3, unsigned long a4,
+                                     unsigned long a5);
+
+static inline unsigned long syscall0(unsigned long n) {
+  unsigned long u;
   u = *(&u);
   return syscall6(n, u, u, u, u, u, u);
 }
 
-static inline uint64_t syscall1(uint64_t n, uint64_t a0)
-{
-  uint64_t u;
+static inline unsigned long syscall1(unsigned long n, unsigned long a0) {
+  unsigned long u;
   u = *(&u);
   return syscall6(n, a0, u, u, u, u, u);
 }
 
-static inline uint64_t syscall2(uint64_t n, uint64_t a0, uint64_t a1)
-{
-  uint64_t u;
+static inline unsigned long syscall2(unsigned long n, unsigned long a0,
+                                     unsigned long a1) {
+  unsigned long u;
   u = *(&u);
   return syscall6(n, a0, a1, u, u, u, u);
 }
 
-static inline uint64_t syscall3(uint64_t n, uint64_t a0, uint64_t a1, uint64_t a2)
-{
-  uint64_t u;
+static inline unsigned long syscall3(unsigned long n, unsigned long a0,
+                                     unsigned long a1, unsigned long a2) {
+  unsigned long u;
   u = *(&u);
   return syscall6(n, a0, a1, a2, u, u, u);
 }
 
-static inline uint64_t syscall4(uint64_t n, uint64_t a0, uint64_t a1, uint64_t a2,
-                         uint64_t a3) {
-  uint64_t u;
+static inline unsigned long syscall4(unsigned long n, unsigned long a0,
+                                     unsigned long a1, unsigned long a2,
+                                     unsigned long a3) {
+  unsigned long u;
   u = *(&u);
   return syscall6(n, a0, a1, a2, a3, u, u);
 }
 
-static inline uint64_t syscall5(uint64_t n, uint64_t a0, uint64_t a1, uint64_t a2,
-                         uint64_t a3, uint64_t a4) {
-  uint64_t u;
+static inline unsigned long syscall5(unsigned long n, unsigned long a0,
+                                     unsigned long a1, unsigned long a2,
+                                     unsigned long a3, unsigned long a4) {
+  unsigned long u;
   u = *(&u);
   return syscall6(n, a0, a1, a2, a3, a4, u);
 }
 
-static inline uint64_t syscall6(uint64_t n, uint64_t a0, uint64_t a1, uint64_t a2,
-                         uint64_t a3, uint64_t a4, uint64_t a5) {
-  uint64_t ret = 0;
-  register uint64_t r10 __asm__("r10") = a3;
-  register uint64_t r8 __asm__("r8") = a4;
-  register uint64_t r9 __asm__("r9") = a5;
+static inline unsigned long syscall6(unsigned long n, unsigned long a0,
+                                     unsigned long a1, unsigned long a2,
+                                     unsigned long a3, unsigned long a4,
+                                     unsigned long a5) {
+  unsigned long ret = 0;
+  register unsigned long r10 __asm__("r10") = a3;
+  register unsigned long r8 __asm__("r8") = a4;
+  register unsigned long r9 __asm__("r9") = a5;
 
   __asm__ volatile("syscall"
                    : "=a"(ret)
@@ -63,5 +69,11 @@ static inline uint64_t syscall6(uint64_t n, uint64_t a0, uint64_t a1, uint64_t a
 
   return ret;
 }
+
+#else
+
+#error "Unimplemented architecture"
+
+#endif
 
 #endif
