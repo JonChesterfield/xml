@@ -329,11 +329,19 @@ static inline uint64_t arena_allocate(arena_module mod, arena_t *a,
   uint64_t base = (uint64_t)arena_base_address(mod, *a);
   uint64_t next = (uint64_t)arena_next_address(mod, *a);
   uint64_t offset = next - base;
-  
+
   uint64_t available = arena_available(mod, *a);
 
+  // Somewhat ambiguous alignment
+  // Either the offset from base could be aligned, or
+  // the offset could be chosen to align base+offset
+  // The latter wouldn't handle moving base very well
+  // Thus it seems to follow that the arena has a maximum alignment
+  // or that the maximum requested alignment needs to be tracked
+  // and handled on reallocation
+
   uint64_t align_padding =
-      arena_increment_needed_for_alignment(mod, next, align);
+      arena_increment_needed_for_alignment(mod, offset, align);
 
   uint64_t total_alloc = bytes + align_padding;
 
@@ -349,11 +357,14 @@ static inline uint64_t arena_allocate(arena_module mod, arena_t *a,
     arena_require(arena_capacity(mod, *a) >= (cap + shortfall));
   }
   arena_require(arena_available(mod, *a) >= total_alloc);
-  
+
   uint64_t got = arena_allocate_into_existing_capacity(mod, a, total_alloc);
 
   arena_require(got == offset);
   uint64_t res = got - align_padding;
+
+  // fprintf(stderr, "Res %lu, align %lu, incr needed %lu\n", res, align,
+  // arena_increment_needed_for_alignment(mod, res, align));
 
   arena_require(arena_increment_needed_for_alignment(mod, res, align) == 0);
 
