@@ -3,92 +3,26 @@
 
 #include "arena.h"
 #include "contract.h"
+#include "arena.from_libc.h"
 
 #include <stdlib.h>
 
-
-static  arena_t arena_libc_create(uint64_t N)
+static void* arena_libc_malloc(size_t N)
 {
-  arena_t r = {0};
-  void * d = malloc(N);
-  if (d)
-    {
-      r.base = (uint64_t)d;
-      r.next = (uint64_t)d;
-      r.limit = (uint64_t)d + N;
-    }
-  return r;
+  return malloc(N);
 }
 
-static  void arena_libc_destroy(arena_t a)
+static void* arena_libc_realloc(void* p, size_t N)
 {
-  void* d = (void*)a.base;
-  free(d);
-}
-static  bool arena_libc_valid(arena_t a)
-{
-  return a.base != 0;
+  return realloc(p, N);
 }
 
-static  bool arena_libc_base_address_constant(void) {return false; }
-static  bool arena_libc_limit_address_constant(void) { return false; }
-
-static  uint64_t arena_libc_size(arena_t a)
+static void arena_libc_free(void* p)
 {
-  return a.next - a.base;
+  free(p);
 }
 
-static  uint64_t arena_libc_capacity(arena_t a)
-{
-  return a.limit - a.base;
-}
-
-static  void * arena_libc_base_address(arena_t a)
-{
-  return (void*)a.base;
-}
-static  void * arena_libc_next_address(arena_t a)
-{
-  return (void*)a.next;
-}
-
-static  void * arena_libc_limit_address(arena_t a)
-{
-  return (void*)a.limit;
-}
-  
-static  bool arena_libc_change_capacity(arena_t *a, uint64_t bytes)
-{
-  char* base = (char*)a->base;
-  char* next = (char*)a->next;
-  char* limit = (char*)a->limit;
-
-  uint64_t next_offset = next - base;
-  uint64_t capacity = limit - base;
-  if (bytes == capacity) { return true; }
-
-  char * r = realloc(base, bytes);
-  if (!r) {
-    return false;
-  }
-
-  a->base = (uint64_t)r;
-  a->next = (uint64_t)r + next_offset;
-  a->limit = (uint64_t)r + bytes;
-  
-  
-  return true;
-}
-
-static  uint64_t arena_libc_allocate_into_existing_capacity(arena_t *a, uint64_t bytes)
-{
-  char* base = (char*)a->base;
-  char* next = (char*)a->next;
-  char* incr = next + bytes;
-  a->next = (uint64_t)incr;
-  return (uint64_t)(next - base);
-}
-
+ARENA_FROM_LIBC(arena_libc, arena_libc_malloc, arena_libc_realloc, arena_libc_free)
 
 static const struct arena_module_ty arena_libc = ARENA_MODULE_INIT(arena_libc, 0);
 

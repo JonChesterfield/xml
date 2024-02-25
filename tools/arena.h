@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -189,7 +190,6 @@ static inline void arena_require_func(arena_module mod, bool expr,
                                       const char *message,
                                       size_t message_length) {
   (void)mod;
-
   const bool contract = ARENA_CONTRACT();
   if (contract & !expr) {
 #if ARENA_CONTRACT()
@@ -326,8 +326,10 @@ static inline uint64_t arena_allocate(arena_module mod, arena_t *a,
                                       uint64_t bytes, uint64_t align) {
   arena_require(arena_valid(mod, *a));
   arena_require(arena_power_of_two_p(align));
+  uint64_t base = (uint64_t)arena_base_address(mod, *a);
   uint64_t next = (uint64_t)arena_next_address(mod, *a);
-
+  uint64_t offset = next - base;
+  
   uint64_t available = arena_available(mod, *a);
 
   uint64_t align_padding =
@@ -347,10 +349,11 @@ static inline uint64_t arena_allocate(arena_module mod, arena_t *a,
     arena_require(arena_capacity(mod, *a) >= (cap + shortfall));
   }
   arena_require(arena_available(mod, *a) >= total_alloc);
-
+  
   uint64_t got = arena_allocate_into_existing_capacity(mod, a, total_alloc);
-  arena_require(got == next);
-  uint64_t res = next + align_padding;
+
+  arena_require(got == offset);
+  uint64_t res = got - align_padding;
 
   arena_require(arena_increment_needed_for_alignment(mod, res, align) == 0);
 
