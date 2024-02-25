@@ -82,13 +82,14 @@ static  bool arena_libc_change_capacity(arena_t *a, uint64_t bytes)
 
 static  uint64_t arena_libc_allocate_into_existing_capacity(arena_t *a, uint64_t bytes)
 {
+  char* base = (char*)a->base;
   char* next = (char*)a->next;
   char* incr = next + bytes;
   a->next = (uint64_t)incr;
-  return (uint64_t)next;
+  return (uint64_t)(next - base);
 }
 
 
-static const struct arena_module_ty arena_libc = ARENA_MODULE_INIT(arena_libc, 0, 0);
+static const struct arena_module_ty arena_libc = ARENA_MODULE_INIT(arena_libc, 0);
 
 #endif

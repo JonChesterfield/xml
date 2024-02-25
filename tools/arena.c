@@ -1,20 +1,15 @@
 #include "arena.h"
 
-#include <setjmp.h>
-
 #include "EvilUnit/EvilUnit.h"
 
 #include "arena.libc.h"
 
-
-static jmp_buf death_buffer;
-
-static const struct arena_module_ty arena_libc_jmp = ARENA_MODULE_INIT(arena_libc, contract_unit_test, &death_buffer);
+static const struct arena_module_ty arena_libc_jmp =
+    ARENA_MODULE_INIT(arena_libc, contract_unit_test);
 
 static const arena_module mod = &arena_libc_jmp;
 
-uint64_t codegen_sanity_check_allocate(arena_t *a, uint64_t bytes)
-{
+uint64_t codegen_sanity_check_allocate(arena_t *a, uint64_t bytes) {
   static const arena_module m = &arena_libc;
 
   return arena_allocate_into_existing_capacity(m, a, bytes);
@@ -22,13 +17,6 @@ uint64_t codegen_sanity_check_allocate(arena_t *a, uint64_t bytes)
 
 static MODULE(create_destroy) {
 
-  TEST("sanity check jmp buf")
-    {
-      CHECK(contract_jmpbuf_is_zero(&death_buffer));
-      contract_jmpbuf_set_zero(&death_buffer);
-      CHECK(contract_jmpbuf_is_zero(&death_buffer));
-    }
-  
   TEST("size 0") {
     arena_t a = arena_create(mod, 0);
     CHECK(arena_valid(mod, a));
@@ -36,7 +24,6 @@ static MODULE(create_destroy) {
     CHECK(arena_capacity(mod, a) == 0);
     arena_destroy(mod, a);
   }
-
 
   TEST("non-zero") {
     arena_t a = arena_create(mod, 4);
@@ -54,29 +41,133 @@ static MODULE(create_destroy) {
     arena_destroy(mod, a);
   }
 
-  TEST("fail a precondition")
-    {
-      arena_t a = {0};
-      CHECK(!arena_valid(mod, a));
-      // Destroy requires a valid arena as a precondition
-      DEATH(death_buffer, arena_destroy(mod, a));
-    }
-
-#if 0
-  TEST("fail without the death macro")
-    {
-      // This was checking the behaviour of failing a contract after forgetting
-      // to wrap it in DEATH() - previously segv, now a stderr message that
-      // a jmp_buf is zero and an early exit 1
-      arena_t a = {0};
-      CHECK(!arena_valid(mod, a));
-
-      // Destroy has valid 
-      arena_destroy(mod, a);
-    }
-#endif
-
-
+  TEST("fail a precondition") {
+    arena_t a = {0};
+    CHECK(!arena_valid(mod, a));
+    DEATH(arena_destroy(mod, a));
+  }
 }
 
-MAIN_MODULE() { DEPENDS(create_destroy); }
+static MODULE(arena_use_without_resizing) {
+  arena_t arena = arena_create(mod, 4);
+  CHECK(arena_valid(mod, arena));
+
+  TEST("initial size") {
+    CHECK(arena_size(mod, arena) == 0);
+    CHECK(arena_capacity(mod, arena) == 4);
+    CHECK(arena_available(mod, arena) == 4);
+  }
+
+  TEST("allocate zero does nothing") {
+    uint64_t offset = arena_allocate_into_existing_capacity(mod, &arena, 0);
+    CHECK(offset == 0);
+    CHECK(arena_size(mod, arena) == 0);
+    CHECK(arena_capacity(mod, arena) == 4);
+    CHECK(arena_available(mod, arena) == 4);
+  }
+
+  TEST("allocate one byte") {
+    uint64_t offset = arena_allocate_into_existing_capacity(mod, &arena, 1);
+    CHECK(offset == 0);
+    CHECK(arena_size(mod, arena) == 1);
+    CHECK(arena_capacity(mod, arena) == 4);
+    CHECK(arena_available(mod, arena) == 3);
+  }
+
+  TEST("allocate two bytes") {
+    uint64_t offset = arena_allocate_into_existing_capacity(mod, &arena, 2);
+    CHECK(offset == 0);
+    CHECK(arena_size(mod, arena) == 2);
+    CHECK(arena_capacity(mod, arena) == 4);
+    CHECK(arena_available(mod, arena) == 2);
+  }
+
+  TEST("allocate whole capacity") {
+    uint64_t offset = arena_allocate_into_existing_capacity(mod, &arena, 4);
+    CHECK(offset == 0);
+    CHECK(arena_size(mod, arena) == 4);
+    CHECK(arena_capacity(mod, arena) == 4);
+    CHECK(arena_available(mod, arena) == 0);
+  }
+
+  TEST("allocate beyond capacity is contract violation") {
+    DEATH(arena_allocate_into_existing_capacity(mod, &arena, 5));
+    CHECK(arena_size(mod, arena) == 0);
+    CHECK(arena_capacity(mod, arena) == 4);
+    CHECK(arena_available(mod, arena) == 4);
+  }
+
+  TEST("allocate multiple single bytes") {
+    for (unsigned i = 0; i < 4; i++) {
+      uint64_t offset = arena_allocate_into_existing_capacity(mod, &arena, 1);
+      CHECK(offset == i);
+      CHECK(arena_size(mod, arena) == i + 1);
+      CHECK(arena_capacity(mod, arena) == 4);
+      CHECK(arena_available(mod, arena) == 3 - i);
+    }
+
+    DEATH(arena_allocate_into_existing_capacity(mod, &arena, 1));
+  }
+
+  TEST("allocate two bytes twice") {
+    for (unsigned i = 0; i < 4; i += 2) {
+      uint64_t offset = arena_allocate_into_existing_capacity(mod, &arena, 2);
+      CHECK(offset == i);
+      CHECK(arena_size(mod, arena) == i + 2);
+      CHECK(arena_capacity(mod, arena) == 4);
+      CHECK(arena_available(mod, arena) == 2 - i);
+    }
+    DEATH(arena_allocate_into_existing_capacity(mod, &arena, 1));
+  }
+
+  arena_destroy(mod, arena);
+}
+
+static MODULE(change_capacity)
+{
+  arena_t arena = arena_create(mod, 4);
+  CHECK(arena_valid(mod, arena));
+
+  TEST("increase")
+    {
+      bool r = arena_change_capacity(mod, &arena, 7);
+      if (r)
+        {
+          CHECK(arena_size(mod, arena) == 0);
+          CHECK(arena_capacity(mod, arena) == 7);
+          CHECK(arena_available(mod, arena) == 7);
+        }
+      else
+        {
+          CHECK(arena_size(mod, arena) == 0);
+          CHECK(arena_capacity(mod, arena) == 4);
+          CHECK(arena_available(mod, arena) == 4);
+        }
+    }
+
+  TEST("decrease")
+    {
+      bool r = arena_change_capacity(mod, &arena, 3);
+      if (r)
+        {
+          CHECK(arena_size(mod, arena) == 0);
+          CHECK(arena_capacity(mod, arena) == 3);
+          CHECK(arena_available(mod, arena) == 3);
+        }
+      else
+        {
+          CHECK(arena_size(mod, arena) == 0);
+          CHECK(arena_capacity(mod, arena) == 4);
+          CHECK(arena_available(mod, arena) == 4);
+        }
+    }
+  
+  arena_destroy(mod, arena);
+}
+
+
+MAIN_MODULE() {
+  DEPENDS(create_destroy);
+  DEPENDS(arena_use_without_resizing);
+  DEPENDS(change_capacity);
+}
