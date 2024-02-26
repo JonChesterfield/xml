@@ -50,11 +50,9 @@ static MODULE(increment_for_alignment) {
     for (uint64_t base = 0; base < 100; base++) {
       for (unsigned a = 0; a < 6; a++) {
         uint64_t align = UINT64_C(1) << a;
-
         uint64_t incr = arena_increment_needed_for_alignment(mod, base, align);
 
         CHECK(incr < align);
-
         CHECK(((base + incr) % align) == 0);
       }
     }
@@ -303,6 +301,30 @@ static MODULE(allocate_align_one) {
 }
 
 static MODULE(allocate_multiple) {
+  TEST("alloc ascending") {
+    arena_t arena = arena_create(mod, 0);
+    for (unsigned A = 0; A < 5; A++) {
+      uint64_t align = 1 << A;
+      for (uint64_t v = 0; v < 32; v++) {
+        uint64_t r = arena_allocate(mod, &arena, v, align);
+        CHECK(r != ~UINT64_C(0));
+      }
+    }
+    arena_destroy(mod, arena);
+  }
+
+  TEST("alloc descending") {
+    arena_t arena = arena_create(mod, 0);
+    for (unsigned A = 0; A < 5; A++) {
+      uint64_t align = 1 << A;
+      for (uint64_t v = 32; v-- > 0;) {
+        uint64_t r = arena_allocate(mod, &arena, v, align);
+        CHECK(r != ~UINT64_C(0));
+      }
+    }
+    arena_destroy(mod, arena);
+  }
+
   TEST("align N") {
     for (unsigned A = 0; A < 4; A++) {
       uint64_t align = 1 << A;

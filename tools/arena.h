@@ -275,7 +275,10 @@ static inline uint64_t arena_increment_needed_for_alignment(arena_module mod,
 
 static inline void *arena_base_address(arena_module mod, arena_t a) {
   arena_require(arena_valid(mod, a));
-  return mod->base_address(a);
+  void *res = mod->base_address(a);
+  arena_require(arena_increment_needed_for_alignment(
+                    mod, (uint64_t)res, arena_alignment(mod)) == 0);
+  return res;
 }
 
 static inline void *arena_next_address(arena_module mod, arena_t a) {
@@ -342,7 +345,7 @@ static inline uint64_t arena_allocate(arena_module mod, arena_t *a,
   uint64_t offset = next - base;
 
   uint64_t available = arena_available(mod, *a);
-
+  
   // Somewhat ambiguous alignment
   // Either the offset from base could be aligned, or
   // the offset could be chosen to align base+offset
@@ -355,30 +358,24 @@ static inline uint64_t arena_allocate(arena_module mod, arena_t *a,
       arena_increment_needed_for_alignment(mod, offset, align);
 
   uint64_t total_alloc = bytes + align_padding;
-
+  
   if (available < total_alloc) {
     uint64_t shortfall = total_alloc - available;
-
     uint64_t cap = arena_capacity(mod, *a);
     bool r = arena_change_capacity(mod, a, cap + shortfall);
     if (!r) {
       return ~UINT64_C(0);
     }
-
     arena_require(arena_capacity(mod, *a) >= (cap + shortfall));
   }
   arena_require(arena_available(mod, *a) >= total_alloc);
-
+  
   uint64_t got = arena_allocate_into_existing_capacity(mod, a, total_alloc);
-
+  uint64_t res = offset + align_padding;
   arena_require(got == offset);
-  uint64_t res = got - align_padding;
-
-  // fprintf(stderr, "Res %lu, align %lu, incr needed %lu\n", res, align,
-  // arena_increment_needed_for_alignment(mod, res, align));
-
+  arena_require(res <= (offset + total_alloc));
   arena_require(arena_increment_needed_for_alignment(mod, res, align) == 0);
-
+  arena_require(arena_increment_needed_for_alignment(mod, base+res, align) == 0);
   return res;
 }
 
