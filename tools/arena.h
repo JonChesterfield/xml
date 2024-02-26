@@ -90,6 +90,9 @@ static inline bool arena_base_address_constant(arena_module mod);
 // True if all calls to limit_address return the same value
 static inline bool arena_limit_address_constant(arena_module mod);
 
+// The alignment of base_address and the maximum alignment of allocations
+static inline uint64_t arena_alignment(arena_module mod);
+
 // True if the module has a non-null contract handler
 static inline bool arena_contract_active(arena_module mod);
 
@@ -148,6 +151,7 @@ struct arena_module_ty {
 
   bool (*const base_address_constant)(void);
   bool (*const limit_address_constant)(void);
+  uint64_t (*const alignment)(void);
 
   uint64_t (*const size)(arena_t);
   uint64_t (*const capacity)(arena_t);
@@ -175,6 +179,7 @@ struct arena_module_ty {
     .valid = ARENA_CONCAT(PREFIX, valid),                                      \
     .base_address_constant = ARENA_CONCAT(PREFIX, base_address_constant),      \
     .limit_address_constant = ARENA_CONCAT(PREFIX, limit_address_constant),    \
+    .alignment = ARENA_CONCAT(PREFIX, alignment),                              \
     .size = ARENA_CONCAT(PREFIX, size),                                        \
     .capacity = ARENA_CONCAT(PREFIX, capacity),                                \
     .base_address = ARENA_CONCAT(PREFIX, base_address),                        \
@@ -204,6 +209,7 @@ static inline void arena_require_func(arena_module mod, bool expr,
 }
 
 static inline arena_t arena_create(arena_module mod, uint64_t N) {
+  arena_require(arena_power_of_two_p(arena_alignment(mod)));
   return mod->create(N);
 }
 
@@ -229,6 +235,10 @@ static inline bool arena_base_address_constant(arena_module mod) {
 
 static inline bool arena_limit_address_constant(arena_module mod) {
   return mod->limit_address_constant();
+}
+
+static inline uint64_t arena_alignment(arena_module mod) {
+  return mod->alignment();
 }
 
 static inline bool arena_contract_active(arena_module mod) {
@@ -326,6 +336,7 @@ static inline uint64_t arena_allocate(arena_module mod, arena_t *a,
                                       uint64_t bytes, uint64_t align) {
   arena_require(arena_valid(mod, *a));
   arena_require(arena_power_of_two_p(align));
+  arena_require(align <= arena_alignment(mod));
   uint64_t base = (uint64_t)arena_base_address(mod, *a);
   uint64_t next = (uint64_t)arena_next_address(mod, *a);
   uint64_t offset = next - base;

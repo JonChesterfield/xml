@@ -33,6 +33,9 @@
   static bool ARENA_CONCAT(PREFIX, limit_address_constant)(void) {             \
     return false;                                                              \
   }                                                                            \
+  static uint64_t ARENA_CONCAT(PREFIX, alignment)(void) {                      \
+    return _Alignof(max_align_t);                                              \
+  }                                                                            \
                                                                                \
   static uint64_t ARENA_CONCAT(PREFIX, size)(arena_t a) {                      \
     return a.next - a.base;                                                    \
