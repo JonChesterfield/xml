@@ -8,15 +8,40 @@ clean::
 	rm -rf $(regex_tmp)
 
 
-REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.declarations.h
+REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.declarations.h regex/regex_parser.lemon.h
 
-REGEX_SOURCE := regex.ptree.c regex.tests.c regex.c regex.lexer.definitions.c
+REGEX_SOURCE := regex.ptree.c regex.tests.c regex.c regex.lexer.definitions.c # regex_parser.lemon.c
+
+REGEX_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_SOURCE:.c=.o))
+
+
+# going to patch lemon to allow specifying filenames I think
+
+lemon_tmp := $(regex_tmp)/lemon
+$(lemon_tmp):	$(regex_tmp)
+	@mkdir -p $(lemon_tmp)
+
+$(lemon_tmp)/%.lemon.c:	regex/%.lemon.y $(lemon) tools/lempar.data regex/regex.lang.xml | $(lemon_tmp)
+	cp "$<" "$(lemon_tmp)/$*.lemon.y"
+	cd $(lemon_tmp) && ./../../$(lemon) -l -T../../tools/lempar.data -m "$*.lemon.y" || rm -f $@
+
+$(lemon_tmp)/%.lemon.h:	$(lemon_tmp)/%.lemon.c $(makeheaders) | $(lemon_tmp)
+	cd $(lemon_tmp)/ && ./../../$(makeheaders) "$*.lemon.c"
+
+regex/regex_parser.lemon.c:	$(lemon_tmp)/regex_parser.lemon.c
+	@cp "$<" "$@"
+
+regex/regex_parser.lemon.h:	$(lemon_tmp)/regex_parser.lemon.h
+	@cp "$<" "$@"
+
+
 
 regex/regex.ptree.h:	regex/regex.ptree.h.in tools/ptree_macro_wrapper.h
 	$(CC) -E -C -P -xc $< -ffreestanding -o $@
 	clang-format -i $@
 
 clean::
+	@rm -f regex/regex_parser.lemon.c regex/regex_parser.lemon.h
 	@rm -f regex/regex.ptree.h
 
 
@@ -34,6 +59,8 @@ $(regex_tmp)/regex.re2c_iterator.c.re2c:	$(regex_tmp)/regex_re2c_iterator.hex $(
 	./$(hex_to_binary) < "$<" > "$@"
 	clang-format -i $@
 
+$(regex_tmp)/regex_parser.lemon.TokenTree.xml:	lang_to_parser_lemon_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
+	xsltproc --output $@ $^
 
 
 # TokenList is a common form
@@ -61,15 +88,24 @@ regex/regex.lexer.definitions.c:	$(regex_tmp)/regex_definitions.hex regex/regex_
 	clang-format -i $@
 
 
+regex/regex_parser.lemon.y:	$(regex_tmp)/regex_parser.lemon.hex $(hex_to_binary)
+	./$(hex_to_binary) < "$<" > "$@"
+
+
 clean::
 	@rm -f regex/regex.lexer.declarations.h
 	@rm -f regex/regex_lexer_re2c_iterator_step.data
 	@rm -f regex/regex.lexer.definitions.c
+	@rm -f regex/regex_parser.lemon.y
 
 
-$(addprefix $(regex_tmp)/,$(REGEX_SOURCE:.c=.o)) : $(regex_tmp)/%.o: regex/%.c $(REGEX_HEADERS) | $(regex_tmp)
+
+$(REGEX_OBJECTS): $(regex_tmp)/%.o: regex/%.c $(REGEX_HEADERS) | $(regex_tmp)
 	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
 
+
+.PHONY: regex
+regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c
 
 bin/regex.tests:	$(regex_tmp)/regex.tests.o $(regex_tmp)/regex.o $(regex_tmp)/regex.ptree.o
 	@mkdir -p "$(dir $@)"
