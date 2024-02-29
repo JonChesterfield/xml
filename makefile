@@ -39,7 +39,7 @@ CC := clang
 CXX := clang++
 
 C_OR_CXX_FLAGS := -Wall -Wextra -g -gdwarf-4
-CFLAGS := -std=c11 $(C_OR_CXX_FLAGS)
+CFLAGS := -std=c11 $(C_OR_CXX_FLAGS) -O2
 CXXFLAGS := -std=c++14 -Wno-c99-designator $(C_OR_CXX_FLAGS)
 
 # Considering a single source single file approach to tools
@@ -67,7 +67,8 @@ XMLLINTOPTS := --nonet --huge --noout --dropdtd
 
 # The xml pretty printer tends to trip the depth limit when it's the default 3000
 # novalid stops it looking for .dtd files, notably CommonMark.dtd
-XSLTPROCOPTS := --huge  --maxdepth 40000 --novalid
+# this is getting borderline, need to build xsltproc with O2 and push these limits up
+XSLTPROCOPTS := --huge  --maxdepth 40000 --maxvars 150000 --novalid
 
 RE2COPTS := --no-debug-info -W --no-generation-date
 
@@ -183,8 +184,9 @@ $1/%.$3.prelint.xml:	$1/%.$2.xml $4 $5 $6 validateA/$1/$4 validateB/$1/$5 valida
 	@$(xmllint) --relaxng $4 "$$<" $(XMLLINTOPTS) --quiet
 	@$(xsltproc) $(XSLTPROCOPTS) --output "$$@" $5 "$$<"
 
+# This transform seems to be prone to stack overflows
 $1/%.$3.pretty.xml:	$1/%.$3.prelint.xml | $(xsltproc)
-	@$(xsltproc) $(XSLTPROCOPTS) --output "$$@" subtransforms/pretty.xsl "$$<"
+	@$(xsltproc) $(XSLTPROCOPTS) --output "$$@" subtransforms/pretty.xsl "$$<" || cp "$$<" "$$@"
 
 $1/%.$3.xml:	$1/%.$3.pretty.xml | $(xmllint)
 	@$(xmllint) --relaxng $6 "$$<" $(XMLLINTOPTS) --quiet

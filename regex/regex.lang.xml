@@ -45,7 +45,274 @@
 
     <Grouping name="byte_00" type="ptree" />
     <Grouping name="byte_01" type="ptree" />
-    <!-- ... -->
+    <Grouping name="byte_02" type="ptree" />
+    <Grouping name="byte_03" type="ptree" />
+    <Grouping name="byte_04" type="ptree" />
+    <Grouping name="byte_05" type="ptree" />
+    <Grouping name="byte_06" type="ptree" />
+    <Grouping name="byte_07" type="ptree" />
+    <Grouping name="byte_08" type="ptree" />
+    <Grouping name="byte_09" type="ptree" />
+    <Grouping name="byte_0a" type="ptree" />
+    <Grouping name="byte_0b" type="ptree" />
+    <Grouping name="byte_0c" type="ptree" />
+    <Grouping name="byte_0d" type="ptree" />
+    <Grouping name="byte_0e" type="ptree" />
+    <Grouping name="byte_0f" type="ptree" />
+
+    <Grouping name="byte_10" type="ptree" />
+    <Grouping name="byte_11" type="ptree" />
+    <Grouping name="byte_12" type="ptree" />
+    <Grouping name="byte_13" type="ptree" />
+    <Grouping name="byte_14" type="ptree" />
+    <Grouping name="byte_15" type="ptree" />
+    <Grouping name="byte_16" type="ptree" />
+    <Grouping name="byte_17" type="ptree" />
+    <Grouping name="byte_18" type="ptree" />
+    <Grouping name="byte_19" type="ptree" />
+    <Grouping name="byte_1a" type="ptree" />
+    <Grouping name="byte_1b" type="ptree" />
+    <Grouping name="byte_1c" type="ptree" />
+    <Grouping name="byte_1d" type="ptree" />
+    <Grouping name="byte_1e" type="ptree" />
+    <Grouping name="byte_1f" type="ptree" />
+
+    <Grouping name="byte_20" type="ptree" />
+    <Grouping name="byte_21" type="ptree" />
+    <Grouping name="byte_22" type="ptree" />
+    <Grouping name="byte_23" type="ptree" />
+    <Grouping name="byte_24" type="ptree" />
+    <Grouping name="byte_25" type="ptree" />
+    <Grouping name="byte_26" type="ptree" />
+    <Grouping name="byte_27" type="ptree" />
+    <Grouping name="byte_28" type="ptree" />
+    <Grouping name="byte_29" type="ptree" />
+    <Grouping name="byte_2a" type="ptree" />
+    <Grouping name="byte_2b" type="ptree" />
+    <Grouping name="byte_2c" type="ptree" />
+    <Grouping name="byte_2d" type="ptree" />
+    <Grouping name="byte_2e" type="ptree" />
+    <Grouping name="byte_2f" type="ptree" />
+
+    <Grouping name="byte_30" type="ptree" />
+    <Grouping name="byte_31" type="ptree" />
+    <Grouping name="byte_32" type="ptree" />
+    <Grouping name="byte_33" type="ptree" />
+    <Grouping name="byte_34" type="ptree" />
+    <Grouping name="byte_35" type="ptree" />
+    <Grouping name="byte_36" type="ptree" />
+    <Grouping name="byte_37" type="ptree" />
+    <Grouping name="byte_38" type="ptree" />
+    <Grouping name="byte_39" type="ptree" />
+    <Grouping name="byte_3a" type="ptree" />
+    <Grouping name="byte_3b" type="ptree" />
+    <Grouping name="byte_3c" type="ptree" />
+    <Grouping name="byte_3d" type="ptree" />
+    <Grouping name="byte_3e" type="ptree" />
+    <Grouping name="byte_3f" type="ptree" />
+
+    <Grouping name="byte_40" type="ptree" />
+    <Grouping name="byte_41" type="ptree" />
+    <Grouping name="byte_42" type="ptree" />
+    <Grouping name="byte_43" type="ptree" />
+    <Grouping name="byte_44" type="ptree" />
+    <Grouping name="byte_45" type="ptree" />
+    <Grouping name="byte_46" type="ptree" />
+    <Grouping name="byte_47" type="ptree" />
+    <Grouping name="byte_48" type="ptree" />
+    <Grouping name="byte_49" type="ptree" />
+    <Grouping name="byte_4a" type="ptree" />
+    <Grouping name="byte_4b" type="ptree" />
+    <Grouping name="byte_4c" type="ptree" />
+    <Grouping name="byte_4d" type="ptree" />
+    <Grouping name="byte_4e" type="ptree" />
+    <Grouping name="byte_4f" type="ptree" />
+
+    <Grouping name="byte_50" type="ptree" />
+    <Grouping name="byte_51" type="ptree" />
+    <Grouping name="byte_52" type="ptree" />
+    <Grouping name="byte_53" type="ptree" />
+    <Grouping name="byte_54" type="ptree" />
+    <Grouping name="byte_55" type="ptree" />
+    <Grouping name="byte_56" type="ptree" />
+    <Grouping name="byte_57" type="ptree" />
+    <Grouping name="byte_58" type="ptree" />
+    <Grouping name="byte_59" type="ptree" />
+    <Grouping name="byte_5a" type="ptree" />
+    <Grouping name="byte_5b" type="ptree" />
+    <Grouping name="byte_5c" type="ptree" />
+    <Grouping name="byte_5d" type="ptree" />
+    <Grouping name="byte_5e" type="ptree" />
+    <Grouping name="byte_5f" type="ptree" />
+
+    <Grouping name="byte_60" type="ptree" />
+    <Grouping name="byte_61" type="ptree" />
+    <Grouping name="byte_62" type="ptree" />
+    <Grouping name="byte_63" type="ptree" />
+    <Grouping name="byte_64" type="ptree" />
+    <Grouping name="byte_65" type="ptree" />
+    <Grouping name="byte_66" type="ptree" />
+    <Grouping name="byte_67" type="ptree" />
+    <Grouping name="byte_68" type="ptree" />
+    <Grouping name="byte_69" type="ptree" />
+    <Grouping name="byte_6a" type="ptree" />
+    <Grouping name="byte_6b" type="ptree" />
+    <Grouping name="byte_6c" type="ptree" />
+    <Grouping name="byte_6d" type="ptree" />
+    <Grouping name="byte_6e" type="ptree" />
+    <Grouping name="byte_6f" type="ptree" />
+
+    <Grouping name="byte_70" type="ptree" />
+    <Grouping name="byte_71" type="ptree" />
+    <Grouping name="byte_72" type="ptree" />
+    <Grouping name="byte_73" type="ptree" />
+    <Grouping name="byte_74" type="ptree" />
+    <Grouping name="byte_75" type="ptree" />
+    <Grouping name="byte_76" type="ptree" />
+    <Grouping name="byte_77" type="ptree" />
+    <Grouping name="byte_78" type="ptree" />
+    <Grouping name="byte_79" type="ptree" />
+    <Grouping name="byte_7a" type="ptree" />
+    <Grouping name="byte_7b" type="ptree" />
+    <Grouping name="byte_7c" type="ptree" />
+    <Grouping name="byte_7d" type="ptree" />
+    <Grouping name="byte_7e" type="ptree" />
+    <Grouping name="byte_7f" type="ptree" />
+
+    <Grouping name="byte_80" type="ptree" />
+    <Grouping name="byte_81" type="ptree" />
+    <Grouping name="byte_82" type="ptree" />
+    <Grouping name="byte_83" type="ptree" />
+    <Grouping name="byte_84" type="ptree" />
+    <Grouping name="byte_85" type="ptree" />
+    <Grouping name="byte_86" type="ptree" />
+    <Grouping name="byte_87" type="ptree" />
+    <Grouping name="byte_88" type="ptree" />
+    <Grouping name="byte_89" type="ptree" />
+    <Grouping name="byte_8a" type="ptree" />
+    <Grouping name="byte_8b" type="ptree" />
+    <Grouping name="byte_8c" type="ptree" />
+    <Grouping name="byte_8d" type="ptree" />
+    <Grouping name="byte_8e" type="ptree" />
+    <Grouping name="byte_8f" type="ptree" />
+
+    <Grouping name="byte_90" type="ptree" />
+    <Grouping name="byte_91" type="ptree" />
+    <Grouping name="byte_92" type="ptree" />
+    <Grouping name="byte_93" type="ptree" />
+    <Grouping name="byte_94" type="ptree" />
+    <Grouping name="byte_95" type="ptree" />
+    <Grouping name="byte_96" type="ptree" />
+    <Grouping name="byte_97" type="ptree" />
+    <Grouping name="byte_98" type="ptree" />
+    <Grouping name="byte_99" type="ptree" />
+    <Grouping name="byte_9a" type="ptree" />
+    <Grouping name="byte_9b" type="ptree" />
+    <Grouping name="byte_9c" type="ptree" />
+    <Grouping name="byte_9d" type="ptree" />
+    <Grouping name="byte_9e" type="ptree" />
+    <Grouping name="byte_9f" type="ptree" />
+
+    <Grouping name="byte_a0" type="ptree" />
+    <Grouping name="byte_a1" type="ptree" />
+    <Grouping name="byte_a2" type="ptree" />
+    <Grouping name="byte_a3" type="ptree" />
+    <Grouping name="byte_a4" type="ptree" />
+    <Grouping name="byte_a5" type="ptree" />
+    <Grouping name="byte_a6" type="ptree" />
+    <Grouping name="byte_a7" type="ptree" />
+    <Grouping name="byte_a8" type="ptree" />
+    <Grouping name="byte_a9" type="ptree" />
+    <Grouping name="byte_aa" type="ptree" />
+    <Grouping name="byte_ab" type="ptree" />
+    <Grouping name="byte_ac" type="ptree" />
+    <Grouping name="byte_ad" type="ptree" />
+    <Grouping name="byte_ae" type="ptree" />
+    <Grouping name="byte_af" type="ptree" />
+
+    <Grouping name="byte_b0" type="ptree" />
+    <Grouping name="byte_b1" type="ptree" />
+    <Grouping name="byte_b2" type="ptree" />
+    <Grouping name="byte_b3" type="ptree" />
+    <Grouping name="byte_b4" type="ptree" />
+    <Grouping name="byte_b5" type="ptree" />
+    <Grouping name="byte_b6" type="ptree" />
+    <Grouping name="byte_b7" type="ptree" />
+    <Grouping name="byte_b8" type="ptree" />
+    <Grouping name="byte_b9" type="ptree" />
+    <Grouping name="byte_ba" type="ptree" />
+    <Grouping name="byte_bb" type="ptree" />
+    <Grouping name="byte_bc" type="ptree" />
+    <Grouping name="byte_bd" type="ptree" />
+    <Grouping name="byte_be" type="ptree" />
+    <Grouping name="byte_bf" type="ptree" />
+
+    <Grouping name="byte_c0" type="ptree" />
+    <Grouping name="byte_c1" type="ptree" />
+    <Grouping name="byte_c2" type="ptree" />
+    <Grouping name="byte_c3" type="ptree" />
+    <Grouping name="byte_c4" type="ptree" />
+    <Grouping name="byte_c5" type="ptree" />
+    <Grouping name="byte_c6" type="ptree" />
+    <Grouping name="byte_c7" type="ptree" />
+    <Grouping name="byte_c8" type="ptree" />
+    <Grouping name="byte_c9" type="ptree" />
+    <Grouping name="byte_ca" type="ptree" />
+    <Grouping name="byte_cb" type="ptree" />
+    <Grouping name="byte_cc" type="ptree" />
+    <Grouping name="byte_cd" type="ptree" />
+    <Grouping name="byte_ce" type="ptree" />
+    <Grouping name="byte_cf" type="ptree" />
+
+    <Grouping name="byte_d0" type="ptree" />
+    <Grouping name="byte_d1" type="ptree" />
+    <Grouping name="byte_d2" type="ptree" />
+    <Grouping name="byte_d3" type="ptree" />
+    <Grouping name="byte_d4" type="ptree" />
+    <Grouping name="byte_d5" type="ptree" />
+    <Grouping name="byte_d6" type="ptree" />
+    <Grouping name="byte_d7" type="ptree" />
+    <Grouping name="byte_d8" type="ptree" />
+    <Grouping name="byte_d9" type="ptree" />
+    <Grouping name="byte_da" type="ptree" />
+    <Grouping name="byte_db" type="ptree" />
+    <Grouping name="byte_dc" type="ptree" />
+    <Grouping name="byte_dd" type="ptree" />
+    <Grouping name="byte_de" type="ptree" />
+    <Grouping name="byte_df" type="ptree" />
+
+    <Grouping name="byte_e0" type="ptree" />
+    <Grouping name="byte_e1" type="ptree" />
+    <Grouping name="byte_e2" type="ptree" />
+    <Grouping name="byte_e3" type="ptree" />
+    <Grouping name="byte_e4" type="ptree" />
+    <Grouping name="byte_e5" type="ptree" />
+    <Grouping name="byte_e6" type="ptree" />
+    <Grouping name="byte_e7" type="ptree" />
+    <Grouping name="byte_e8" type="ptree" />
+    <Grouping name="byte_e9" type="ptree" />
+    <Grouping name="byte_ea" type="ptree" />
+    <Grouping name="byte_eb" type="ptree" />
+    <Grouping name="byte_ec" type="ptree" />
+    <Grouping name="byte_ed" type="ptree" />
+    <Grouping name="byte_ee" type="ptree" />
+    <Grouping name="byte_ef" type="ptree" />
+
+    <Grouping name="byte_f0" type="ptree" />
+    <Grouping name="byte_f1" type="ptree" />
+    <Grouping name="byte_f2" type="ptree" />
+    <Grouping name="byte_f3" type="ptree" />
+    <Grouping name="byte_f4" type="ptree" />
+    <Grouping name="byte_f5" type="ptree" />
+    <Grouping name="byte_f6" type="ptree" />
+    <Grouping name="byte_f7" type="ptree" />
+    <Grouping name="byte_f8" type="ptree" />
+    <Grouping name="byte_f9" type="ptree" />
+    <Grouping name="byte_fa" type="ptree" />
+    <Grouping name="byte_fb" type="ptree" />
+    <Grouping name="byte_fc" type="ptree" />
+    <Grouping name="byte_fd" type="ptree" />
+    <Grouping name="byte_fe" type="ptree" />
     <Grouping name="byte_ff" type="ptree" />
 </Groupings>
 
@@ -65,12 +332,61 @@
       <Grouping type="regex" position="2" />
       <Token name="RPAREN" />
     </ListProduction>
-
     <AssignProduction label="from_concat" grouping="regex" >
       <Grouping type="concat" position="1" />
     </AssignProduction>
 
+    <ListProduction label="make_kleene" grouping="kleene" >
+      <Token name="LPAREN" />
+      <Token name="KLEENE" />
+      <Grouping type="regex" position="1" />
+      <Token name="RPAREN" />
+    </ListProduction>
+    <AssignProduction label="from_kleene" grouping="regex" >
+      <Grouping type="kleene" position="1" />
+    </AssignProduction>
 
+    <ListProduction label="make_or" grouping="or" >
+      <Token name="LPAREN" />
+      <Token name="OR" />
+      <Grouping type="regex" position="1" />
+      <Grouping type="regex" position="2" />
+      <Token name="RPAREN" />
+    </ListProduction>
+    <AssignProduction label="from_or" grouping="regex" >
+      <Grouping type="or" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_and" grouping="and" >
+      <Token name="LPAREN" />
+      <Token name="AND" />
+      <Grouping type="regex" position="1" />
+      <Grouping type="regex" position="2" />
+      <Token name="RPAREN" />
+    </ListProduction>
+    <AssignProduction label="from_and" grouping="regex" >
+      <Grouping type="and" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_not" grouping="not" >
+      <Token name="LPAREN" />
+      <Token name="NOT" />
+      <Grouping type="regex" position="1" />
+      <Token name="RPAREN" />
+    </ListProduction>
+    <AssignProduction label="from_not" grouping="regex" >
+      <Grouping type="not" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="DiscardWSLeft" grouping="regex" >
+      <Token name="WHITESPACE" />
+      <Grouping type="regex" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="DiscardWSRight" grouping="regex" >
+      <Grouping type="regex" position="1" />
+      <Token name="WHITESPACE" />
+    </AssignProduction>
 
   </Productions>
 </Language>
