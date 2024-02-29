@@ -9,7 +9,7 @@
 
 MODULE(ptree)
 {
-    ptree_context ctx = arith_ptree_create_context();
+  ptree_context ctx = arith_ptree_create_context();
   TEST("ctor/dtor") {
     (void)ctx;
   }

@@ -22,7 +22,7 @@ $(regex_tmp)/regex.o:	regex/regex.c regex/regex.ptree.h tools/ptree.h tools/ptre
 	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
 
 
-bin/regex.tests:	$(regex_tmp)/regex.tests.o $(regex_tmp)/regex.ptree.o
+bin/regex.tests:	$(regex_tmp)/regex.tests.o $(regex_tmp)/regex.o $(regex_tmp)/regex.ptree.o
 	@mkdir -p "$(dir $@)"
 	$(CC) $(CFLAGS) $^ -o $@
 

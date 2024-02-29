@@ -86,8 +86,8 @@ regex_impl_ptree_identifier_expression_maybe_name(uint64_t id) {
     break;
   }
 
-  if ((regex_grouping_byte_00 <= id) && (id <= regex_grouping_byte_ff)) {
-    size_t offset = regex_ptree_byte_print_array_stride * (id - regex_grouping_byte_00);
+  if (regex_grouping_id_is_single_byte(id)) {
+    size_t offset = regex_ptree_byte_print_array_stride * regex_grouping_extract_single_byte(id);
     return &regex_ptree_byte_print_array[offset];
   }
 
