@@ -10,7 +10,7 @@ clean::
 
 REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.declarations.h regex/regex_parser.lemon.h
 
-REGEX_SOURCE := regex.ptree.c regex.tests.c regex.c regex.lexer.definitions.c # regex_parser.lemon.c
+REGEX_SOURCE := regex.ptree.c regex.tests.c regex.c regex.lexer.definitions.c regex_parser.lemon.c
 
 REGEX_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_SOURCE:.c=.o))
 

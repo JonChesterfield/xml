@@ -129,6 +129,30 @@ static ptree arith_impl_ptree_expression_element(ptree arg, size_t index) {
   return p->elements[index];
 }
 
+static inline ptree arith_impl_ptree_expression_create_uninitialised(ptree_context ctx,
+                                                                     uint64_t id,
+                                                                     uint64_t N) {
+  ptree_malloc_ptree_context s =
+      ptree_context_to_ptree_malloc_ptree_context(ctx);
+  ptree_malloc_ptree r = ptree_malloc_ptree_allocate(id, N);
+  if (r) {
+    r->is_token = false;
+    for (size_t i = 0; i < N; i++) {
+      r->elements[i] = ptree_failure();
+    }
+    s->root = r;
+  }
+  return ptree_malloc_ptree_to_ptree(r);
+}
+
+static inline void arith_impl_ptree_expression_initialise_element(ptree base,
+                                                                  size_t index,
+                                                                  ptree elt)
+{
+  ptree_malloc_ptree p = ptree_to_ptree_malloc_ptree(base);
+  p->elements[index] = elt;
+}
+
 static inline ptree arith_impl_ptree_expression_construct(ptree_context ctx,
                                                           uint64_t id,
                                                           uint64_t N,

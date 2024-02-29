@@ -38,21 +38,54 @@
   
 #include "../tools/token.h"
 #include "../tools/ptree.h"
-#endif
 
-// #include "arith.lemon.h"
-
-// Removes LemonAlloc/LemonFree
-#define arith_Lemon_ENGINEALWAYSONSTACK 1
-
+#endif // end INTERFACE
 
 ]]>
       </xsl:attribute>
     </Include>
 
+
+    <NL hexvalue = "0a" />
+    <OnStack value='#define {$LangName}_Lemon_ENGINEALWAYSONSTACK 1 // Remove LemonAlloc' />
+    <NL hexvalue = "0a" />
+    <Header value='#include "../tools/token.h"' />
     <NL hexvalue = "0a" />
     <Header value='#include "{$LangName}.ptree.h"' />
     <NL hexvalue = "0a" />
+    <Header value='#include "{$LangName}.lexer.declarations.h"' />
+    <NL hexvalue = "0a" />
+    <Header value='#include "{$LangName}.declarations.h"' />
+    <NL hexvalue = "0a" />
+    <DisableFallback value="__attribute__((unused)) static int {$LangName}_LemonFallback(int);" />
+    <NL hexvalue = "0a" />
+    <StaticFinalize value="static void {$LangName}_LemonFinalize(void *p);" />
+    <NL hexvalue = "0a" />
+    <StaticInit value="static void {$LangName}_LemonInit(void *, ptree_context);" />
+    <NL hexvalue = "0a" />
+    <StaticParse value="static void {$LangName}_Lemon(void*, int, token, ptree*);" />
+
+<InterfaceType>
+      <xsl:attribute name="value">
+
+static ptree parser_<xsl:value-of select="$LangName"/>_ptree_from_token(ptree_context ctx, enum <xsl:value-of select="$LangName"/>_token id, token tok)
+{
+  return <xsl:value-of select="$LangName"/>_ptree_from_token(ctx, id, tok.value, tok.width);
+}
+
+#if INTERFACE
+union <xsl:value-of select="$LangName"/>_parser_u;
+typedef union <xsl:value-of select="$LangName"/>_parser_u <xsl:value-of select="$LangName"/>_parser_type ;
+#define <xsl:value-of select="$LangName"/>_parser_type_size 3240
+#define <xsl:value-of select="$LangName"/>_parser_type_align 8
+
+// enum {<xsl:value-of select="$LangName"/>_parser_type_size = 3240, <xsl:value-of select="$LangName"/>_parser_type_align = 8};
+struct <xsl:value-of select="$LangName"/>_parser_s {
+    char _Alignas(<xsl:value-of select="$LangName"/>_parser_type_align) data[<xsl:value-of select="$LangName"/>_parser_type_size];
+};
+#endif // INTERFACE
+      </xsl:attribute>
+</InterfaceType>
 
     <IncludeClose>
       <xsl:attribute name="value"><![CDATA[
@@ -66,6 +99,28 @@
 
 <Code>
       <xsl:attribute name="value">
+
+
+  // crude bisection by changing these values
+  _Static_assert(sizeof(struct yyParser) &gt;= 3240, "");
+  _Static_assert(sizeof(struct yyParser) &lt;= 3240, "");
+    
+  _Static_assert(sizeof(struct yyParser) == <xsl:value-of select="$LangName"/>_parser_type_size,"");
+  _Static_assert(_Alignof(struct yyParser) == <xsl:value-of select="$LangName"/>_parser_type_align,"");
+
+  _Static_assert(sizeof(struct <xsl:value-of select="$LangName"/>_parser_s) == <xsl:value-of select="$LangName"/>_parser_type_size,"");
+  _Static_assert(_Alignof(struct <xsl:value-of select="$LangName"/>_parser_s) == <xsl:value-of select="$LangName"/>_parser_type_align,"");
+
+  union <xsl:value-of select="$LangName"/>_parser_u
+  {
+    struct yyParser lemon;
+    struct <xsl:value-of select="$LangName"/>_parser_s state;
+  };
+
+  _Static_assert(sizeof(union <xsl:value-of select="$LangName"/>_parser_u) == <xsl:value-of select="$LangName"/>_parser_type_size,"");
+  _Static_assert(_Alignof(union <xsl:value-of select="$LangName"/>_parser_u) == <xsl:value-of select="$LangName"/>_parser_type_align,"");
+
+
   void <xsl:value-of select="$LangName"/>_parser_initialize(<xsl:value-of select="$LangName"/>_parser_type*p, ptree_context <xsl:value-of select="$LangName"/>_ptree_context)
   {
     <xsl:value-of select="$LangName"/>_LemonInit(&amp;p->lemon, <xsl:value-of select="$LangName"/>_ptree_context);
@@ -102,7 +157,9 @@
     <NL hexvalue = "0a" />
     <StartSymbol value = "%start_symbol program // explicit" />
     <NL hexvalue = "0a" />
-    <ExtraArg value = "%extra_argument {{list* external_context}}" />
+    <ExtraArg value = "%extra_argument {{ptree* external_context}}" />
+    <NL hexvalue = "0a" />
+    <ExtraContext value = "%extra_context {{ptree_context {$LangName}_ptree_context}}" />
     <NL hexvalue = "0a" />
     <ErrorMessage value = '%syntax_error {{ fprintf(stderr, "Syntax error\n"); }}' />
     <NL hexvalue = "0a0a" />
@@ -121,11 +178,6 @@
 // and non-terminals etc)
 // Can give the terminals names as well, PLUS(D) etc
 
-program ::= expr(A). {
-   printf("Invoking program\n");
-   *external_context = A;
-   printf("\n");
-}
 ]]></xsl:attribute>
     </Program>
 
@@ -155,6 +207,9 @@ program ::= expr(A). {
 
 <xsl:template match="Groupings">
   <Header value="// Groupings" />
+  <NL hexvalue = "0a" />
+  <Prog value="%type program {{ ptree }}" />
+
   <NL hexvalue = "0a" />
   <xsl:apply-templates select="Grouping"/>
   <NL hexvalue="0a" />
@@ -242,25 +297,20 @@ program ::= expr(A). {
   <EE value = "  }};" />
   <NL hexvalue="0a" />
 
-  <ListTmp value = '  ptree tmp[total_arity];&#x0a;' />
+
+
+  <ResTmp value = '  R = {$LangName}_ptree_expression_create_uninitialised({$LangName}_ptree_context, {$LangName}_grouping_{@grouping}, total_arity);' />
+  <NL hexvalue="0a" />
 
   <xsl:apply-templates select="Grouping|Token" mode="ListProductionAssign"/>
-  
-  <ResExpr value = '  R = {$LangName}_ptree_expression{count(Grouping[@position]) + count(Token[@position])}(ctx,&#x0a;        {$LangName}_grouping_{@grouping}' />
-
-
-<!-- this is way harder than it should be
-
-  <xsl:call-template name="ListProductionSelectGrouping">
-    <xsl:with-param name="iter" select="1" />
-    <xsl:with-param name="maxiter" select="count(Grouping) + count(Token) + 1" />
-  </xsl:call-template>
--->
+  <OutExpr value = '  if (external_context) {{*external_context = R;}}' />
+  <NL hexvalue="0a" />
+  <!--
+      <ResExpr value = '  return R;' />
+      <NL hexvalue="0a" />
+  -->
 
   <xsl:apply-templates select="Grouping|Token" mode="ListProductionSelect"/>
-  
-  <EndResExpr value=");&#x0a;" />
-
   <RB hexvalue="7d0a" />
 </xsl:template>
 
@@ -303,60 +353,22 @@ program ::= expr(A). {
 <xsl:template match="Grouping" mode="ListProductionAssign">
   <xsl:choose>
     <xsl:when test="@position">
-      <P value="  tmp[{@position}-1] = x{position()};" />
+      <P value="  {$LangName}_ptree_expression_initialise_element(R, {@position}-1, x{position()});" />
     </xsl:when>
     <xsl:otherwise>
-      <P value="  list_free(x{position()});" />
+      <P value="  (void)x{position()};" />
     </xsl:otherwise>
   </xsl:choose>
   <NL hexvalue="0a" />
 </xsl:template>
-
-<xsl:template name="ListProductionSelectGrouping" >
-  <xsl:param name="iter" />
-  <xsl:param name="maxiter" />
-
-  <NL hexvalue="0a" />
-  <MyPos value="myiter={$iter} of {$maxiter}" />
-
-  <xsl:if test="$maxiter > $iter" >
-  <NL hexvalue="0a" />
-  <MyPos value="mypos={position()}" />
-  <NL hexvalue="0a" />
-  <ClaimedPos value="groupclaimedpos={Grouping/@position}" />
-  <NL hexvalue="0a" />
-  <ClaimedPos value="tokenclaimedpos={Token/@position}" />
-  <NL hexvalue="0a" />
-
-  
-  <xsl:choose>
-    <xsl:when test="Grouping/@position">
-      <P value="  group tmp[{@position}-1] = x{position()};" />
-    </xsl:when>
-    <xsl:when test="Token/@position">
-      <P value="  token tmp[{@position}-1] = x{position()};" />
-    </xsl:when>
-
-    <xsl:otherwise>
-      <P value="  list_free(x{position()});" />
-    </xsl:otherwise>
-  </xsl:choose>
-  <NL hexvalue="0a" />
-
-  <xsl:call-template name="ListProductionSelectGrouping">
-    <xsl:with-param name="iter" select="1 + $iter" />
-    <xsl:with-param name="maxiter" select="$maxiter" />
-  </xsl:call-template>
-
-
-</xsl:if>
-</xsl:template>
-
 
 <xsl:template match="Token" mode="ListProductionAssign">
   <xsl:choose>
     <xsl:when test="@position">
-      <P value="  tmp[{@position}-1] = list_from_token(x{position()});" />
+      
+      <T value = "  ptree tmp{position()} = parser_{$LangName}_ptree_from_token({$LangName}_ptree_context, {$LangName}_token_{@name}, x{position()});" />
+      <NL hexvalue="0a" />
+      <P value="  {$LangName}_ptree_expression_initialise_element(R, {@position}-1, tmp{position()});" />
     </xsl:when>
     <xsl:otherwise>
       <P value="  (void)x{position()};" />
@@ -392,7 +404,7 @@ program ::= expr(A). {
 
 <xsl:template match="AssignProduction">
   <NL hexvalue="0a" />
-  <Label value="// AssignProduction {@label}" />
+  <Label value="// AssignProduction {@label} -&gt; {$LangName}_grouping_{@grouping}" />
   <NL hexvalue="0a" />
   <xsl:call-template name="production-definition" />
   <LB hexvalue="7b0a" />

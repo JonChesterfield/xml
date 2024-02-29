@@ -53,16 +53,24 @@
 </Precedences>
 
   <Productions>
+
+    <AssignProduction label="result" grouping="program" >
+      <Grouping type="regex" position="1" />
+    </AssignProduction>
+
     <ListProduction label="make_concat" grouping="concat" >
       <Token name="LPAREN" />
-      <Token name="CONCAT" position="3" />
+      <Token name="CONCAT" />
       <Grouping type="regex" position="1" />
       <Grouping type="regex" position="2" />
       <Token name="RPAREN" />
     </ListProduction>
-    <AssignProduction label="from_concat" type="regex" >
+
+    <AssignProduction label="from_concat" grouping="regex" >
       <Grouping type="concat" position="1" />
     </AssignProduction>
+
+
 
   </Productions>
 </Language>

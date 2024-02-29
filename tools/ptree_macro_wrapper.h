@@ -40,6 +40,10 @@
                                                 ptree element);                \
   ptree PTREE_CONCAT(PREFIX, expression_construct)(                            \
       ptree_context ctx, uint64_t id, size_t N, ptree * elts);                 \
+  ptree PTREE_CONCAT(PREFIX, expression_create_uninitialised)(                 \
+      ptree_context ctx, uint64_t id, size_t N);                               \
+  void PTREE_CONCAT(PREFIX, expression_initialise_element)(                    \
+      ptree base, uint64_t id, ptree elt);                                     \
   ptree PTREE_CONCAT(PREFIX, expression0)(ptree_context ctx, uint64_t id);     \
   ptree PTREE_CONCAT(PREFIX, expression1)(ptree_context ctx, uint64_t id,      \
                                           ptree x0);                           \
@@ -142,6 +146,14 @@
       ptree_context ctx, uint64_t id, size_t N, ptree * elts) {                \
     return ptree_expression_construct(&MODULE, ctx, id, N, elts);              \
   }                                                                            \
+  ptree PTREE_CONCAT(PREFIX, expression_create_uninitialised)(                 \
+      ptree_context ctx, uint64_t id, size_t N) {                              \
+    return ptree_expression_create_uninitialised(&MODULE, ctx, id, N);         \
+  }                                                                            \
+  void PTREE_CONCAT(PREFIX, expression_initialise_element)(                    \
+      ptree base, uint64_t id, ptree elt) {                                    \
+    return ptree_expression_initialise_element(&MODULE, base, id, elt);        \
+  }                                                                            \
   ptree PTREE_CONCAT(PREFIX, expression0)(ptree_context ctx, uint64_t id) {    \
     return ptree_expression0(&MODULE, ctx, id);                                \
   }                                                                            \
@@ -235,7 +247,10 @@
     .expression_elements = PTREE_CONCAT(PREFIX, expression_elements),          \
     .expression_element = PTREE_CONCAT(PREFIX, expression_element),            \
     .expression_append = PTREE_CONCAT(PREFIX, expression_append),              \
-    .expression_construct = PTREE_CONCAT(PREFIX, expression_construct),        \
+    .expression_create_uninitialised =                                         \
+        PTREE_CONCAT(PREFIX, expression_create_uninitialised),                 \
+    .expression_initialise_element =                                           \
+        PTREE_CONCAT(PREFIX, expression_initialise_element),                   \
   }
 
 #endif

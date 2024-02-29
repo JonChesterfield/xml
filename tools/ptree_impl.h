@@ -177,17 +177,59 @@ static inline ptree ptree_expression_construct(const ptree_module *mod,
   for (size_t i = 0; i < N; i++) {
     ptree_require(!ptree_is_failure(elts[i]));
   }
-  ptree res = mod->expression_construct(ctx, id, N, elts);
+  ptree res = ptree_expression_create_uninitialised(mod, ctx, id, N);
   ptree_require(ptree_impl_expression_failure_or_has_N_elements(mod, res, N));
+
+  if (ptree_is_failure(res)) {return ptree_failure(); }
+  
+  for (size_t i = 0; i < N; i++) {
+    ptree_expression_initialise_element(mod, res, i, elts[i]);
+  }
+  
   return res;
 }
+
+static inline ptree ptree_expression_create_uninitialised(const ptree_module *mod,
+                                                          ptree_context ctx, uint64_t id,
+                                                          size_t N)
+{
+  ptree_require(
+      ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
+
+  ptree res = mod->expression_create_uninitialised(ctx, id, N);
+
+  if (!ptree_is_failure(res)) {
+    ptree_require(ptree_is_expression(mod, res));
+    ptree_require(ptree_expression_elements(mod, res) == N);
+    for (size_t i = 0; i < N; i++)
+      {
+        ptree_require(ptree_is_failure(mod->expression_element(res, i)));
+      }
+  }
+  
+  return res;
+}
+
+static inline void ptree_expression_initialise_element(const ptree_module *mod, ptree base,
+                                                       size_t index, ptree elt)
+{
+  ptree_require(ptree_is_expression(mod, base));
+  ptree_require(index < ptree_expression_elements(mod, base));
+  ptree_require(!ptree_is_failure(elt));
+  
+  ptree_require(ptree_is_failure(mod->expression_element(base, index)));
+  mod->expression_initialise_element(base, index, elt);
+  ptree_require(!ptree_is_failure(mod->expression_element(base, index)));
+  ptree_require(mod->expression_element(base, index).state == elt.state);
+}
+
 
 static inline ptree ptree_expression0(const ptree_module *mod,
                                       ptree_context ctx, uint64_t id) {
   enum { N = 0 };
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
-  ptree res = mod->expression_construct(ctx, id, 0, 0);
+  ptree res = ptree_expression_construct(mod, ctx, id, 0, 0);
   ptree_require(ptree_impl_expression_failure_or_has_N_elements(mod, res, N));
   return res;
 }
@@ -199,7 +241,7 @@ static inline ptree ptree_expression1(const ptree_module *mod,
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
   ptree arr[N] = {x0};
-  ptree res = mod->expression_construct(ctx, id, N, arr);
+  ptree res = ptree_expression_construct(mod, ctx, id, N, arr);
   ptree_require(ptree_impl_expression_failure_or_has_N_elements(mod, res, N));
   return res;
 }
@@ -211,7 +253,7 @@ static inline ptree ptree_expression2(const ptree_module *mod,
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
   ptree arr[N] = {x0, x1};
-  ptree res = mod->expression_construct(ctx, id, N, arr);
+  ptree res = ptree_expression_construct(mod, ctx, id, N, arr);
   ptree_require(ptree_impl_expression_failure_or_has_N_elements(mod, res, N));
   return res;
 }
@@ -223,7 +265,7 @@ static inline ptree ptree_expression3(const ptree_module *mod,
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
   ptree arr[N] = {x0, x1, x2};
-  ptree res = mod->expression_construct(ctx, id, N, arr);
+  ptree res = ptree_expression_construct(mod, ctx, id, N, arr);
   ptree_require(ptree_impl_expression_failure_or_has_N_elements(mod, res, N));
   return res;
 }
@@ -235,7 +277,7 @@ static inline ptree ptree_expression4(const ptree_module *mod,
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
   ptree arr[N] = {x0, x1, x2, x3};
-  ptree res = mod->expression_construct(ctx, id, N, arr);
+  ptree res = ptree_expression_construct(mod, ctx, id, N, arr);
   ptree_require(ptree_impl_expression_failure_or_has_N_elements(mod, res, N));
   return res;
 }
@@ -247,7 +289,7 @@ static inline ptree ptree_expression5(const ptree_module *mod,
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
   ptree arr[N] = {x0, x1, x2, x3, x4};
-  ptree res = mod->expression_construct(ctx, id, N, arr);
+  ptree res = ptree_expression_construct(mod, ctx, id, N, arr);
   ptree_require(ptree_impl_expression_failure_or_has_N_elements(mod, res, N));
   return res;
 }
@@ -260,7 +302,7 @@ static inline ptree ptree_expression6(const ptree_module *mod,
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
   ptree arr[N] = {x0, x1, x2, x3, x4, x5};
-  ptree res = mod->expression_construct(ctx, id, N, arr);
+  ptree res = ptree_expression_construct(mod, ctx, id, N, arr);
   ptree_require(ptree_impl_expression_failure_or_has_N_elements(mod, res, N));
   return res;
 }
@@ -273,7 +315,7 @@ static inline ptree ptree_expression7(const ptree_module *mod,
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
   ptree arr[N] = {x0, x1, x2, x3, x4, x5, x6};
-  ptree res = mod->expression_construct(ctx, id, N, arr);
+  ptree res = ptree_expression_construct(mod, ctx, id, N, arr);
   ptree_require(ptree_impl_expression_failure_or_has_N_elements(mod, res, N));
   return res;
 }
@@ -286,7 +328,7 @@ static inline ptree ptree_expression8(const ptree_module *mod,
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
   ptree arr[N] = {x0, x1, x2, x3, x4, x5, x6, x7};
-  ptree res = mod->expression_construct(ctx, id, N, arr);
+  ptree res = ptree_expression_construct(mod, ctx, id, N, arr);
   ptree_require(ptree_impl_expression_failure_or_has_N_elements(mod, res, N));
   return res;
 }

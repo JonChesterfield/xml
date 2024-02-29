@@ -95,6 +95,14 @@ static inline ptree ptree_expression_construct(const ptree_module *mod,
                                                ptree_context ctx, uint64_t id,
                                                size_t N, ptree *elts);
 
+static inline ptree ptree_expression_create_uninitialised(const ptree_module *mod,
+                                                          ptree_context ctx, uint64_t id,
+                                                          size_t N);
+
+static inline void ptree_expression_initialise_element(const ptree_module *mod, ptree base,
+                                                       size_t index, ptree elt);
+
+
 // Call into construct.
 static inline ptree ptree_expression0(const ptree_module *mod,
                                       ptree_context ctx, uint64_t id);
@@ -198,8 +206,8 @@ struct ptree_module_ty {
 
   ptree (*const expression_append)(ptree_context, ptree base, ptree element);
 
-  ptree (*const expression_construct)(ptree_context, uint64_t id, size_t N,
-                                      ptree *);
+  ptree (*const expression_create_uninitialised)(ptree_context, uint64_t id, size_t N);
+  void (*const expression_initialise_element)(ptree base, size_t index, ptree elt);
 };
 
 #include "ptree_impl.h"
