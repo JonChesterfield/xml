@@ -1,3 +1,4 @@
+#include "regex.h"
 #include "regex.ptree.h"
 #include "regex.declarations.h"
 

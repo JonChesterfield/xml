@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Language>
+  <LanguageName>regex</LanguageName>
+  <Lexer>
+    <!-- Currently posix, re2, re2c or multi -->
+    <!-- considering lex and the posix from musl -->
+    <!-- Multi is set up to run all the engines that lexer.h says are available -->    
+    <Engine value="re2c" />
+  </Lexer>
+
+  <Tokens>
+    <Token name="BYTE" regex="[abcdef0123456789][abcdef0123456789]" />
+    <Token name="LPAREN" literal="(" />
+    <Token name="RPAREN" literal=")" />
+
+    <Token name="LSQUARE" literal="[" />
+    <Token name="RSQUARE" literal="]" />
+
+    <Token name="EMPTYSET" literal="%" />
+    <Token name="EMPTYSTRING" literal="_" />
+
+    <Token name="CONCAT" literal="." />
+
+    <Token name="KLEENE" literal="*" />
+
+    <Token name="OR" literal="|" />
+    <Token name="AND" literal="&amp;" />
+    <Token name="NOT" literal="~" />
+
+    <Token name="WHITESPACE" regex="[ \f\n\r\t\v]+" />
+  </Tokens>
+
+<Groupings>
+    <Grouping name="regex" type="ptree" />
+
+    <Grouping name="empty_set" type="ptree" />
+    <Grouping name="empty_string" type="ptree" />
+
+    <Grouping name="concat" type="ptree" />
+    <Grouping name="kleene" type="ptree" />
+    <Grouping name="or" type="ptree" />
+    <Grouping name="and" type="ptree" />
+    <Grouping name="not" type="ptree" />
+    <Grouping name="range" type="ptree" />
+
+    <Grouping name="byte_00" type="ptree" />
+    <Grouping name="byte_01" type="ptree" />
+    <!-- ... -->
+    <Grouping name="byte_ff" type="ptree" />
+</Groupings>
+
+<Precedences>
+</Precedences>
+
+  <Productions>
+    <ListProduction label="make_concat" type="ptree" >
+      <Token name="LPAREN" />
+      <Token name="CONCAT" />
+      <Grouping type="regex" position="1" />
+      <Grouping type="regex" position="2" />
+      <Token name="RPAREN" />
+    </ListProduction>
+    <AssignProduction label="from_concat" type="regex" >
+      <Grouping type="concat" position="1" />
+    </AssignProduction>
+
+  </Productions>
+</Language>

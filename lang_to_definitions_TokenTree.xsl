@@ -55,7 +55,7 @@
     <Assign value="="/>
     <SP value = " " />
     <LB hexvalue = "7b0a" />
-    <Default value='  [arith_token_UNKNOWN] = "UNKNOWN",' />
+    <Default value='  [{$LangName}_token_UNKNOWN] = "UNKNOWN",' />
     <NL hexvalue="0a" />
     <xsl:apply-templates select="Token" mode="Names"/>
     <RB hexvalue = "7d" />
@@ -73,7 +73,7 @@
     <Assign value="="/>
     <SP value = " " />
     <LB hexvalue = "7b0a" />
-    <Default value='  [arith_token_UNKNOWN] = ".",' />
+    <Default value='  [{$LangName}_token_UNKNOWN] = ".",' />
     <NL hexvalue="0a" />    
     <xsl:apply-templates select="Token" mode="Combined"/>
     <RB hexvalue = "7d" />
@@ -92,7 +92,7 @@
     <Assign value="="/>
     <SP value = " " />
     <LB hexvalue = "7b0a" />
-    <Default value='  [arith_token_UNKNOWN] = ".",' />
+    <Default value='  [{$LangName}_token_UNKNOWN] = ".",' />
     <NL hexvalue="0a" />
     <xsl:apply-templates select="Token" mode="Regexes"/>
     <RB hexvalue = "7d" />
@@ -111,7 +111,7 @@
     <Assign value="="/>
     <SP value = " " />
     <LB hexvalue = "7b0a" />
-    <Default value='  [arith_token_UNKNOWN] = 0,' />
+    <Default value='  [{$LangName}_token_UNKNOWN] = 0,' />
     <NL hexvalue="0a" />    
     <xsl:apply-templates select="Token" mode="Literals"/>
     <RB hexvalue = "7d" />

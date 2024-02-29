@@ -8,7 +8,7 @@ clean::
 	rm -rf $(arith_tmp)
 
 # well this is grim, lemon is a bit too filename driven
-# use a directory ad cd into it before calling the tools to control the output filename
+# use a directory and cd into it before calling the tools to control the output filename
 
 lemon_tmp := $(arith_tmp)/lemon
 $(lemon_tmp):	$(arith_tmp)

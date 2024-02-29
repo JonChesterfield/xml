@@ -328,7 +328,7 @@ static int regex_to_char_sequence_pre(ptree tree, uint64_t depth, void *p) {
 
   switch (id) {
   case regex_grouping_empty_set: {
-    printf("{}");
+    printf("%%");
     break;
   }
 
@@ -348,7 +348,7 @@ static int regex_to_char_sequence_pre(ptree tree, uint64_t depth, void *p) {
   }
 
   case regex_grouping_or: {
-    printf("(+");
+    printf("(|");
     break;
   }
 

@@ -27,9 +27,9 @@
 
 <xsl:template match="Tokens">
   <Header>
-    <Header0 value ="#ifndef {$UpcaseLangName}_DECLARATIONS_H_INCLUDED" />
+    <Header0 value ="#ifndef {$UpcaseLangName}_LEXER_DECLARATIONS_H_INCLUDED" />
     <NL hexvalue="0a" />
-    <Header1 value ="#define {$UpcaseLangName}_DECLARATIONS_H_INCLUDED" />
+    <Header1 value ="#define {$UpcaseLangName}_LEXER_DECLARATIONS_H_INCLUDED" />
     <NL hexvalue="0a0a" />
 
     <Include value='#include &lt;stdbool.h&gt;' />
@@ -57,16 +57,6 @@
     <NL hexvalue="0a" />
   </Lexer>
 
-  <Parser>
-    <Comment value="// Parser" />
-    <NL hexvalue="0a" />
-
-    <Include value='#include "../tools/token.h"' />
-    <NL hexvalue="0a" />
-
-    <NL hexvalue="0a" />
-  </Parser>
-
   <TokenEnum>
     <Comment value="// Enumeration" />
     <NL hexvalue="0a" />
@@ -76,7 +66,7 @@
 
     <SP value = " " />
     <LB hexvalue = "7b0a" />
-    <Default value="  arith_token_UNKNOWN = 0," />
+    <Default value="  {$LangName}_token_UNKNOWN = 0," />
     <NL hexvalue="0a" />
     <xsl:apply-templates select="Token" mode="Enumerate"/>
     <RB hexvalue = "7d" />
@@ -114,7 +104,7 @@
 
   <NL hexvalue="0a0a" />
   <Footer>
-    <Footer0 value="#endif /* {$UpcaseLangName}_DECLARATIONS_H_INCLUDED */" />
+    <Footer0 value="#endif /* {$UpcaseLangName}_LEXER_DECLARATIONS_H_INCLUDED */" />
   </Footer>
 </xsl:template>
 

@@ -72,6 +72,26 @@ static inline ptree regex_make_and(ptree_context ctx, ptree lhs, ptree rhs) {
   return regex_ptree_expression2(ctx, regex_grouping_and, lhs, rhs);
 }
 
+
+static inline bool regex_grouping_id_is_single_byte(uint64_t id)
+{
+  return (regex_grouping_byte_00 <= id) && (id <= regex_grouping_byte_ff);
+}
+
+static inline uint8_t regex_grouping_extract_single_byte(uint64_t id)
+{
+  // requires regex_grouping_id_is_single_byte(id)
+  return id - regex_grouping_byte_00;
+}
+
+static inline ptree regex_grouping_single_from_byte(ptree_context ctx, uint8_t byte)
+{
+  uint64_t id = byte + regex_grouping_byte_00;
+  return regex_ptree_expression0(ctx, id);
+}
+
+#include "regex.byte_constructors.data"
+
 ptree regex_nullable(ptree_context ctx, ptree val);
 ptree regex_derivative(ptree_context ctx, ptree val, uint8_t byte);
 ptree regex_canonicalise(ptree_context ctx, ptree val);
@@ -79,5 +99,6 @@ ptree regex_canonicalise(ptree_context ctx, ptree val);
 void regex_split(ptree_context ctx, ptree val, ptree *edges);
 
 int regex_to_char_sequence(arena_module mod, arena_t *arena, ptree val);
+
 
 #endif
