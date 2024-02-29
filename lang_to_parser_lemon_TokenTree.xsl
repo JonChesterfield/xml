@@ -15,10 +15,17 @@
   <TokenTree>
     <Header value="// Parser lemon {$LangName}" />
     <NL hexvalue = "0a0a" />
-    <Include>
+    <IncludeOpen>
       <xsl:attribute name="value"><![CDATA[
 %include
 {
+]]>        
+      </xsl:attribute>
+    </IncludeOpen>
+
+
+    <Include>
+      <xsl:attribute name="value"><![CDATA[
 #include <assert.h>
 #include <stdio.h> // parsetrace uses FILE
 #include <stdlib.h>
@@ -30,14 +37,64 @@
 #endif
   
 #include "../tools/token.h"
-#include "../tools/list.h"
+#include "../tools/ptree.h"
 #endif
 
 // #include "arith.lemon.h"
 
-}]]>
+// Removes LemonAlloc/LemonFree
+#define arith_Lemon_ENGINEALWAYSONSTACK 1
+
+
+]]>
       </xsl:attribute>
     </Include>
+
+    <NL hexvalue = "0a" />
+    <Header value='#include "{$LangName}.ptree.h"' />
+    <NL hexvalue = "0a" />
+
+    <IncludeClose>
+      <xsl:attribute name="value"><![CDATA[
+}
+]]>        
+      </xsl:attribute>
+    </IncludeClose>
+
+    
+    <CodeOpen value="&#xA;%code&#xA;{{&#xA;" />
+
+<Code>
+      <xsl:attribute name="value">
+  void <xsl:value-of select="$LangName"/>_parser_initialize(<xsl:value-of select="$LangName"/>_parser_type*p, ptree_context <xsl:value-of select="$LangName"/>_ptree_context)
+  {
+    <xsl:value-of select="$LangName"/>_LemonInit(&amp;p->lemon, <xsl:value-of select="$LangName"/>_ptree_context);
+  }
+  
+  void <xsl:value-of select="$LangName"/>_parser_finalize(<xsl:value-of select="$LangName"/>_parser_type*p)
+  {
+    <xsl:value-of select="$LangName"/>_LemonFinalize(&amp;p->lemon);
+  }
+
+  void <xsl:value-of select="$LangName"/>_parser_parse(<xsl:value-of select="$LangName"/>_parser_type*p, int id, token t)
+  {
+    assert(id > 0);
+    <xsl:value-of select="$LangName"/>_Lemon(&amp;p->lemon, id, t, 0);
+  }
+
+  ptree <xsl:value-of select="$LangName"/>_parser_tree(<xsl:value-of select="$LangName"/>_parser_type*p)
+  {
+    ptree tmp;
+    token tok = token_create_novalue("");
+    <xsl:value-of select="$LangName"/>_Lemon(&amp;p->lemon, 0, tok, &amp;tmp);
+    return tmp;
+  }
+
+      </xsl:attribute>
+</Code>
+
+    <CodeClose value="&#xA;}}&#xA;"/>
+
     <NL hexvalue = "0a" />
     <Header value="// lemon configuration" />
     <NL hexvalue = "0a" />
@@ -157,55 +214,68 @@ program ::= expr(A). {
 </xsl:template>
 
 <xsl:template name="production-definition" >
-  <ResultType value = "{@type}" />
+  <ResultType value = "{@grouping}" />
   <ResultName value="(R)" />
   <NL hexvalue="20" />
   <Arrow value="::=" />
-  <xsl:apply-templates select="Argument|Token" mode="ListProductionArguments"/>
+  <xsl:apply-templates select="Grouping|Token" mode="ListProductionGroupings"/>
   <DotNL hexvalue="2e0a" />
 </xsl:template>
 
 <xsl:template match="ListProduction">
   <NL hexvalue="0a" />
-  <Label value="// ListProduction {@label}" />
+  <Label value="// ListProduction {@label} -&gt; {$LangName}_grouping_{@grouping}" />
   <NL hexvalue="0a" />
   <xsl:call-template name="production-definition" />
 
   <LB hexvalue="7b0a" /> 
-  <xsl:apply-templates select="Argument|Token" mode="ListProductionDescribe"/>
+  <xsl:apply-templates select="Grouping|Token" mode="ListProductionDescribe"/>
   
   <ES value = "  enum {{" />
   <NL hexvalue="0a" />
-  <T value="    argument_arity = {count(Argument[@position])}," />
+  <T value="    argument_arity = {count(Grouping[@position])}," />
   <NL hexvalue="0a" />
   <T value="    token_arity = {count(Token[@position])}," />
   <NL hexvalue="0a" />
-  <T value="    total_arity = argument_arity + token_arity," />
+  <T value="    total_arity = {count(Grouping[@position]) + count(Token[@position])}," />
   <NL hexvalue="0a" />
   <EE value = "  }};" />
   <NL hexvalue="0a" />
 
-  <ListTmp value = '  list tmp = list_make_uninitialised("{@label}", total_arity);&#x0a;' />
+  <ListTmp value = '  ptree tmp[total_arity];&#x0a;' />
 
-  <xsl:apply-templates select="Argument|Token" mode="ListProductionAssign"/>
+  <xsl:apply-templates select="Grouping|Token" mode="ListProductionAssign"/>
   
-  <ReturnTmp value = '  R = tmp;&#x0a;' />
+  <ResExpr value = '  R = {$LangName}_ptree_expression{count(Grouping[@position]) + count(Token[@position])}(ctx,&#x0a;        {$LangName}_grouping_{@grouping}' />
+
+
+<!-- this is way harder than it should be
+
+  <xsl:call-template name="ListProductionSelectGrouping">
+    <xsl:with-param name="iter" select="1" />
+    <xsl:with-param name="maxiter" select="count(Grouping) + count(Token) + 1" />
+  </xsl:call-template>
+-->
+
+  <xsl:apply-templates select="Grouping|Token" mode="ListProductionSelect"/>
+  
+  <EndResExpr value=");&#x0a;" />
 
   <RB hexvalue="7d0a" />
 </xsl:template>
 
-<xsl:template match="Argument" mode="ListProductionArguments">
+<xsl:template match="Grouping" mode="ListProductionGroupings">
   <NL hexvalue="20" />
-  <ArgumentProduction value="{@type}(x{position()})" />
+  <GroupingProduction value="{@type}(x{position()})" />
 </xsl:template>
 
-<xsl:template match="Token" mode="ListProductionArguments">
+<xsl:template match="Token" mode="ListProductionGroupings">
   <NL hexvalue="20" />
   <TokenProduction value="{@name}(x{position()})" />
 </xsl:template>
 
-<xsl:template match="Argument" mode="ListProductionDescribe">
-  <N value = "  // Argument {@type}(x{position()}) is" />
+<xsl:template match="Grouping" mode="ListProductionDescribe">
+  <N value = "  // Grouping {@type}(x{position()}) is" />
   <xsl:choose>
     <xsl:when test="@position">
       <P value=" used at position {@position}" />
@@ -230,10 +300,10 @@ program ::= expr(A). {
   <NL hexvalue="0a" />
 </xsl:template>
 
-<xsl:template match="Argument" mode="ListProductionAssign">
+<xsl:template match="Grouping" mode="ListProductionAssign">
   <xsl:choose>
     <xsl:when test="@position">
-      <P value="  tmp.elts[{@position}-1] = x{position()};" />
+      <P value="  tmp[{@position}-1] = x{position()};" />
     </xsl:when>
     <xsl:otherwise>
       <P value="  list_free(x{position()});" />
@@ -242,10 +312,51 @@ program ::= expr(A). {
   <NL hexvalue="0a" />
 </xsl:template>
 
+<xsl:template name="ListProductionSelectGrouping" >
+  <xsl:param name="iter" />
+  <xsl:param name="maxiter" />
+
+  <NL hexvalue="0a" />
+  <MyPos value="myiter={$iter} of {$maxiter}" />
+
+  <xsl:if test="$maxiter > $iter" >
+  <NL hexvalue="0a" />
+  <MyPos value="mypos={position()}" />
+  <NL hexvalue="0a" />
+  <ClaimedPos value="groupclaimedpos={Grouping/@position}" />
+  <NL hexvalue="0a" />
+  <ClaimedPos value="tokenclaimedpos={Token/@position}" />
+  <NL hexvalue="0a" />
+
+  
+  <xsl:choose>
+    <xsl:when test="Grouping/@position">
+      <P value="  group tmp[{@position}-1] = x{position()};" />
+    </xsl:when>
+    <xsl:when test="Token/@position">
+      <P value="  token tmp[{@position}-1] = x{position()};" />
+    </xsl:when>
+
+    <xsl:otherwise>
+      <P value="  list_free(x{position()});" />
+    </xsl:otherwise>
+  </xsl:choose>
+  <NL hexvalue="0a" />
+
+  <xsl:call-template name="ListProductionSelectGrouping">
+    <xsl:with-param name="iter" select="1 + $iter" />
+    <xsl:with-param name="maxiter" select="$maxiter" />
+  </xsl:call-template>
+
+
+</xsl:if>
+</xsl:template>
+
+
 <xsl:template match="Token" mode="ListProductionAssign">
   <xsl:choose>
     <xsl:when test="@position">
-      <P value="  tmp.elts[{@position}-1] = list_from_token(x{position()});" />
+      <P value="  tmp[{@position}-1] = list_from_token(x{position()});" />
     </xsl:when>
     <xsl:otherwise>
       <P value="  (void)x{position()};" />
@@ -255,7 +366,7 @@ program ::= expr(A). {
 </xsl:template>
 
 
-<xsl:template match="Argument" mode="AssignProductionAssign">
+<xsl:template match="Grouping" mode="AssignProductionAssign">
   <xsl:choose>
     <xsl:when test="@position">
       <P value="  R = x{position()};" />
@@ -286,7 +397,7 @@ program ::= expr(A). {
   <xsl:call-template name="production-definition" />
   <LB hexvalue="7b0a" />
 
-  <xsl:apply-templates select="Argument|Token" mode="AssignProductionAssign"/>
+  <xsl:apply-templates select="Grouping|Token" mode="AssignProductionAssign"/>
   <LR hexvalue="7d0a" />  
 </xsl:template>
 
