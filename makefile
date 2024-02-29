@@ -82,7 +82,6 @@ RE2COPTS := --no-debug-info -W --no-generation-date
 %.cmark.html:	%.md | $(cmark)
 	@./$(cmark) --to html $^ > $@
 
-
 #
 # make functions
 #
@@ -294,10 +293,6 @@ RE2LIB := /usr/lib/x86_64-linux-gnu/libre2.a
 
 # WIP lexer/parser constructions. Very much a prototype at present.
 arith_tmp := .arith.O
-$(arith_tmp):
-	@mkdir -p $@
-clean::
-	rm -rf $(arith_tmp)
 include $(SELF_DIR)arith/arith.mk
 
 arith.lexer:	$(arith_tmp)/arith.lexer.o
@@ -330,6 +325,12 @@ arith.txt:	TokenList_to_bytes.xsl $(arith_tmp)/arith.xml
 
 clean::
 	rm -f arith.txt
+
+
+# WIP regex operations
+regex_tmp := .regex.O
+include $(SELF_DIR)regex/regex.mk
+
 
 # Building auxilary tools out of C.
 

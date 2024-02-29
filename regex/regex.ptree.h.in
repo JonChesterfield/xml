@@ -1,12 +1,12 @@
 #define DELAY(X) X // TODO, choose a file extension for by-preprocessor
-DELAY(#ifndef ARITH_PTREE_H_INCLUDED)
-DELAY(#define ARITH_PTREE_H_INCLUDED)
+DELAY(#ifndef REGEX_PTREE_H_INCLUDED)
+DELAY(#define REGEX_PTREE_H_INCLUDED)
 
 DELAY(#include "../tools/ptree.h")
 
-// Generated from arith.ptree.h.in by the preprocessor
+// Generated from regex.ptree.h.in by the preprocessor
 #include "../tools/ptree_macro_wrapper.h"
 
-PTREE_INSTANTIATE_DECLARE(arith);
+PTREE_INSTANTIATE_DECLARE(regex);
 
 DELAY(#endif)

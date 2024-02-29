@@ -152,6 +152,18 @@ ptree_traverse(const ptree_module *mod,
                int (*post)(const ptree_module *mod, ptree tree, uint64_t, void*),
                void* post_data);
 
+
+enum ptree_compare_res {
+  ptree_compare_lesser = -1,
+  ptree_compare_equal = 0,
+  ptree_compare_greater = 1,
+  ptree_compare_out_of_memory = 2,
+};
+
+static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
+                                                   stack_module stackmod,
+                                                   ptree left, ptree right);
+
 struct ptree_module_ty {
   ptree_context (*const create_context)(void);
   void (*const destroy_context)(ptree_context);

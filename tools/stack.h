@@ -180,19 +180,21 @@ static inline void *stack_reserve(stack_module mod, void *s, size_t N) {
   void *res = mod->reserve(s, N);
 
 #if STACK_CONTRACT()
-  size_t size_after = stack_size(mod, res);
-  size_t capacity_after = stack_capacity(mod, res);
-
-  if (res) {
-    stack_require(capacity_after >= N);
-  } else {
-    stack_require(capacity_before == capacity_after);
-    stack_require(capacity_before == capacity_after);
-  }
-
+  size_t size_after = stack_size(mod, res ? res : s);
+  size_t capacity_after = stack_capacity(mod, res ? res : s);
+  if (res)
+    {
+      // Succeeded, can't look at s again
+      stack_require(capacity_after >= N);
+    }
+  else
+    {
+      // Failed, s still valid
+      stack_require(size_before == size_after);
+    }
   stack_require(size_before == size_after);
 #endif
-
+  
   return res;
 }
 

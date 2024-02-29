@@ -1,6 +1,9 @@
 $(if $(arith_tmp),,$(error makefile requires arith_tmp))
 $(if $(XML_Pipeline_Template),,$(error makefile requires XML_Pipeline_Template))
 
+$(arith_tmp):
+	@mkdir -p $@
+
 clean::
 	rm -rf $(arith_tmp)
 

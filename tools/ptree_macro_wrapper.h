@@ -61,8 +61,12 @@
   ptree PTREE_CONCAT(PREFIX, expression8)(                                     \
       ptree_context ctx, uint64_t id, ptree x0, ptree x1, ptree x2, ptree x3,  \
       ptree x4, ptree x5, ptree x6, ptree x7);                                 \
- void PTREE_CONCAT(PREFIX, as_raw_xml)(stack_module stackmod, FILE * file, ptree tree);\
- void PTREE_CONCAT(PREFIX, as_xml)(stack_module stackmod, FILE * file, ptree tree);
+  void PTREE_CONCAT(PREFIX, as_raw_xml)(stack_module stackmod, FILE * file,    \
+                                        ptree tree);                           \
+  void PTREE_CONCAT(PREFIX, as_xml)(stack_module stackmod, FILE * file,        \
+                                    ptree tree);                               \
+  enum ptree_compare_res PTREE_CONCAT(PREFIX, compare)(                        \
+      stack_module stackmod, ptree left, ptree right)
 
 #define PTREE_INSTANTIATE_DEFINE(PREFIX, MODULE)                               \
   PTREE_INSTANTIATE_DECLARE(PREFIX);                                           \
@@ -174,11 +178,17 @@
     return ptree_expression8(&MODULE, ctx, id, x0, x1, x2, x3, x4, x5, x6,     \
                              x7);                                              \
   }                                                                            \
-  void PTREE_CONCAT(PREFIX, as_raw_xml)(stack_module stackmod, FILE * file, ptree tree) { \
-    return ptree_as_raw_xml(&MODULE, stackmod, file, tree);                  \
-  }\
-  void PTREE_CONCAT(PREFIX, as_xml)(stack_module stackmod, FILE * file, ptree tree) { \
-    return ptree_as_xml(&MODULE, stackmod, file, tree);                  \
+  void PTREE_CONCAT(PREFIX, as_raw_xml)(stack_module stackmod, FILE * file,    \
+                                        ptree tree) {                          \
+    return ptree_as_raw_xml(&MODULE, stackmod, file, tree);                    \
+  }                                                                            \
+  void PTREE_CONCAT(PREFIX, as_xml)(stack_module stackmod, FILE * file,        \
+                                    ptree tree) {                              \
+    return ptree_as_xml(&MODULE, stackmod, file, tree);                        \
+  }                                                                            \
+  enum ptree_compare_res PTREE_CONCAT(PREFIX, compare)(                        \
+      stack_module stackmod, ptree left, ptree right) {                        \
+    return ptree_compare(&MODULE, stackmod, left, right);                      \
   }
 
 #if 0
