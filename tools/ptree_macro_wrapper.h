@@ -66,7 +66,12 @@
   void PTREE_CONCAT(PREFIX, as_xml)(stack_module stackmod, FILE * file,        \
                                     ptree tree);                               \
   enum ptree_compare_res PTREE_CONCAT(PREFIX, compare)(                        \
-      stack_module stackmod, ptree left, ptree right)
+      stack_module stackmod, ptree left, ptree right);                         \
+  int PTREE_CONCAT(PREFIX, traverse)(                                          \
+      stack_module stackmod, ptree tree, uint64_t depth,                       \
+      int (*pre)(ptree tree, uint64_t, void *), void *pre_data,                \
+      int (*elt)(ptree tree, uint64_t, void *), void *elt_data,                \
+      int (*post)(ptree tree, uint64_t, void *), void *post_data)
 
 #define PTREE_INSTANTIATE_DEFINE(PREFIX, MODULE)                               \
   PTREE_INSTANTIATE_DECLARE(PREFIX);                                           \
@@ -189,6 +194,15 @@
   enum ptree_compare_res PTREE_CONCAT(PREFIX, compare)(                        \
       stack_module stackmod, ptree left, ptree right) {                        \
     return ptree_compare(&MODULE, stackmod, left, right);                      \
+  }                                                                            \
+  int PTREE_CONCAT(PREFIX, traverse)(                                          \
+      stack_module stackmod, ptree tree, uint64_t depth,                       \
+      int (*pre)(ptree tree, uint64_t, void *), void *pre_data,                \
+      int (*elt)(ptree tree, uint64_t, void *), void *elt_data,                \
+      int (*post)(ptree tree, uint64_t, void *), void *post_data) {            \
+    return ptree_traverse_without_mod_callback_parameter(                      \
+        &MODULE, stackmod, tree, depth, pre, pre_data, elt, elt_data, post,    \
+        post_data);                                                            \
   }
 
 #if 0

@@ -291,6 +291,43 @@ static inline ptree ptree_expression8(const ptree_module *mod,
   return res;
 }
 
+struct ptree_traverse_without_mod_callback_wrap_ty {
+  int (*func)(ptree tree, uint64_t, void *);
+  void *data;
+};
+
+static inline int ptree_traverse_without_mod_callback_wrap_func(
+    const ptree_module *mod, ptree tree, uint64_t depth, void *p) {
+  struct ptree_traverse_without_mod_callback_wrap_ty *arg =
+      (struct ptree_traverse_without_mod_callback_wrap_ty *)p;
+  return arg->func(tree, depth, arg->data);
+}
+
+static inline int ptree_traverse_without_mod_callback_parameter(
+    const ptree_module *mod, stack_module stackmod, ptree tree, uint64_t depth,
+    int (*pre)(ptree tree, uint64_t, void *), void *pre_data,
+    int (*elt)(ptree tree, uint64_t, void *), void *elt_data,
+    int (*post)(ptree tree, uint64_t, void *), void *post_data) {
+
+  struct ptree_traverse_without_mod_callback_wrap_ty pre_w = {
+      .func = pre,
+      .data = pre_data,
+  };
+  struct ptree_traverse_without_mod_callback_wrap_ty elt_w = {
+      .func = elt,
+      .data = elt_data,
+  };
+  struct ptree_traverse_without_mod_callback_wrap_ty post_w = {
+      .func = post,
+      .data = post_data,
+  };
+
+  return ptree_traverse(mod, stackmod, tree, depth,
+                        ptree_traverse_without_mod_callback_wrap_func, &pre_w,
+                        ptree_traverse_without_mod_callback_wrap_func, &elt_w,
+                        ptree_traverse_without_mod_callback_wrap_func, &post_w);
+}
+
 static inline int ptree_impl_as_xml_pre_impl(const ptree_module *mod,
                                              ptree tree, uint64_t depth,
                                              bool pretty, void *voidfile) {
@@ -518,11 +555,10 @@ static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
     ptree right = {.state = stack_pop(stackmod, stack)};
     size = size - 2;
 
-    if (left.state == right.state)
-      {
-        continue;
-      }
-    
+    if (left.state == right.state) {
+      continue;
+    }
+
     ptree_require(!ptree_is_failure(left));
     ptree_require(!ptree_is_failure(right));
 
@@ -602,6 +638,5 @@ static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
   }
   return ptree_compare_equal;
 }
-
 
 #endif

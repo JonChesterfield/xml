@@ -55,13 +55,11 @@ static inline bool ptree_identifier_valid_expression(const ptree_module *mod,
                                                      uint64_t id);
 
 // Returns a null terminated name if available, otherwise null
-static inline
-const char *
-ptree_identifier_token_maybe_name(const ptree_module *mod,uint64_t id);
+static inline const char *
+ptree_identifier_token_maybe_name(const ptree_module *mod, uint64_t id);
 
-static inline
-const char *
-ptree_identifier_expression_maybe_name(const ptree_module *mod,uint64_t id);
+static inline const char *
+ptree_identifier_expression_maybe_name(const ptree_module *mod, uint64_t id);
 
 // TODO: Probably don't want max/min elements in the external API
 static inline size_t ptree_identifier_minimum_elements(const ptree_module *mod,
@@ -127,10 +125,10 @@ static inline ptree ptree_expression8(const ptree_module *mod,
                                       ptree x1, ptree x2, ptree x3, ptree x4,
                                       ptree x5, ptree x6, ptree x7);
 
-static inline void
-ptree_as_raw_xml(const ptree_module *mod, stack_module stackmod, FILE *f, ptree tree);
-static inline void
-ptree_as_xml(const ptree_module *mod, stack_module stackmod, FILE *f, ptree tree);
+static inline void ptree_as_raw_xml(const ptree_module *mod,
+                                    stack_module stackmod, FILE *f, ptree tree);
+static inline void ptree_as_xml(const ptree_module *mod, stack_module stackmod,
+                                FILE *f, ptree tree);
 
 // Traverse the parse tree. Calls pre on the node, then elt on each element
 // of that node (if any), then calls post on the node.
@@ -140,18 +138,20 @@ ptree_as_xml(const ptree_module *mod, stack_module stackmod, FILE *f, ptree tree
 // Invariants on the tree on failure depend on the implementation, let's
 // see how well it can be done.
 
-static inline int
-ptree_traverse(const ptree_module *mod,
-               stack_module stackmod,
-               ptree tree,
-               uint64_t depth,
-               int (*pre)(const ptree_module *mod, ptree tree, uint64_t, void*),
-               void* pre_data,
-               int (*elt)(const ptree_module *mod, ptree tree, uint64_t, void*),
-               void* elt_data,
-               int (*post)(const ptree_module *mod, ptree tree, uint64_t, void*),
-               void* post_data);
+static inline int ptree_traverse(
+    const ptree_module *mod, stack_module stackmod, ptree tree, uint64_t depth,
+    int (*pre)(const ptree_module *mod, ptree tree, uint64_t, void *),
+    void *pre_data,
+    int (*elt)(const ptree_module *mod, ptree tree, uint64_t, void *),
+    void *elt_data,
+    int (*post)(const ptree_module *mod, ptree tree, uint64_t, void *),
+    void *post_data);
 
+static inline int ptree_traverse_without_mod_callback_parameter(
+    const ptree_module *mod, stack_module stackmod, ptree tree, uint64_t depth,
+    int (*pre)(ptree tree, uint64_t, void *), void *pre_data,
+    int (*elt)(ptree tree, uint64_t, void *), void *elt_data,
+    int (*post)(ptree tree, uint64_t, void *), void *post_data);
 
 enum ptree_compare_res {
   ptree_compare_lesser = -1,
@@ -171,12 +171,9 @@ struct ptree_module_ty {
   bool (*const identifier_valid_token)(uint64_t);
   bool (*const identifier_valid_expression)(uint64_t);
 
-  const char *
-  (*identifier_token_maybe_name)(uint64_t id);
-  const char *
-  (*identifier_expression_maybe_name)(uint64_t id);
+  const char *(*identifier_token_maybe_name)(uint64_t id);
+  const char *(*identifier_expression_maybe_name)(uint64_t id);
 
-  
   // A given expression identifier might have hard constraints on the number
   // of elements it can have, e.g. exactly 2 or at most 4
   // Maximum is UINT64_MAX for no limit.

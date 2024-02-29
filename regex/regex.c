@@ -2,6 +2,7 @@
 #include "regex.declarations.h"
 #include "regex.ptree.h"
 
+#include "../tools/arena.h"
 #include "../tools/stack.libc.h"
 
 #include <stdio.h>
@@ -168,7 +169,7 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
 
     r = regex_canonicalise(ctx, r);
     s = regex_canonicalise(ctx, s);
-    
+
     if (id == regex_grouping_and) {
       if (regex_is_empty_set(r) || regex_is_empty_set(s)) {
         // {} & s -> {}
@@ -230,7 +231,7 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
   if (id == regex_grouping_kleene) {
     ptree r = regex_ptree_expression_element(val, 0);
     r = regex_canonicalise(ctx, r);
-    
+
     // (r*)* -> r*
     if (regex_is_kleene(r)) {
       return r;
@@ -254,7 +255,7 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
     ptree r = regex_ptree_expression_element(val, 0);
     r = regex_canonicalise(ctx, r);
     if (regex_is_not(r)) {
-      return r;      
+      return r;
     }
     val = regex_make_not(ctx, r);
   }
@@ -301,10 +302,137 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
   return val;
 }
 
+void regex_split(ptree_context ctx, ptree val, ptree *edges) {
+  for (size_t i = 0; i < 256; i++) {
+    edges[i] = regex_derivative(ctx, val, (uint8_t)i);
+  }
+}
+
+struct regex_to_char_sequence_type {
+  arena_module mod;
+  arena_t *arena;
+};
+
+static int regex_to_char_sequence_pre(ptree tree, uint64_t depth, void *p) {
+  struct regex_to_char_sequence_type *data =
+      (struct regex_to_char_sequence_type *)p;
+  (void)data;
+
+  uint64_t id = regex_ptree_identifier(tree);
+
+  if (regex_grouping_id_is_single_byte(id)) {
+    uint8_t byte = regex_grouping_extract_single_byte(id);
+    printf("%02x", (unsigned)byte);
+    return 0;
+  }
+
+  switch (id) {
+  case regex_grouping_empty_set: {
+    printf("{}");
+    break;
+  }
+
+  case regex_grouping_empty_string: {
+    printf("_");
+    break;
+  }
+
+  case regex_grouping_concat: {
+    printf("(.");
+    break;
+  }
+
+  case regex_grouping_kleene: {
+    printf("(*");
+    break;
+  }
+
+  case regex_grouping_or: {
+    printf("(+");
+    break;
+  }
+
+  case regex_grouping_and: {
+    printf("(&");
+    break;
+  }
+
+  case regex_grouping_not: {
+    printf("(~");
+    break;
+  }
+
+  default:
+    printf("?");
+    break;
+  }
+
+  return 0;
+}
+
+static int regex_to_char_sequence_elt(ptree tree, uint64_t depth, void *p) {
+  struct regex_to_char_sequence_type *data =
+      (struct regex_to_char_sequence_type *)p;
+  (void)tree;
+  (void)depth;
+  (void)p;
+  (void)data;
+  return 0;
+}
+
+static int regex_to_char_sequence_post(ptree tree, uint64_t depth, void *p) {
+  struct regex_to_char_sequence_type *data =
+      (struct regex_to_char_sequence_type *)p;
+  (void)data;
+
+  uint64_t id = regex_ptree_identifier(tree);
+
+  if (regex_grouping_id_is_single_byte(id)) {
+    return 0;
+  }
+
+  switch (id) {
+  case regex_grouping_empty_set:
+  case regex_grouping_empty_string:
+    break;
+
+  case regex_grouping_concat:
+  case regex_grouping_kleene:
+  case regex_grouping_or:
+  case regex_grouping_and:
+  case regex_grouping_not: {
+    printf(")");
+    break;
+  }
+
+  default:
+    printf("?");
+    break;
+  }
+  return 0;
+}
+
+int regex_to_char_sequence(arena_module mod, arena_t *arena, ptree val) {
+
+  const struct stack_module_ty *stackmod = &stack_libc;
+
+  struct regex_to_char_sequence_type v = {
+      .mod = mod,
+      .arena = arena,
+  };
+
+  uint64_t depth = 0;
+  int r = regex_ptree_traverse(stackmod, val, depth, regex_to_char_sequence_pre,
+                               &v, regex_to_char_sequence_elt, &v,
+                               regex_to_char_sequence_post, &v);
+
+  return r;
+}
+
 int regex_main(void) {
   ptree_context ctx = regex_ptree_create_context();
   ptree expr =
-      regex_make_and(ctx, regex_make_byte_00(ctx), regex_make_byte_cd(ctx));
+      regex_make_and(ctx, regex_make_byte_00(ctx), regex_make_byte_02(ctx));
 
   regex_ptree_as_xml(&stack_libc, stdout, expr);
   fprintf(stdout, "\n");
