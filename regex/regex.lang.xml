@@ -10,6 +10,9 @@
 
   <Tokens>
     <Token name="BYTE" regex="[abcdef0123456789][abcdef0123456789]" />
+
+    <Token name="BYTE00" literal="00" />
+
     <Token name="LPAREN" literal="(" />
     <Token name="RPAREN" literal=")" />
 
@@ -378,14 +381,20 @@
       <Grouping type="not" position="1" />
     </AssignProduction>
 
+<!--
     <AssignProduction label="DiscardWSLeft" grouping="regex" >
       <Token name="WHITESPACE" />
       <Grouping type="regex" position="1" />
     </AssignProduction>
+-->
 
     <AssignProduction label="DiscardWSRight" grouping="regex" >
       <Grouping type="regex" position="1" />
       <Token name="WHITESPACE" />
+    </AssignProduction>
+
+    <AssignProduction label="byte00" grouping="regex" >
+      <Token name="BYTE00" position="1" />
     </AssignProduction>
 
   </Productions>

@@ -11,6 +11,12 @@
   <xsl:value-of select="/Language/LanguageName"></xsl:value-of>
 </xsl:variable>
 
+<xsl:variable name="lowercase" select="'abcdefghijklmnopqrstuvwxyz'" />
+<xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'" />
+<xsl:variable name="UpcaseLangName" >
+  <xsl:value-of select="translate($LangName,$lowercase,$uppercase)" />
+</xsl:variable>
+
 <xsl:template match="/Language">
   <TokenTree>
     <Header value="// Parser lemon {$LangName}" />
@@ -22,7 +28,6 @@
 ]]>        
       </xsl:attribute>
     </IncludeOpen>
-
 
     <Include>
       <xsl:attribute name="value"><![CDATA[
@@ -39,9 +44,12 @@
 #include "../tools/token.h"
 #include "../tools/ptree.h"
 
+]]>
+
+typedef union <xsl:value-of select="$LangName"/>_parser_u <xsl:value-of select="$LangName"/>_parser_type;
+
 #endif // end INTERFACE
 
-]]>
       </xsl:attribute>
     </Include>
 
@@ -68,22 +76,12 @@
 <InterfaceType>
       <xsl:attribute name="value">
 
+__attribute__((unused))
 static ptree parser_<xsl:value-of select="$LangName"/>_ptree_from_token(ptree_context ctx, enum <xsl:value-of select="$LangName"/>_token id, token tok)
 {
   return <xsl:value-of select="$LangName"/>_ptree_from_token(ctx, id, tok.value, tok.width);
 }
 
-#if INTERFACE
-union <xsl:value-of select="$LangName"/>_parser_u;
-typedef union <xsl:value-of select="$LangName"/>_parser_u <xsl:value-of select="$LangName"/>_parser_type ;
-#define <xsl:value-of select="$LangName"/>_parser_type_size 3240
-#define <xsl:value-of select="$LangName"/>_parser_type_align 8
-
-// enum {<xsl:value-of select="$LangName"/>_parser_type_size = 3240, <xsl:value-of select="$LangName"/>_parser_type_align = 8};
-struct <xsl:value-of select="$LangName"/>_parser_s {
-    char _Alignas(<xsl:value-of select="$LangName"/>_parser_type_align) data[<xsl:value-of select="$LangName"/>_parser_type_size];
-};
-#endif // INTERFACE
       </xsl:attribute>
 </InterfaceType>
 
@@ -96,20 +94,14 @@ struct <xsl:value-of select="$LangName"/>_parser_s {
 
     
     <CodeOpen value="&#xA;%code&#xA;{{&#xA;" />
-
-<Code>
+    <Code>
       <xsl:attribute name="value">
 
+#include "<xsl:value-of select='$LangName'/>_parser.lemon.h"
 
-  // crude bisection by changing these values
-  _Static_assert(sizeof(struct yyParser) &gt;= 3240, "");
-  _Static_assert(sizeof(struct yyParser) &lt;= 3240, "");
-    
-  _Static_assert(sizeof(struct yyParser) == <xsl:value-of select="$LangName"/>_parser_type_size,"");
-  _Static_assert(_Alignof(struct yyParser) == <xsl:value-of select="$LangName"/>_parser_type_align,"");
-
-  _Static_assert(sizeof(struct <xsl:value-of select="$LangName"/>_parser_s) == <xsl:value-of select="$LangName"/>_parser_type_size,"");
-  _Static_assert(_Alignof(struct <xsl:value-of select="$LangName"/>_parser_s) == <xsl:value-of select="$LangName"/>_parser_type_align,"");
+  struct <xsl:value-of select="$LangName"/>_parser_s {
+    char _Alignas(_Alignof(struct yyParser)) data[sizeof(struct yyParser)];
+  };
 
   union <xsl:value-of select="$LangName"/>_parser_u
   {
@@ -117,8 +109,10 @@ struct <xsl:value-of select="$LangName"/>_parser_s {
     struct <xsl:value-of select="$LangName"/>_parser_s state;
   };
 
-  _Static_assert(sizeof(union <xsl:value-of select="$LangName"/>_parser_u) == <xsl:value-of select="$LangName"/>_parser_type_size,"");
-  _Static_assert(_Alignof(union <xsl:value-of select="$LangName"/>_parser_u) == <xsl:value-of select="$LangName"/>_parser_type_align,"");
+  _Static_assert(sizeof(union <xsl:value-of select="$LangName"/>_parser_u) == sizeof(struct yyParser),"");
+
+  _Static_assert(_Alignof(union <xsl:value-of select="$LangName"/>_parser_u) == _Alignof(struct yyParser),"");
+
 
 
   void <xsl:value-of select="$LangName"/>_parser_initialize(<xsl:value-of select="$LangName"/>_parser_type*p, ptree_context <xsl:value-of select="$LangName"/>_ptree_context)
@@ -144,6 +138,33 @@ struct <xsl:value-of select="$LangName"/>_parser_s {
     <xsl:value-of select="$LangName"/>_Lemon(&amp;p->lemon, 0, tok, &amp;tmp);
     return tmp;
   }
+
+
+#if __STDC_HOSTED__
+#include &lt;stdio.h&gt;
+int <xsl:value-of select='$LangName'/>_Lemon_parser_header(void)
+{
+  return printf(
+  "#ifndef <xsl:value-of select='$UpcaseLangName'/>_PARSER_LEMON_H_INCLUDED\n"
+  "#define <xsl:value-of select='$UpcaseLangName'/>_PARSER_LEMON_H_INCLUDED\n"
+  "\n"
+  "union <xsl:value-of select='$LangName'/>_parser_u;\n"
+  "typedef union <xsl:value-of select='$LangName'/>_parser_u <xsl:value-of select='$LangName'/>_parser_type;\n"
+  "\n"
+  "typedef struct <xsl:value-of select='$LangName'/>_parser_s <xsl:value-of select='$LangName'/>_parser_s;\n"
+  "enum {\n"
+  "  <xsl:value-of select='$LangName'/>_parser_type_align = %lu,\n"
+  "  <xsl:value-of select='$LangName'/>_parser_type_size = %lu,\n"
+  "};\n"
+  "struct <xsl:value-of select='$LangName'/>_parser_s {\n"
+  "    char _Alignas(<xsl:value-of select='$LangName'/>_parser_type_align) data[<xsl:value-of select='$LangName'/>_parser_type_size];\n"
+  "};\n"
+  "\n"
+  "#endif\n",
+  _Alignof(struct yyParser),
+  sizeof(struct yyParser)) > 0 ? 0 : 1;
+}
+#endif
 
       </xsl:attribute>
 </Code>
@@ -384,7 +405,7 @@ struct <xsl:value-of select="$LangName"/>_parser_s {
       <P value="  R = x{position()};" />
     </xsl:when>
     <xsl:otherwise>
-      <P value="  list_free(x{position()});" />
+      <P value="  (void)x{position()};" />
     </xsl:otherwise>
   </xsl:choose>
   <NL hexvalue="0a" />
@@ -393,7 +414,7 @@ struct <xsl:value-of select="$LangName"/>_parser_s {
 <xsl:template match="Token" mode="AssignProductionAssign">
   <xsl:choose>
     <xsl:when test="@position">
-      <P value="  R = list_from_token(x{position()});" />
+      <P value="  R = parser_{$LangName}_ptree_from_token({$LangName}_ptree_context, {$LangName}_token_{@name}, x{position()});" />
     </xsl:when>
     <xsl:otherwise>
       <P value="  (void)x{position()};" />

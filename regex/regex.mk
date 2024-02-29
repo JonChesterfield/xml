@@ -47,20 +47,20 @@ clean::
 
 
 $(regex_tmp)/regex_declarations.TokenTree.xml:	lang_to_declarations_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
-	xsltproc --output $@ $^
+	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
 $(regex_tmp)/regex_definitions.TokenTree.xml:	lang_to_definitions_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
-	xsltproc --output $@ $^
+	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
 $(regex_tmp)/regex_re2c_iterator.TokenTree.xml:	lang_to_lexer_re2c_iterator_definition_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
-	xsltproc --output $@ $^
+	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
 $(regex_tmp)/regex.re2c_iterator.c.re2c:	$(regex_tmp)/regex_re2c_iterator.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"
 	clang-format -i $@
 
 $(regex_tmp)/regex_parser.lemon.TokenTree.xml:	lang_to_parser_lemon_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
-	xsltproc --output $@ $^
+	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
 
 # TokenList is a common form
@@ -104,8 +104,22 @@ $(REGEX_OBJECTS): $(regex_tmp)/%.o: regex/%.c $(REGEX_HEADERS) | $(regex_tmp)
 	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
 
 
+
+$(regex_tmp)/parser_header_gen.c: | $(regex_tmp)
+	@echo 'int regex_Lemon_parser_header(void);' > $@
+	@echo 'int main(void) { return regex_Lemon_parser_header(); }' >> $@
+
+$(regex_tmp)/parser_header_gen: $(regex_tmp)/parser_header_gen.c $(regex_tmp)/regex_parser.lemon.o $(regex_tmp)/regex.ptree.o
+	$(CC) $(CFLAGS) $^ -o $@
+
+regex/regex_parser.lemon.t:	$(regex_tmp)/parser_header_gen
+	@./$< > $@
+
+clean::
+	@rm -f regex/regex_parser.lemon.t
+
 .PHONY: regex
-regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c
+regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c regex/regex_parser.lemon.t
 
 bin/regex.tests:	$(regex_tmp)/regex.tests.o $(regex_tmp)/regex.o $(regex_tmp)/regex.ptree.o
 	@mkdir -p "$(dir $@)"
