@@ -1,10 +1,9 @@
-#ifndef TOOLS_REGEX_H_INCLUDED
-#define TOOLS_REGEX_H_INCLUDED
+#ifndef REGEX_H_INCLUDED
+#define REGEX_H_INCLUDED
 
 #include "regex.declarations.h"
 #include "regex.ptree.h"
 
-#include "../tools/arena.h"
 
 static inline bool regex_is_empty_set(ptree val) {
   uint64_t id = regex_ptree_identifier(val);
@@ -97,8 +96,6 @@ ptree regex_derivative(ptree_context ctx, ptree val, uint8_t byte);
 ptree regex_canonicalise(ptree_context ctx, ptree val);
 
 void regex_split(ptree_context ctx, ptree val, ptree *edges);
-
-int regex_to_char_sequence(arena_module mod, arena_t *arena, ptree val);
 
 
 #endif

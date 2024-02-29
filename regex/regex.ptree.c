@@ -4,6 +4,8 @@
 
 #include "../tools/ptree_malloc_allocator.h"
 
+#include "regex.lexer.declarations.h"
+
 static ptree_context regex_impl_ptree_create_context(void) {
   return ptree_malloc_ptree_create_context();
 }
@@ -16,21 +18,14 @@ _Static_assert(regex_token_UNKNOWN == 0, "");
 
 static bool regex_impl_ptree_identifier_valid_token(uint64_t id) {
   // No tokens defined at present
-  switch (id) {
-  case 0: {
-    return false;
-  }
-  default:
-    break;
-  }
-  return false;
+  return (id > regex_token_UNKNOWN) && (id < regex_token_count);
 }
 
 static bool regex_impl_ptree_identifier_valid_expression(uint64_t id) {
   if (id < regex_token_count) {
     return false;
   }
-
+  
   switch (id) {
   case regex_grouping_empty_set:
   case regex_grouping_empty_string:
@@ -54,11 +49,14 @@ static bool regex_impl_ptree_identifier_valid_expression(uint64_t id) {
 }
 
 static const char *regex_impl_ptree_identifier_token_maybe_name(uint64_t id) {
-  switch (id) {
-  default: {
-    return 0;
-  }
-  }
+  if (regex_impl_ptree_identifier_valid_token(id))
+    {
+      return regex_token_names[id];      
+    }
+  else
+    {
+      return 0;
+    }
 }
 
 

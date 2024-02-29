@@ -132,6 +132,21 @@ static inline void *arena_limit_address(arena_module mod, arena_t a);
 static inline bool arena_change_capacity(arena_module mod, arena_t *a,
                                          uint64_t bytes);
 
+
+// Try to increase capacity to ensure at least bytes are available
+static inline bool arena_request_available(arena_module mod, arena_t *a,
+                                           uint64_t bytes)
+{
+  uint64_t req_size = arena_size(mod, *a) + bytes;
+  if (req_size < arena_capacity(mod, *a)) {
+    return true;
+  }
+  
+  return arena_change_capacity(mod, a, req_size);
+}
+
+
+
 // Allocate bytes space, returns offset from base address. Assert / UB if
 // insufficient capacity.
 static inline uint64_t arena_allocate_into_existing_capacity(arena_module mod,

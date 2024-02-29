@@ -9,9 +9,12 @@
   </Lexer>
 
   <Tokens>
-    <Token name="BYTE" regex="[abcdef0123456789][abcdef0123456789]" />
 
     <Token name="BYTE00" literal="00" />
+    <Token name="BYTE01" literal="01" />
+    <Token name="BYTE02" literal="02" />
+
+    <Token name="BYTE" regex="[abcdef0123456789][abcdef0123456789]" />
 
     <Token name="LPAREN" literal="(" />
     <Token name="RPAREN" literal=")" />
@@ -395,6 +398,14 @@
 
     <AssignProduction label="byte00" grouping="regex" >
       <Token name="BYTE00" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="byte01" grouping="regex" >
+      <Token name="BYTE01" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="byte02" grouping="regex" >
+      <Token name="BYTE02" position="1" />
     </AssignProduction>
 
   </Productions>

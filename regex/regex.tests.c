@@ -6,6 +6,10 @@
 #include "regex.h"
 #include "regex.ptree.h"
 
+#include "regex_string.h"
+
+#include <string.h>
+
 static MODULE(regex_nullable) {
   ptree_context ctx = regex_ptree_create_context();
   ptree empty_str = regex_make_empty_string(ctx);
@@ -189,6 +193,7 @@ static MODULE(regex_split) {
 
     arena_destroy(&arena_libc, arena);
   }
+
   TEST("wip") {
     return;
     ptree regex =
@@ -214,8 +219,52 @@ static MODULE(regex_split) {
   regex_ptree_destroy_context(ctx);
 }
 
+static MODULE(regex_string)
+{
+  arena_t arena = arena_create(&arena_libc, 64);
+  ptree_context ctx = regex_ptree_create_context();
+  
+  TEST("wip")
+  {
+
+    printf("WIP\n");
+    
+    const char seq[] = "01";
+
+const    size_t N = strlen(seq);
+    fprintf(stderr, "Try to parse %s, len %lu\n", seq, N);
+    
+    ptree tmp = regex_from_char_sequence(ctx, seq, N);
+    CHECK(!ptree_is_failure(tmp));
+
+    fprintf(stdout, "xml\n");
+    regex_ptree_as_xml(&stack_libc, stdout, tmp);
+    fprintf(stdout, "\n");
+
+    uint64_t before = arena_size(&arena_libc, arena);
+    CHECK(regex_to_char_sequence(&arena_libc, &arena, tmp) == 0);
+
+    uint64_t after = arena_size(&arena_libc, arena);
+
+    uint64_t size = after - before;
+    const char * cursor = before + (char*)arena_base_address(&arena_libc, arena);
+
+    fprintf(stderr, "N = %lu\n", N);
+    fprintf(stderr, "size = %lu\n", size);
+    fprintf(stderr, "thing %s\n", cursor);
+    CHECK(size == N);
+    
+    
+    
+  }
+  
+  regex_ptree_destroy_context(ctx);
+    arena_destroy(&arena_libc, arena);
+}
+
 MAIN_MODULE() {
   DEPENDS(ptree);
   DEPENDS(regex_nullable);
   DEPENDS(regex_split);
+  DEPENDS(regex_string);
 }

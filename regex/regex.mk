@@ -8,9 +8,9 @@ clean::
 	rm -rf $(regex_tmp)
 
 
-REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.declarations.h regex/regex_parser.lemon.h
+REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.declarations.h regex/regex_parser.lemon.h regex/regex_string.h
 
-REGEX_SOURCE := regex.ptree.c regex.tests.c regex.c regex.lexer.definitions.c regex_parser.lemon.c
+REGEX_SOURCE := regex.ptree.c regex.tests.c regex.c regex.lexer.definitions.c regex_parser.lemon.c regex_string.c
 
 REGEX_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_SOURCE:.c=.o))
 
@@ -109,9 +109,10 @@ $(regex_tmp)/parser_header_gen.c: | $(regex_tmp)
 	@echo 'int regex_Lemon_parser_header(void);' > $@
 	@echo 'int main(void) { return regex_Lemon_parser_header(); }' >> $@
 
-$(regex_tmp)/parser_header_gen: $(regex_tmp)/parser_header_gen.c $(regex_tmp)/regex_parser.lemon.o $(regex_tmp)/regex.ptree.o
-	$(CC) $(CFLAGS) $^ -o $@
+$(regex_tmp)/parser_header_gen: $(regex_tmp)/parser_header_gen.c $(regex_tmp)/regex_parser.lemon.o
+	$(CC) $(CFLAGS) $^ -o $@ -Wl,--unresolved-symbols=ignore-all -static
 
+$(regex_tmp)/regex_string.o:	regex/regex_parser.lemon.t
 regex/regex_parser.lemon.t:	$(regex_tmp)/parser_header_gen
 	@./$< > $@
 
@@ -121,7 +122,7 @@ clean::
 .PHONY: regex
 regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c regex/regex_parser.lemon.t
 
-bin/regex.tests:	$(regex_tmp)/regex.tests.o $(regex_tmp)/regex.o $(regex_tmp)/regex.ptree.o
+bin/regex.tests:	$(REGEX_OBJECTS) .tools.O/lexer.re2c.o .tools.O/lexer.posix.o .tools.O/lexer.re2.o
 	@mkdir -p "$(dir $@)"
 	$(CC) $(CFLAGS) $^ -o $@
 
