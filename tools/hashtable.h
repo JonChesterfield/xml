@@ -46,22 +46,27 @@ static inline uint32_t hashtable_value_align(hashtable_module mod);
 static inline uint32_t hashtable_key_size(hashtable_module mod);
 static inline uint32_t hashtable_value_size(hashtable_module mod);
 
-// Takes key_size bytes, calculates a hash from them
-static inline uint64_t hashtable_key_hash(hashtable_module mod,
-                                          unsigned char *bytes);
-
 // Returns key_size bytes representing a key that cannot be inserted
 static inline const unsigned char *hashtable_key_sentinel(hashtable_module mod);
 
 // a memcmp, not a pointer compare
-static inline bool hashtable_key_is_sentinel(hashtable_module mod,
-                                             unsigned char *key);
+static inline bool hashtable_key_is_sentinel(hashtable_module mod, hashtable_t,
+                                             const unsigned char *key);
+
+static inline bool hashtable_contract_active(hashtable_module mod);
 
 //
 // Hashtable level queries
 //
 
-static inline bool hashtable_contract_active(hashtable_module mod);
+// Takes key_size bytes, calculates a hash from them
+static inline uint64_t hashtable_key_hash(hashtable_module mod, hashtable_t,
+                                          unsigned char *bytes);
+
+// Compare keys with respect to a given hash table, e.g. by memcmp
+static inline bool hashtable_key_equal(hashtable_module mod, hashtable_t,
+                                       const unsigned char *left,
+                                       const unsigned char *right);
 
 // Count of keys in the table
 static inline uint64_t hashtable_size(hashtable_module mod, hashtable_t);
@@ -105,8 +110,11 @@ struct hashtable_module_ty {
   const uint32_t value_align;
   const uint32_t value_size;
 
-  uint64_t (*const key_hash)(unsigned char *bytes);
   const unsigned char *sentinel;
+
+  uint64_t (*const key_hash)(hashtable_t, unsigned char *bytes);
+  bool (*const key_equal)(hashtable_t, const unsigned char *,
+                          const unsigned char *);
 
   uint64_t (*const size)(hashtable_t);
   uint64_t (*const capacity)(hashtable_t);
@@ -166,12 +174,6 @@ static inline uint32_t hashtable_value_size(hashtable_module mod) {
   return mod->value_size;
 }
 
-// Takes key_size bytes, calculates a hash from them
-static inline uint64_t hashtable_key_hash(hashtable_module mod,
-                                          unsigned char *bytes) {
-  return mod->key_hash(bytes);
-}
-
 // Returns key_size bytes representing a key that cannot be inserted
 static inline const unsigned char *
 hashtable_key_sentinel(hashtable_module mod) {
@@ -179,13 +181,26 @@ hashtable_key_sentinel(hashtable_module mod) {
 }
 
 static inline bool hashtable_key_is_sentinel(hashtable_module mod,
-                                             unsigned char *key) {
+                                             hashtable_t h,
+                                             const unsigned char *key) {
   const unsigned char *sentinel = hashtable_key_sentinel(mod);
-  return __builtin_memcmp(sentinel, key, mod->key_size) == 0;
+  return hashtable_key_equal(mod, h, key, sentinel);
 }
 
 static inline bool hashtable_contract_active(hashtable_module mod) {
   return mod->maybe_contract != 0;
+}
+
+// Takes key_size bytes, calculates a hash from them
+static inline uint64_t hashtable_key_hash(hashtable_module mod, hashtable_t h,
+                                          unsigned char *bytes) {
+  return mod->key_hash(h, bytes);
+}
+
+static inline bool hashtable_key_equal(hashtable_module mod, hashtable_t h,
+                                       const unsigned char *left,
+                                       const unsigned char *right) {
+  return mod->key_equal(h, left, right);
 }
 
 static inline uint64_t hashtable_size(hashtable_module mod, hashtable_t h) {
@@ -211,19 +226,23 @@ static inline bool hashtable_contains(hashtable_module mod, hashtable_t h,
   hashtable_require(hashtable_valid(mod, h));
 
   uint64_t offset = mod->lookup_offset(h, key);
-  if (offset == UINT64_MAX) { return false; }
+  if (offset == UINT64_MAX) {
+    return false;
+  }
 
   unsigned char *kres = mod->location_key(h, offset);
-  return !hashtable_key_is_sentinel(mod, kres);
+  return !hashtable_key_is_sentinel(mod, h, kres);
 }
 
 static inline unsigned char *
 hashtable_lookup_key(hashtable_module mod, hashtable_t h, unsigned char *key) {
   hashtable_require(hashtable_valid(mod, h));
   uint64_t offset = mod->lookup_offset(h, key);
-  if (offset == UINT64_MAX) { return 0; }
+  if (offset == UINT64_MAX) {
+    return 0;
+  }
   unsigned char *kres = mod->location_key(h, offset);
-  return hashtable_key_is_sentinel(mod, kres) ? 0 : kres;
+  return hashtable_key_is_sentinel(mod, h, kres) ? 0 : kres;
 }
 
 static inline unsigned char *hashtable_lookup_value(hashtable_module mod,
@@ -232,10 +251,13 @@ static inline unsigned char *hashtable_lookup_value(hashtable_module mod,
   hashtable_require(hashtable_valid(mod, h));
   hashtable_require(mod->value_size != 0);
   uint64_t offset = mod->lookup_offset(h, key);
-  if (offset == UINT64_MAX) { return 0; }
+  if (offset == UINT64_MAX) {
+    return 0;
+  }
   unsigned char *kres = mod->location_key(h, offset);
-  return hashtable_key_is_sentinel(mod, kres) ? 0
-                                              : mod->location_value(h, offset);
+  return hashtable_key_is_sentinel(mod, h, kres)
+             ? 0
+             : mod->location_value(h, offset);
 }
 
 // (value_size == 0) != (value != NULL)
@@ -252,7 +274,7 @@ static inline void hashtable_insert(hashtable_module mod, hashtable_t *h,
   unsigned char *k_res = mod->location_key(*h, offset);
   unsigned char *v_res = is_set ? 0 : mod->location_value(*h, offset);
 
-  if (hashtable_key_is_sentinel(mod, k_res)) {
+  if (hashtable_key_is_sentinel(mod, *h, k_res)) {
     mod->set_size(h, hashtable_size(mod, *h) + 1);
   }
 
@@ -267,7 +289,8 @@ static inline void hashtable_insert(hashtable_module mod, hashtable_t *h,
     unsigned char *k_chk = hashtable_lookup_key(mod, *h, key);
     unsigned char *v_chk = (is_set ? 0 : hashtable_lookup_value(mod, *h, key));
 
-    hashtable_require(__builtin_memcmp(k_res, k_chk, mod->key_size) == 0);
+    hashtable_require(hashtable_key_equal(mod, *h, k_res, k_chk));
+
     hashtable_require(is_set ||
                       (__builtin_memcmp(v_res, v_chk, mod->value_size) == 0));
   }
@@ -319,16 +342,18 @@ static inline bool hashtable_equal(hashtable_module mod, hashtable_t x,
 
   for (uint64_t offset = 0; offset < cap; offset++) {
     unsigned char *k_res = mod->location_key(s, offset);
-    if (hashtable_key_is_sentinel(mod, k_res)) {
+    if (hashtable_key_is_sentinel(mod, s, k_res)) {
       continue;
     }
 
     unsigned char *v_res = is_set ? 0 : mod->location_value(s, offset);
 
     uint64_t large_offset = mod->lookup_offset(l, k_res);
-
     unsigned char *l_k_res = mod->location_key(l, large_offset);
-    if (__builtin_memcmp(k_res, l_k_res, mod->key_size) != 0) {
+
+    bool eq_s = hashtable_key_equal(mod, s, k_res, l_k_res);
+    hashtable_require(eq_s == hashtable_key_equal(mod, l, k_res, l_k_res));
+    if (!eq_s) {
       return false;
     }
 
@@ -356,7 +381,7 @@ static inline hashtable_t hashtable_rehash(hashtable_module mod, hashtable_t h,
   for (uint64_t offset = 0; offset < cap; offset++) {
     unsigned char *k_res = mod->location_key(h, offset);
 
-    if (!hashtable_key_is_sentinel(mod, k_res)) {
+    if (!hashtable_key_is_sentinel(mod, h, k_res)) {
       unsigned char *v_res = is_set ? 0 : mod->location_value(h, offset);
       hashtable_insert(mod, &ret, k_res, v_res);
     }

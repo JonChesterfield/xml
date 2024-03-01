@@ -3,6 +3,7 @@
 #include "EvilUnit/EvilUnit.h"
 
 #include "hashtable.h"
+#include "intset_util.h"
 
 #include "arena.libc.h"
 
@@ -17,45 +18,17 @@ static const struct arena_module_ty arena_libc_contract =
 #endif
     );
 
-arena_module arena_mod = &arena_libc_contract;
+static arena_module arena_mod = &arena_libc_contract;
 
-enum { table_sizeof = 4 * 8 };
-
-_Static_assert(sizeof(hashtable_t) == table_sizeof, "");
-_Static_assert(sizeof(intset_t) == table_sizeof, "");
+_Static_assert(sizeof(hashtable_t) == intset_util_struct_sizeof, "");
+_Static_assert(sizeof(intset_t) == intset_util_struct_sizeof, "");
 
 static const uint64_t sentinel = UINT64_MAX;
 
-static hashtable_t to_hash(intset_t s) {
-  hashtable_t r;
-  __builtin_memcpy(&r.state, &s.state, table_sizeof);
-  return r;
-}
 
-static intset_t to_set(hashtable_t s) {
-  intset_t r;
-  __builtin_memcpy(&r.state, &s.state, table_sizeof);
-  return r;
-}
+// INTEST_UTIL(arena_mod, contract_unit_test);
 
-static arena_t hash_to_arena(hashtable_t h) {
-  arena_t a;
-  a.base = h.state[0];
-  a.next = h.state[1];
-  a.limit = h.state[2];
-  return a;
-}
-
-static hashtable_t arena_to_hash(arena_t a) {
-  hashtable_t h;
-  h.state[0] = a.base;
-  h.state[1] = a.next;
-  h.state[2] = a.limit;
-  h.state[3] = 0;
-  return h;
-}
-
-static hashtable_t create(uint64_t size) {
+static hashtable_t intset_util_create(uint64_t size) {
 #if INTSET_CONTRACTS
   contract_unit_test(contract_is_zero_or_power_of_two(size), "size", 4);
 #endif
@@ -68,29 +41,36 @@ static hashtable_t create(uint64_t size) {
     __builtin_memcpy(c, &sentinel, 8);
   }
 
-  hashtable_t r = arena_to_hash(a);
+  hashtable_t r = intset_util_arena_to_hash(a);
   return r;
 }
 
-static void destroy(hashtable_t h) {
-  arena_destroy(arena_mod, hash_to_arena(h));
+static void intset_util_destroy(hashtable_t h) {
+  arena_destroy(arena_mod, intset_util_hash_to_arena(h));
 }
 
-static bool valid(hashtable_t h) {
-  return arena_valid(arena_mod, hash_to_arena(h));
+static bool intset_util_valid(hashtable_t h) {
+  return arena_valid(arena_mod, intset_util_hash_to_arena(h));
 }
 
-uint64_t key_hash(unsigned char *bytes) {
+static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes) {
+  (void)h;
   // identity at present
   uint64_t r;
   __builtin_memcpy(&r, bytes, 8);
   return r;
 }
 
-uint64_t size(hashtable_t h) { return h.state[3]; }
+static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
+               const unsigned char *right) {
+  (void)h;
+  return __builtin_memcmp(left, right, 8) == 0;
+}
 
-uint64_t capacity(hashtable_t h) {
-  arena_t a = hash_to_arena(h);
+static uint64_t intset_util_size(hashtable_t h) { return h.state[3]; }
+
+static uint64_t intset_util_capacity(hashtable_t h) {
+  arena_t a = intset_util_hash_to_arena(h);
   uint64_t r = arena_size(arena_mod, a) / 8;
 #if INTSET_CONTRACTS
   contract_unit_test(contract_is_zero_or_power_of_two(r), "cap", 3);
@@ -98,17 +78,17 @@ uint64_t capacity(hashtable_t h) {
   return r;
 }
 
-uint64_t available(hashtable_t h) { return capacity(h) - size(h); }
+static uint64_t intset_util_available(hashtable_t h) { return intset_util_capacity(h) - intset_util_size(h); }
 
-unsigned char *location_key(hashtable_t h, uint64_t offset) {
-  arena_t a = hash_to_arena(h);
+static unsigned char *intset_util_location_key(hashtable_t h, uint64_t offset) {
+  arena_t a = intset_util_hash_to_arena(h);
   unsigned char *p = arena_base_address(arena_mod, a);
   return p + offset * 8;
 }
 
-uint64_t lookup_offset(hashtable_t h, unsigned char *key) {
-  uint64_t hash = key_hash(key);
-  uint64_t cap = capacity(h);
+static uint64_t intset_util_lookup_offset(hashtable_t h, unsigned char *key) {
+  uint64_t hash = intset_util_key_hash(h, key);
+  uint64_t cap = intset_util_capacity(h);
 
 #if INTSET_CONTRACTS
   contract_unit_test(contract_is_power_of_two(cap), "cap offset", 10);
@@ -120,85 +100,90 @@ uint64_t lookup_offset(hashtable_t h, unsigned char *key) {
   for (uint64_t c = 0; c < cap; c++) {
     uint64_t index = (start_index + c) & mask;
 
-    unsigned char *loc_key = location_key(h, index);
+    unsigned char *loc_key = intset_util_location_key(h, index);
 
-    if (__builtin_memcmp(loc_key, key, 8) == 0) {
+    if (intset_util_key_equal(h, loc_key, key)) {
       // Found key
       return index;
     }
 
-    if (__builtin_memcmp(loc_key, &sentinel, 8) == 0) {
+    if (intset_util_key_equal(h, loc_key, (unsigned char *)&sentinel)) {
       // Found a space
       return index;
     }
   }
 
 #if INTSET_CONTRACTS
-  contract_unit_test(available(h) == 0, "avail 0", 7);
+  contract_unit_test(intset_util_available(h) == 0, "avail 0", 7);
 #endif
 
   return UINT64_MAX;
 }
 
-static void set_size(hashtable_t *h, uint64_t s) { h->state[3] = s; }
+static void intset_util_set_size(hashtable_t *h, uint64_t s) { h->state[3] = s; }
 
 static const struct hashtable_module_ty mod_state = {
-    .create = create,
-    .destroy = destroy,
-    .valid = valid,
+    .create = intset_util_create,
+    .destroy = intset_util_destroy,
+    .valid = intset_util_valid,
     .key_align = 8,
     .key_size = 8,
     .value_align = 1,
     .value_size = 0,
-    .key_hash = key_hash,
-    .sentinel = (unsigned char *)&sentinel,
-    .size = size,
-    .capacity = capacity,
-    .lookup_offset = lookup_offset,
-    .location_key = location_key,
+    .key_hash = intset_util_key_hash,
+    .key_equal = intset_util_key_equal,
+    .sentinel = (const unsigned char *)&sentinel,
+    .size = intset_util_size,
+    .capacity = intset_util_capacity,
+    .lookup_offset = intset_util_lookup_offset,
+    .location_key = intset_util_location_key,
     .location_value = 0,
-    .set_size = set_size,
+    .set_size = intset_util_set_size,
     .maybe_remove = 0,
+#if INTSET_CONTRACTS
     .maybe_contract = contract_unit_test,
+#else
+    .maybe_contract = 0,
+#endif
 };
 
-const hashtable_module mod = &mod_state;
+static const hashtable_module mod = &mod_state;
 
 intset_t intset_create(uint64_t size) {
-  return to_set(hashtable_create(mod, size));
+  return intset_util_to_set(hashtable_create(mod, size));
 }
 
-void intset_destroy(intset_t s) { hashtable_destroy(mod, to_hash(s)); }
-bool intset_valid(intset_t s) { return hashtable_valid(mod, to_hash(s)); }
+void intset_destroy(intset_t s) { hashtable_destroy(mod, intset_util_to_hash(s)); }
+bool intset_valid(intset_t s) { return hashtable_valid(mod, intset_util_to_hash(s)); }
 
 bool intset_equal(intset_t x, intset_t y) {
-  return hashtable_equal(mod, to_hash(x), to_hash(y));
+  return hashtable_equal(mod, intset_util_to_hash(x), intset_util_to_hash(y));
 }
 
 intset_t intset_rehash(intset_t s, uint64_t size) {
-  return to_set(hashtable_rehash(mod, to_hash(s), size));
+  return intset_util_to_set(hashtable_rehash(mod, intset_util_to_hash(s), size));
 }
 
-uint64_t intset_size(intset_t s) { return hashtable_size(mod, to_hash(s)); }
+uint64_t intset_size(intset_t s) { return hashtable_size(mod, intset_util_to_hash(s)); }
 
 uint64_t intset_capacity(intset_t s) {
-  return hashtable_capacity(mod, to_hash(s));
+  return hashtable_capacity(mod, intset_util_to_hash(s));
 }
 
 bool intset_contains(intset_t s, uint64_t v) {
-  return hashtable_contains(mod, to_hash(s), (unsigned char *)&v);
+  return hashtable_contains(mod, intset_util_to_hash(s), (unsigned char *)&v);
 }
 
 void intset_insert(intset_t *s, uint64_t v) {
-  hashtable_t h = to_hash(*s);
+  hashtable_t h = intset_util_to_hash(*s);
   hashtable_insert(mod, &h, (unsigned char *)&v, 0);
-  *s = to_set(h);
+  *s = intset_util_to_set(h);
 }
 
 #if 0 // todo
 void intset_remove(intset_t* s, uint64_t v)
 {
-  hashtable_remove(mod, to_hash(s), (unsigned char*)&v);
+  hashtable_remove(mod, intset_util_to_hash(s), (unsigned char*)&v);
 }
 #endif
 
