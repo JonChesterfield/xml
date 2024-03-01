@@ -98,6 +98,8 @@ uint64_t capacity(hashtable_t h) {
   return r;
 }
 
+uint64_t available(hashtable_t h) { return capacity(h) - size(h); }
+
 unsigned char *location_key(hashtable_t h, uint64_t offset) {
   arena_t a = hash_to_arena(h);
   unsigned char *p = arena_base_address(arena_mod, a);
@@ -131,7 +133,10 @@ uint64_t lookup_offset(hashtable_t h, unsigned char *key) {
     }
   }
 
-  contract_unit_test(false, "look offset", 11);
+#if INTSET_CONTRACTS
+  contract_unit_test(available(h) == 0, "avail 0", 7);
+#endif
+
   return UINT64_MAX;
 }
 
@@ -214,7 +219,10 @@ static MODULE(create_destroy) {
     intset_destroy(a);
   }
 
-  TEST("non-zero, odd") { DEATH(intset_create(5)); }
+  TEST("non-zero, non-power-two") {
+    DEATH(intset_create(5));
+    DEATH(intset_create(18));
+  }
 
   TEST("fail a precondition") {
     intset_t a = {0};
@@ -260,11 +268,11 @@ static MODULE(operations) {
     intset_insert(&s, 0);
     intset_insert(&s, 1);
     intset_insert(&s, 2);
-    DEATH(intset_insert(&s, 3));
+    intset_insert(&s, 3);
     CHECK(intset_available(s) == 0);
     DEATH(intset_insert(&s, 4));
 
-    // at capacity, also can't insert an wxisting value
+    // at capacity, also can't insert an existing value
     DEATH(intset_insert(&s, 2));
   }
 
@@ -277,7 +285,7 @@ static MODULE(operations) {
     intset_insert(&s, 2);
 
     CHECK(intset_available(s) == 1);
-    DEATH(intset_insert(&s, 3));
+    intset_insert(&s, 3);
     CHECK(intset_available(s) == 0);
 
     // and then not ok
@@ -315,7 +323,19 @@ static MODULE(rehash_empty) {
 
   TEST("rehash to zero") {
     intset_t s = intset_create(4);
-    DEATH(intset_rehash(s, 0));
+    intset_rehash(s, 0);
+    intset_destroy(s);
+  }
+
+  TEST("rehash from zero") {
+    intset_t s = intset_create(0);
+    intset_rehash(s, 4);
+    intset_destroy(s);
+  }
+
+  TEST("rehash to non-power-two fails") {
+    intset_t s = intset_create(4);
+    DEATH(intset_rehash(s, 3));
     intset_destroy(s);
   }
 }
@@ -343,7 +363,13 @@ static MODULE(rehash_partial) {
     intset_destroy(t);
   }
 
-  TEST("to full fails") { DEATH(intset_rehash(s, 2)); }
+  TEST("decrease to full") {
+    intset_t t = intset_rehash(s, 2);
+    CHECK(intset_equal(s, t));
+    intset_destroy(t);
+  }
+
+  TEST("rehash cannot drop elements") { DEATH(intset_rehash(s, 1)); }
 
   intset_destroy(s);
 }

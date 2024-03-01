@@ -111,7 +111,8 @@ struct hashtable_module_ty {
   uint64_t (*const size)(hashtable_t);
   uint64_t (*const capacity)(hashtable_t);
 
-  // If the key is missing, returns where it should be inserted
+  // Find the key. if it is missing, return where it should be inserted.
+  // If the key is missing and availability is zero, returns ~0
   uint64_t (*const lookup_offset)(hashtable_t, unsigned char *key);
 
   // key and value lookup tend to use the same offset computation
@@ -208,15 +209,19 @@ static inline uint64_t hashtable_available(hashtable_module mod,
 static inline bool hashtable_contains(hashtable_module mod, hashtable_t h,
                                       unsigned char *key) {
   hashtable_require(hashtable_valid(mod, h));
-  hashtable_require(hashtable_available(mod, h) > 0);
-  return hashtable_lookup_key(mod, h, key) != 0;
+
+  uint64_t offset = mod->lookup_offset(h, key);
+  if (offset == UINT64_MAX) { return false; }
+
+  unsigned char *kres = mod->location_key(h, offset);
+  return !hashtable_key_is_sentinel(mod, kres);
 }
 
 static inline unsigned char *
 hashtable_lookup_key(hashtable_module mod, hashtable_t h, unsigned char *key) {
   hashtable_require(hashtable_valid(mod, h));
-  hashtable_require(hashtable_available(mod, h) > 0);
   uint64_t offset = mod->lookup_offset(h, key);
+  if (offset == UINT64_MAX) { return 0; }
   unsigned char *kres = mod->location_key(h, offset);
   return hashtable_key_is_sentinel(mod, kres) ? 0 : kres;
 }
@@ -225,9 +230,9 @@ static inline unsigned char *hashtable_lookup_value(hashtable_module mod,
                                                     hashtable_t h,
                                                     unsigned char *key) {
   hashtable_require(hashtable_valid(mod, h));
-  hashtable_require(hashtable_available(mod, h) > 0);
   hashtable_require(mod->value_size != 0);
   uint64_t offset = mod->lookup_offset(h, key);
+  if (offset == UINT64_MAX) { return 0; }
   unsigned char *kres = mod->location_key(h, offset);
   return hashtable_key_is_sentinel(mod, kres) ? 0
                                               : mod->location_value(h, offset);
@@ -296,9 +301,6 @@ static inline bool hashtable_equal(hashtable_module mod, hashtable_t x,
   if (N != hashtable_size(mod, y)) {
     return false;
   }
-
-  hashtable_require(hashtable_available(mod, x) > 0);
-  hashtable_require(hashtable_available(mod, y) > 0);
 
   // Guess x is smaller
   uint64_t cap = hashtable_capacity(mod, x);
