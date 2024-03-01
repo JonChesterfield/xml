@@ -343,6 +343,64 @@ static MODULE(allocate_multiple) {
   }
 }
 
+MODULE(convenience) {
+  TEST("req available") {
+    arena_t arena = arena_create(mod, 0);
+    CHECK(arena_valid(mod, arena));
+
+    for (unsigned i = 0; i < 20; i += 3) {
+      CHECK(arena_request_available(mod, &arena, i));
+      CHECK(arena_available(mod, arena) >= i);
+    }
+
+    arena_destroy(mod, arena);
+  }
+
+  TEST("pad to alignment") {
+    arena_t arena = arena_create(mod, 0);
+    CHECK(arena_valid(mod, arena));
+
+    CHECK(arena_pad_to_alignment(mod, &arena, 1));
+    CHECK(0 == arena_size(mod, arena));
+
+    CHECK(arena_pad_to_alignment(mod, &arena, 8));
+    CHECK(0 == arena_size(mod, arena));
+
+    CHECK(0 == arena_allocate(mod, &arena, 3, 1));
+    CHECK(3 == arena_size(mod, arena));
+
+    CHECK(arena_pad_to_alignment(mod, &arena, 2));
+    CHECK(4 == arena_size(mod, arena));
+
+    CHECK(arena_pad_to_alignment(mod, &arena, 4));
+    CHECK(4 == arena_size(mod, arena));
+
+    CHECK(arena_pad_to_alignment(mod, &arena, 8));
+    CHECK(8 == arena_size(mod, arena));
+
+    arena_destroy(mod, arena);
+  }
+
+  TEST("append bytes") {
+    arena_t arena = arena_create(mod, 0);
+    CHECK(arena_valid(mod, arena));
+
+    unsigned char buf[7] = "foobar?";
+
+    CHECK(arena_append_bytes(mod, &arena, buf, sizeof(buf)));
+    CHECK(7 == arena_size(mod, arena));
+
+    CHECK(__builtin_memcmp(buf, arena_base_address(mod, arena), 7) == 0);
+
+    for (unsigned i = 0; i < 20; i += 3) {
+      CHECK(arena_request_available(mod, &arena, i));
+      CHECK(arena_available(mod, arena) >= i);
+    }
+
+    arena_destroy(mod, arena);
+  }
+}
+
 MAIN_MODULE() {
   DEPENDS(increment_for_alignment);
   DEPENDS(create_destroy);
@@ -351,4 +409,5 @@ MAIN_MODULE() {
   DEPENDS(change_capacity_of_nonempty_arena);
   DEPENDS(allocate_align_one);
   DEPENDS(allocate_multiple);
+  DEPENDS(convenience);
 }

@@ -241,7 +241,7 @@ static MODULE(regex_string)
     char * out = regex_to_malloced_c_string(tmp);
     uint64_t size = out ? strlen(out) : 0;
 
-    CHECK(out);
+    CHECK(out != NULL);
     CHECK(size == N);
     if (size == N)
       {
