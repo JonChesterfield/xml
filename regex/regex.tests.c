@@ -11,6 +11,11 @@
 #include <string.h>
 
 static MODULE(regex_nullable) {
+  // Fun. So this leaks. The ptree context builds a tree from the last appended node,
+  // but if that leaves part of the tree unreachable, that part leaks
+  // Inclined to fix by declaring that the context always has arena semantics
+  // and building a better linked structure on the fly for the versions backed
+  // by libc (as opposed to areans on mmap or similar)
   ptree_context ctx = regex_ptree_create_context();
   ptree empty_str = regex_make_empty_string(ctx);
   ptree empty_set = regex_make_empty_set(ctx);
@@ -224,42 +229,30 @@ static MODULE(regex_string)
   arena_t arena = arena_create(&arena_libc, 64);
   ptree_context ctx = regex_ptree_create_context();
   
-  TEST("wip")
+  TEST("parse and print a sequence")
   {
+    const char seq[] = "(|(*00)(|02(~cc)))";
 
-    printf("WIP\n");
-    
-    const char seq[] = "01";
-
-const    size_t N = strlen(seq);
-    fprintf(stderr, "Try to parse %s, len %lu\n", seq, N);
+    const size_t N = strlen(seq);
     
     ptree tmp = regex_from_char_sequence(ctx, seq, N);
     CHECK(!ptree_is_failure(tmp));
 
-    fprintf(stdout, "xml\n");
-    regex_ptree_as_xml(&stack_libc, stdout, tmp);
-    fprintf(stdout, "\n");
+    char * out = regex_to_malloced_c_string(tmp);
+    uint64_t size = out ? strlen(out) : 0;
 
-    uint64_t before = arena_size(&arena_libc, arena);
-    CHECK(regex_to_char_sequence(&arena_libc, &arena, tmp) == 0);
-
-    uint64_t after = arena_size(&arena_libc, arena);
-
-    uint64_t size = after - before;
-    const char * cursor = before + (char*)arena_base_address(&arena_libc, arena);
-
-    fprintf(stderr, "N = %lu\n", N);
-    fprintf(stderr, "size = %lu\n", size);
-    fprintf(stderr, "thing %s\n", cursor);
+    CHECK(out);
     CHECK(size == N);
-    
-    
-    
+    if (size == N)
+      {
+        CHECK(memcmp(seq, out, N) == 0);
+      }
+
+    free(out);
   }
   
   regex_ptree_destroy_context(ctx);
-    arena_destroy(&arena_libc, arena);
+  arena_destroy(&arena_libc, arena);
 }
 
 MAIN_MODULE() {

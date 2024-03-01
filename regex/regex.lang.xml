@@ -10,11 +10,267 @@
 
   <Tokens>
 
-    <Token name="BYTE00" literal="00" />
-    <Token name="BYTE01" literal="01" />
-    <Token name="BYTE02" literal="02" />
+<!-- for i = 0, 255 do print(string.format([[<Token name="BYTE%02x" literal="%02x" />]], i, i)) end -->
 
-    <Token name="BYTE" regex="[abcdef0123456789][abcdef0123456789]" />
+<!-- TODO: Generate this from lua or similar, probably just the entire file -->
+<Token name="BYTE00" literal="00" />
+<Token name="BYTE01" literal="01" />
+<Token name="BYTE02" literal="02" />
+<Token name="BYTE03" literal="03" />
+<Token name="BYTE04" literal="04" />
+<Token name="BYTE05" literal="05" />
+<Token name="BYTE06" literal="06" />
+<Token name="BYTE07" literal="07" />
+<Token name="BYTE08" literal="08" />
+<Token name="BYTE09" literal="09" />
+<Token name="BYTE0a" literal="0a" />
+<Token name="BYTE0b" literal="0b" />
+<Token name="BYTE0c" literal="0c" />
+<Token name="BYTE0d" literal="0d" />
+<Token name="BYTE0e" literal="0e" />
+<Token name="BYTE0f" literal="0f" />
+<Token name="BYTE10" literal="10" />
+<Token name="BYTE11" literal="11" />
+<Token name="BYTE12" literal="12" />
+<Token name="BYTE13" literal="13" />
+<Token name="BYTE14" literal="14" />
+<Token name="BYTE15" literal="15" />
+<Token name="BYTE16" literal="16" />
+<Token name="BYTE17" literal="17" />
+<Token name="BYTE18" literal="18" />
+<Token name="BYTE19" literal="19" />
+<Token name="BYTE1a" literal="1a" />
+<Token name="BYTE1b" literal="1b" />
+<Token name="BYTE1c" literal="1c" />
+<Token name="BYTE1d" literal="1d" />
+<Token name="BYTE1e" literal="1e" />
+<Token name="BYTE1f" literal="1f" />
+<Token name="BYTE20" literal="20" />
+<Token name="BYTE21" literal="21" />
+<Token name="BYTE22" literal="22" />
+<Token name="BYTE23" literal="23" />
+<Token name="BYTE24" literal="24" />
+<Token name="BYTE25" literal="25" />
+<Token name="BYTE26" literal="26" />
+<Token name="BYTE27" literal="27" />
+<Token name="BYTE28" literal="28" />
+<Token name="BYTE29" literal="29" />
+<Token name="BYTE2a" literal="2a" />
+<Token name="BYTE2b" literal="2b" />
+<Token name="BYTE2c" literal="2c" />
+<Token name="BYTE2d" literal="2d" />
+<Token name="BYTE2e" literal="2e" />
+<Token name="BYTE2f" literal="2f" />
+<Token name="BYTE30" literal="30" />
+<Token name="BYTE31" literal="31" />
+<Token name="BYTE32" literal="32" />
+<Token name="BYTE33" literal="33" />
+<Token name="BYTE34" literal="34" />
+<Token name="BYTE35" literal="35" />
+<Token name="BYTE36" literal="36" />
+<Token name="BYTE37" literal="37" />
+<Token name="BYTE38" literal="38" />
+<Token name="BYTE39" literal="39" />
+<Token name="BYTE3a" literal="3a" />
+<Token name="BYTE3b" literal="3b" />
+<Token name="BYTE3c" literal="3c" />
+<Token name="BYTE3d" literal="3d" />
+<Token name="BYTE3e" literal="3e" />
+<Token name="BYTE3f" literal="3f" />
+<Token name="BYTE40" literal="40" />
+<Token name="BYTE41" literal="41" />
+<Token name="BYTE42" literal="42" />
+<Token name="BYTE43" literal="43" />
+<Token name="BYTE44" literal="44" />
+<Token name="BYTE45" literal="45" />
+<Token name="BYTE46" literal="46" />
+<Token name="BYTE47" literal="47" />
+<Token name="BYTE48" literal="48" />
+<Token name="BYTE49" literal="49" />
+<Token name="BYTE4a" literal="4a" />
+<Token name="BYTE4b" literal="4b" />
+<Token name="BYTE4c" literal="4c" />
+<Token name="BYTE4d" literal="4d" />
+<Token name="BYTE4e" literal="4e" />
+<Token name="BYTE4f" literal="4f" />
+<Token name="BYTE50" literal="50" />
+<Token name="BYTE51" literal="51" />
+<Token name="BYTE52" literal="52" />
+<Token name="BYTE53" literal="53" />
+<Token name="BYTE54" literal="54" />
+<Token name="BYTE55" literal="55" />
+<Token name="BYTE56" literal="56" />
+<Token name="BYTE57" literal="57" />
+<Token name="BYTE58" literal="58" />
+<Token name="BYTE59" literal="59" />
+<Token name="BYTE5a" literal="5a" />
+<Token name="BYTE5b" literal="5b" />
+<Token name="BYTE5c" literal="5c" />
+<Token name="BYTE5d" literal="5d" />
+<Token name="BYTE5e" literal="5e" />
+<Token name="BYTE5f" literal="5f" />
+<Token name="BYTE60" literal="60" />
+<Token name="BYTE61" literal="61" />
+<Token name="BYTE62" literal="62" />
+<Token name="BYTE63" literal="63" />
+<Token name="BYTE64" literal="64" />
+<Token name="BYTE65" literal="65" />
+<Token name="BYTE66" literal="66" />
+<Token name="BYTE67" literal="67" />
+<Token name="BYTE68" literal="68" />
+<Token name="BYTE69" literal="69" />
+<Token name="BYTE6a" literal="6a" />
+<Token name="BYTE6b" literal="6b" />
+<Token name="BYTE6c" literal="6c" />
+<Token name="BYTE6d" literal="6d" />
+<Token name="BYTE6e" literal="6e" />
+<Token name="BYTE6f" literal="6f" />
+<Token name="BYTE70" literal="70" />
+<Token name="BYTE71" literal="71" />
+<Token name="BYTE72" literal="72" />
+<Token name="BYTE73" literal="73" />
+<Token name="BYTE74" literal="74" />
+<Token name="BYTE75" literal="75" />
+<Token name="BYTE76" literal="76" />
+<Token name="BYTE77" literal="77" />
+<Token name="BYTE78" literal="78" />
+<Token name="BYTE79" literal="79" />
+<Token name="BYTE7a" literal="7a" />
+<Token name="BYTE7b" literal="7b" />
+<Token name="BYTE7c" literal="7c" />
+<Token name="BYTE7d" literal="7d" />
+<Token name="BYTE7e" literal="7e" />
+<Token name="BYTE7f" literal="7f" />
+<Token name="BYTE80" literal="80" />
+<Token name="BYTE81" literal="81" />
+<Token name="BYTE82" literal="82" />
+<Token name="BYTE83" literal="83" />
+<Token name="BYTE84" literal="84" />
+<Token name="BYTE85" literal="85" />
+<Token name="BYTE86" literal="86" />
+<Token name="BYTE87" literal="87" />
+<Token name="BYTE88" literal="88" />
+<Token name="BYTE89" literal="89" />
+<Token name="BYTE8a" literal="8a" />
+<Token name="BYTE8b" literal="8b" />
+<Token name="BYTE8c" literal="8c" />
+<Token name="BYTE8d" literal="8d" />
+<Token name="BYTE8e" literal="8e" />
+<Token name="BYTE8f" literal="8f" />
+<Token name="BYTE90" literal="90" />
+<Token name="BYTE91" literal="91" />
+<Token name="BYTE92" literal="92" />
+<Token name="BYTE93" literal="93" />
+<Token name="BYTE94" literal="94" />
+<Token name="BYTE95" literal="95" />
+<Token name="BYTE96" literal="96" />
+<Token name="BYTE97" literal="97" />
+<Token name="BYTE98" literal="98" />
+<Token name="BYTE99" literal="99" />
+<Token name="BYTE9a" literal="9a" />
+<Token name="BYTE9b" literal="9b" />
+<Token name="BYTE9c" literal="9c" />
+<Token name="BYTE9d" literal="9d" />
+<Token name="BYTE9e" literal="9e" />
+<Token name="BYTE9f" literal="9f" />
+<Token name="BYTEa0" literal="a0" />
+<Token name="BYTEa1" literal="a1" />
+<Token name="BYTEa2" literal="a2" />
+<Token name="BYTEa3" literal="a3" />
+<Token name="BYTEa4" literal="a4" />
+<Token name="BYTEa5" literal="a5" />
+<Token name="BYTEa6" literal="a6" />
+<Token name="BYTEa7" literal="a7" />
+<Token name="BYTEa8" literal="a8" />
+<Token name="BYTEa9" literal="a9" />
+<Token name="BYTEaa" literal="aa" />
+<Token name="BYTEab" literal="ab" />
+<Token name="BYTEac" literal="ac" />
+<Token name="BYTEad" literal="ad" />
+<Token name="BYTEae" literal="ae" />
+<Token name="BYTEaf" literal="af" />
+<Token name="BYTEb0" literal="b0" />
+<Token name="BYTEb1" literal="b1" />
+<Token name="BYTEb2" literal="b2" />
+<Token name="BYTEb3" literal="b3" />
+<Token name="BYTEb4" literal="b4" />
+<Token name="BYTEb5" literal="b5" />
+<Token name="BYTEb6" literal="b6" />
+<Token name="BYTEb7" literal="b7" />
+<Token name="BYTEb8" literal="b8" />
+<Token name="BYTEb9" literal="b9" />
+<Token name="BYTEba" literal="ba" />
+<Token name="BYTEbb" literal="bb" />
+<Token name="BYTEbc" literal="bc" />
+<Token name="BYTEbd" literal="bd" />
+<Token name="BYTEbe" literal="be" />
+<Token name="BYTEbf" literal="bf" />
+<Token name="BYTEc0" literal="c0" />
+<Token name="BYTEc1" literal="c1" />
+<Token name="BYTEc2" literal="c2" />
+<Token name="BYTEc3" literal="c3" />
+<Token name="BYTEc4" literal="c4" />
+<Token name="BYTEc5" literal="c5" />
+<Token name="BYTEc6" literal="c6" />
+<Token name="BYTEc7" literal="c7" />
+<Token name="BYTEc8" literal="c8" />
+<Token name="BYTEc9" literal="c9" />
+<Token name="BYTEca" literal="ca" />
+<Token name="BYTEcb" literal="cb" />
+<Token name="BYTEcc" literal="cc" />
+<Token name="BYTEcd" literal="cd" />
+<Token name="BYTEce" literal="ce" />
+<Token name="BYTEcf" literal="cf" />
+<Token name="BYTEd0" literal="d0" />
+<Token name="BYTEd1" literal="d1" />
+<Token name="BYTEd2" literal="d2" />
+<Token name="BYTEd3" literal="d3" />
+<Token name="BYTEd4" literal="d4" />
+<Token name="BYTEd5" literal="d5" />
+<Token name="BYTEd6" literal="d6" />
+<Token name="BYTEd7" literal="d7" />
+<Token name="BYTEd8" literal="d8" />
+<Token name="BYTEd9" literal="d9" />
+<Token name="BYTEda" literal="da" />
+<Token name="BYTEdb" literal="db" />
+<Token name="BYTEdc" literal="dc" />
+<Token name="BYTEdd" literal="dd" />
+<Token name="BYTEde" literal="de" />
+<Token name="BYTEdf" literal="df" />
+<Token name="BYTEe0" literal="e0" />
+<Token name="BYTEe1" literal="e1" />
+<Token name="BYTEe2" literal="e2" />
+<Token name="BYTEe3" literal="e3" />
+<Token name="BYTEe4" literal="e4" />
+<Token name="BYTEe5" literal="e5" />
+<Token name="BYTEe6" literal="e6" />
+<Token name="BYTEe7" literal="e7" />
+<Token name="BYTEe8" literal="e8" />
+<Token name="BYTEe9" literal="e9" />
+<Token name="BYTEea" literal="ea" />
+<Token name="BYTEeb" literal="eb" />
+<Token name="BYTEec" literal="ec" />
+<Token name="BYTEed" literal="ed" />
+<Token name="BYTEee" literal="ee" />
+<Token name="BYTEef" literal="ef" />
+<Token name="BYTEf0" literal="f0" />
+<Token name="BYTEf1" literal="f1" />
+<Token name="BYTEf2" literal="f2" />
+<Token name="BYTEf3" literal="f3" />
+<Token name="BYTEf4" literal="f4" />
+<Token name="BYTEf5" literal="f5" />
+<Token name="BYTEf6" literal="f6" />
+<Token name="BYTEf7" literal="f7" />
+<Token name="BYTEf8" literal="f8" />
+<Token name="BYTEf9" literal="f9" />
+<Token name="BYTEfa" literal="fa" />
+<Token name="BYTEfb" literal="fb" />
+<Token name="BYTEfc" literal="fc" />
+<Token name="BYTEfd" literal="fd" />
+<Token name="BYTEfe" literal="fe" />
+<Token name="BYTEff" literal="ff" />
+
+    <!-- <Token name="BYTE" regex="[abcdef0123456789][abcdef0123456789]" /> -->
 
     <Token name="LPAREN" literal="(" />
     <Token name="RPAREN" literal=")" />
@@ -396,17 +652,1811 @@
       <Token name="WHITESPACE" />
     </AssignProduction>
 
-    <AssignProduction label="byte00" grouping="regex" >
-      <Token name="BYTE00" position="1" />
+<!--
+for i = 0, 255 do
+print(string.format([[
+    <ListProduction label="make_byte_%02x" grouping="byte_%02x" >
+      <Token name="BYTE%02x" />
+    </ListProduction>
+    <AssignProduction label="from_byte_%02x" grouping="regex" >
+      <Grouping type="byte_%02x" position="1" />
+    </AssignProduction>
+]], i, i, i, i, i))
+end
+-->
+
+
+    <ListProduction label="make_byte_00" grouping="byte_00" >
+      <Token name="BYTE00" />
+    </ListProduction>
+    <AssignProduction label="from_byte_00" grouping="regex" >
+      <Grouping type="byte_00" position="1" />
     </AssignProduction>
 
-    <AssignProduction label="byte01" grouping="regex" >
-      <Token name="BYTE01" position="1" />
+    <ListProduction label="make_byte_01" grouping="byte_01" >
+      <Token name="BYTE01" />
+    </ListProduction>
+    <AssignProduction label="from_byte_01" grouping="regex" >
+      <Grouping type="byte_01" position="1" />
     </AssignProduction>
 
-    <AssignProduction label="byte02" grouping="regex" >
-      <Token name="BYTE02" position="1" />
+    <ListProduction label="make_byte_02" grouping="byte_02" >
+      <Token name="BYTE02" />
+    </ListProduction>
+    <AssignProduction label="from_byte_02" grouping="regex" >
+      <Grouping type="byte_02" position="1" />
     </AssignProduction>
 
+    <ListProduction label="make_byte_03" grouping="byte_03" >
+      <Token name="BYTE03" />
+    </ListProduction>
+    <AssignProduction label="from_byte_03" grouping="regex" >
+      <Grouping type="byte_03" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_04" grouping="byte_04" >
+      <Token name="BYTE04" />
+    </ListProduction>
+    <AssignProduction label="from_byte_04" grouping="regex" >
+      <Grouping type="byte_04" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_05" grouping="byte_05" >
+      <Token name="BYTE05" />
+    </ListProduction>
+    <AssignProduction label="from_byte_05" grouping="regex" >
+      <Grouping type="byte_05" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_06" grouping="byte_06" >
+      <Token name="BYTE06" />
+    </ListProduction>
+    <AssignProduction label="from_byte_06" grouping="regex" >
+      <Grouping type="byte_06" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_07" grouping="byte_07" >
+      <Token name="BYTE07" />
+    </ListProduction>
+    <AssignProduction label="from_byte_07" grouping="regex" >
+      <Grouping type="byte_07" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_08" grouping="byte_08" >
+      <Token name="BYTE08" />
+    </ListProduction>
+    <AssignProduction label="from_byte_08" grouping="regex" >
+      <Grouping type="byte_08" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_09" grouping="byte_09" >
+      <Token name="BYTE09" />
+    </ListProduction>
+    <AssignProduction label="from_byte_09" grouping="regex" >
+      <Grouping type="byte_09" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_0a" grouping="byte_0a" >
+      <Token name="BYTE0a" />
+    </ListProduction>
+    <AssignProduction label="from_byte_0a" grouping="regex" >
+      <Grouping type="byte_0a" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_0b" grouping="byte_0b" >
+      <Token name="BYTE0b" />
+    </ListProduction>
+    <AssignProduction label="from_byte_0b" grouping="regex" >
+      <Grouping type="byte_0b" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_0c" grouping="byte_0c" >
+      <Token name="BYTE0c" />
+    </ListProduction>
+    <AssignProduction label="from_byte_0c" grouping="regex" >
+      <Grouping type="byte_0c" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_0d" grouping="byte_0d" >
+      <Token name="BYTE0d" />
+    </ListProduction>
+    <AssignProduction label="from_byte_0d" grouping="regex" >
+      <Grouping type="byte_0d" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_0e" grouping="byte_0e" >
+      <Token name="BYTE0e" />
+    </ListProduction>
+    <AssignProduction label="from_byte_0e" grouping="regex" >
+      <Grouping type="byte_0e" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_0f" grouping="byte_0f" >
+      <Token name="BYTE0f" />
+    </ListProduction>
+    <AssignProduction label="from_byte_0f" grouping="regex" >
+      <Grouping type="byte_0f" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_10" grouping="byte_10" >
+      <Token name="BYTE10" />
+    </ListProduction>
+    <AssignProduction label="from_byte_10" grouping="regex" >
+      <Grouping type="byte_10" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_11" grouping="byte_11" >
+      <Token name="BYTE11" />
+    </ListProduction>
+    <AssignProduction label="from_byte_11" grouping="regex" >
+      <Grouping type="byte_11" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_12" grouping="byte_12" >
+      <Token name="BYTE12" />
+    </ListProduction>
+    <AssignProduction label="from_byte_12" grouping="regex" >
+      <Grouping type="byte_12" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_13" grouping="byte_13" >
+      <Token name="BYTE13" />
+    </ListProduction>
+    <AssignProduction label="from_byte_13" grouping="regex" >
+      <Grouping type="byte_13" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_14" grouping="byte_14" >
+      <Token name="BYTE14" />
+    </ListProduction>
+    <AssignProduction label="from_byte_14" grouping="regex" >
+      <Grouping type="byte_14" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_15" grouping="byte_15" >
+      <Token name="BYTE15" />
+    </ListProduction>
+    <AssignProduction label="from_byte_15" grouping="regex" >
+      <Grouping type="byte_15" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_16" grouping="byte_16" >
+      <Token name="BYTE16" />
+    </ListProduction>
+    <AssignProduction label="from_byte_16" grouping="regex" >
+      <Grouping type="byte_16" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_17" grouping="byte_17" >
+      <Token name="BYTE17" />
+    </ListProduction>
+    <AssignProduction label="from_byte_17" grouping="regex" >
+      <Grouping type="byte_17" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_18" grouping="byte_18" >
+      <Token name="BYTE18" />
+    </ListProduction>
+    <AssignProduction label="from_byte_18" grouping="regex" >
+      <Grouping type="byte_18" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_19" grouping="byte_19" >
+      <Token name="BYTE19" />
+    </ListProduction>
+    <AssignProduction label="from_byte_19" grouping="regex" >
+      <Grouping type="byte_19" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_1a" grouping="byte_1a" >
+      <Token name="BYTE1a" />
+    </ListProduction>
+    <AssignProduction label="from_byte_1a" grouping="regex" >
+      <Grouping type="byte_1a" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_1b" grouping="byte_1b" >
+      <Token name="BYTE1b" />
+    </ListProduction>
+    <AssignProduction label="from_byte_1b" grouping="regex" >
+      <Grouping type="byte_1b" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_1c" grouping="byte_1c" >
+      <Token name="BYTE1c" />
+    </ListProduction>
+    <AssignProduction label="from_byte_1c" grouping="regex" >
+      <Grouping type="byte_1c" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_1d" grouping="byte_1d" >
+      <Token name="BYTE1d" />
+    </ListProduction>
+    <AssignProduction label="from_byte_1d" grouping="regex" >
+      <Grouping type="byte_1d" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_1e" grouping="byte_1e" >
+      <Token name="BYTE1e" />
+    </ListProduction>
+    <AssignProduction label="from_byte_1e" grouping="regex" >
+      <Grouping type="byte_1e" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_1f" grouping="byte_1f" >
+      <Token name="BYTE1f" />
+    </ListProduction>
+    <AssignProduction label="from_byte_1f" grouping="regex" >
+      <Grouping type="byte_1f" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_20" grouping="byte_20" >
+      <Token name="BYTE20" />
+    </ListProduction>
+    <AssignProduction label="from_byte_20" grouping="regex" >
+      <Grouping type="byte_20" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_21" grouping="byte_21" >
+      <Token name="BYTE21" />
+    </ListProduction>
+    <AssignProduction label="from_byte_21" grouping="regex" >
+      <Grouping type="byte_21" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_22" grouping="byte_22" >
+      <Token name="BYTE22" />
+    </ListProduction>
+    <AssignProduction label="from_byte_22" grouping="regex" >
+      <Grouping type="byte_22" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_23" grouping="byte_23" >
+      <Token name="BYTE23" />
+    </ListProduction>
+    <AssignProduction label="from_byte_23" grouping="regex" >
+      <Grouping type="byte_23" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_24" grouping="byte_24" >
+      <Token name="BYTE24" />
+    </ListProduction>
+    <AssignProduction label="from_byte_24" grouping="regex" >
+      <Grouping type="byte_24" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_25" grouping="byte_25" >
+      <Token name="BYTE25" />
+    </ListProduction>
+    <AssignProduction label="from_byte_25" grouping="regex" >
+      <Grouping type="byte_25" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_26" grouping="byte_26" >
+      <Token name="BYTE26" />
+    </ListProduction>
+    <AssignProduction label="from_byte_26" grouping="regex" >
+      <Grouping type="byte_26" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_27" grouping="byte_27" >
+      <Token name="BYTE27" />
+    </ListProduction>
+    <AssignProduction label="from_byte_27" grouping="regex" >
+      <Grouping type="byte_27" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_28" grouping="byte_28" >
+      <Token name="BYTE28" />
+    </ListProduction>
+    <AssignProduction label="from_byte_28" grouping="regex" >
+      <Grouping type="byte_28" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_29" grouping="byte_29" >
+      <Token name="BYTE29" />
+    </ListProduction>
+    <AssignProduction label="from_byte_29" grouping="regex" >
+      <Grouping type="byte_29" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_2a" grouping="byte_2a" >
+      <Token name="BYTE2a" />
+    </ListProduction>
+    <AssignProduction label="from_byte_2a" grouping="regex" >
+      <Grouping type="byte_2a" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_2b" grouping="byte_2b" >
+      <Token name="BYTE2b" />
+    </ListProduction>
+    <AssignProduction label="from_byte_2b" grouping="regex" >
+      <Grouping type="byte_2b" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_2c" grouping="byte_2c" >
+      <Token name="BYTE2c" />
+    </ListProduction>
+    <AssignProduction label="from_byte_2c" grouping="regex" >
+      <Grouping type="byte_2c" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_2d" grouping="byte_2d" >
+      <Token name="BYTE2d" />
+    </ListProduction>
+    <AssignProduction label="from_byte_2d" grouping="regex" >
+      <Grouping type="byte_2d" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_2e" grouping="byte_2e" >
+      <Token name="BYTE2e" />
+    </ListProduction>
+    <AssignProduction label="from_byte_2e" grouping="regex" >
+      <Grouping type="byte_2e" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_2f" grouping="byte_2f" >
+      <Token name="BYTE2f" />
+    </ListProduction>
+    <AssignProduction label="from_byte_2f" grouping="regex" >
+      <Grouping type="byte_2f" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_30" grouping="byte_30" >
+      <Token name="BYTE30" />
+    </ListProduction>
+    <AssignProduction label="from_byte_30" grouping="regex" >
+      <Grouping type="byte_30" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_31" grouping="byte_31" >
+      <Token name="BYTE31" />
+    </ListProduction>
+    <AssignProduction label="from_byte_31" grouping="regex" >
+      <Grouping type="byte_31" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_32" grouping="byte_32" >
+      <Token name="BYTE32" />
+    </ListProduction>
+    <AssignProduction label="from_byte_32" grouping="regex" >
+      <Grouping type="byte_32" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_33" grouping="byte_33" >
+      <Token name="BYTE33" />
+    </ListProduction>
+    <AssignProduction label="from_byte_33" grouping="regex" >
+      <Grouping type="byte_33" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_34" grouping="byte_34" >
+      <Token name="BYTE34" />
+    </ListProduction>
+    <AssignProduction label="from_byte_34" grouping="regex" >
+      <Grouping type="byte_34" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_35" grouping="byte_35" >
+      <Token name="BYTE35" />
+    </ListProduction>
+    <AssignProduction label="from_byte_35" grouping="regex" >
+      <Grouping type="byte_35" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_36" grouping="byte_36" >
+      <Token name="BYTE36" />
+    </ListProduction>
+    <AssignProduction label="from_byte_36" grouping="regex" >
+      <Grouping type="byte_36" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_37" grouping="byte_37" >
+      <Token name="BYTE37" />
+    </ListProduction>
+    <AssignProduction label="from_byte_37" grouping="regex" >
+      <Grouping type="byte_37" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_38" grouping="byte_38" >
+      <Token name="BYTE38" />
+    </ListProduction>
+    <AssignProduction label="from_byte_38" grouping="regex" >
+      <Grouping type="byte_38" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_39" grouping="byte_39" >
+      <Token name="BYTE39" />
+    </ListProduction>
+    <AssignProduction label="from_byte_39" grouping="regex" >
+      <Grouping type="byte_39" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_3a" grouping="byte_3a" >
+      <Token name="BYTE3a" />
+    </ListProduction>
+    <AssignProduction label="from_byte_3a" grouping="regex" >
+      <Grouping type="byte_3a" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_3b" grouping="byte_3b" >
+      <Token name="BYTE3b" />
+    </ListProduction>
+    <AssignProduction label="from_byte_3b" grouping="regex" >
+      <Grouping type="byte_3b" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_3c" grouping="byte_3c" >
+      <Token name="BYTE3c" />
+    </ListProduction>
+    <AssignProduction label="from_byte_3c" grouping="regex" >
+      <Grouping type="byte_3c" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_3d" grouping="byte_3d" >
+      <Token name="BYTE3d" />
+    </ListProduction>
+    <AssignProduction label="from_byte_3d" grouping="regex" >
+      <Grouping type="byte_3d" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_3e" grouping="byte_3e" >
+      <Token name="BYTE3e" />
+    </ListProduction>
+    <AssignProduction label="from_byte_3e" grouping="regex" >
+      <Grouping type="byte_3e" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_3f" grouping="byte_3f" >
+      <Token name="BYTE3f" />
+    </ListProduction>
+    <AssignProduction label="from_byte_3f" grouping="regex" >
+      <Grouping type="byte_3f" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_40" grouping="byte_40" >
+      <Token name="BYTE40" />
+    </ListProduction>
+    <AssignProduction label="from_byte_40" grouping="regex" >
+      <Grouping type="byte_40" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_41" grouping="byte_41" >
+      <Token name="BYTE41" />
+    </ListProduction>
+    <AssignProduction label="from_byte_41" grouping="regex" >
+      <Grouping type="byte_41" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_42" grouping="byte_42" >
+      <Token name="BYTE42" />
+    </ListProduction>
+    <AssignProduction label="from_byte_42" grouping="regex" >
+      <Grouping type="byte_42" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_43" grouping="byte_43" >
+      <Token name="BYTE43" />
+    </ListProduction>
+    <AssignProduction label="from_byte_43" grouping="regex" >
+      <Grouping type="byte_43" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_44" grouping="byte_44" >
+      <Token name="BYTE44" />
+    </ListProduction>
+    <AssignProduction label="from_byte_44" grouping="regex" >
+      <Grouping type="byte_44" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_45" grouping="byte_45" >
+      <Token name="BYTE45" />
+    </ListProduction>
+    <AssignProduction label="from_byte_45" grouping="regex" >
+      <Grouping type="byte_45" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_46" grouping="byte_46" >
+      <Token name="BYTE46" />
+    </ListProduction>
+    <AssignProduction label="from_byte_46" grouping="regex" >
+      <Grouping type="byte_46" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_47" grouping="byte_47" >
+      <Token name="BYTE47" />
+    </ListProduction>
+    <AssignProduction label="from_byte_47" grouping="regex" >
+      <Grouping type="byte_47" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_48" grouping="byte_48" >
+      <Token name="BYTE48" />
+    </ListProduction>
+    <AssignProduction label="from_byte_48" grouping="regex" >
+      <Grouping type="byte_48" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_49" grouping="byte_49" >
+      <Token name="BYTE49" />
+    </ListProduction>
+    <AssignProduction label="from_byte_49" grouping="regex" >
+      <Grouping type="byte_49" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_4a" grouping="byte_4a" >
+      <Token name="BYTE4a" />
+    </ListProduction>
+    <AssignProduction label="from_byte_4a" grouping="regex" >
+      <Grouping type="byte_4a" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_4b" grouping="byte_4b" >
+      <Token name="BYTE4b" />
+    </ListProduction>
+    <AssignProduction label="from_byte_4b" grouping="regex" >
+      <Grouping type="byte_4b" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_4c" grouping="byte_4c" >
+      <Token name="BYTE4c" />
+    </ListProduction>
+    <AssignProduction label="from_byte_4c" grouping="regex" >
+      <Grouping type="byte_4c" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_4d" grouping="byte_4d" >
+      <Token name="BYTE4d" />
+    </ListProduction>
+    <AssignProduction label="from_byte_4d" grouping="regex" >
+      <Grouping type="byte_4d" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_4e" grouping="byte_4e" >
+      <Token name="BYTE4e" />
+    </ListProduction>
+    <AssignProduction label="from_byte_4e" grouping="regex" >
+      <Grouping type="byte_4e" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_4f" grouping="byte_4f" >
+      <Token name="BYTE4f" />
+    </ListProduction>
+    <AssignProduction label="from_byte_4f" grouping="regex" >
+      <Grouping type="byte_4f" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_50" grouping="byte_50" >
+      <Token name="BYTE50" />
+    </ListProduction>
+    <AssignProduction label="from_byte_50" grouping="regex" >
+      <Grouping type="byte_50" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_51" grouping="byte_51" >
+      <Token name="BYTE51" />
+    </ListProduction>
+    <AssignProduction label="from_byte_51" grouping="regex" >
+      <Grouping type="byte_51" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_52" grouping="byte_52" >
+      <Token name="BYTE52" />
+    </ListProduction>
+    <AssignProduction label="from_byte_52" grouping="regex" >
+      <Grouping type="byte_52" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_53" grouping="byte_53" >
+      <Token name="BYTE53" />
+    </ListProduction>
+    <AssignProduction label="from_byte_53" grouping="regex" >
+      <Grouping type="byte_53" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_54" grouping="byte_54" >
+      <Token name="BYTE54" />
+    </ListProduction>
+    <AssignProduction label="from_byte_54" grouping="regex" >
+      <Grouping type="byte_54" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_55" grouping="byte_55" >
+      <Token name="BYTE55" />
+    </ListProduction>
+    <AssignProduction label="from_byte_55" grouping="regex" >
+      <Grouping type="byte_55" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_56" grouping="byte_56" >
+      <Token name="BYTE56" />
+    </ListProduction>
+    <AssignProduction label="from_byte_56" grouping="regex" >
+      <Grouping type="byte_56" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_57" grouping="byte_57" >
+      <Token name="BYTE57" />
+    </ListProduction>
+    <AssignProduction label="from_byte_57" grouping="regex" >
+      <Grouping type="byte_57" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_58" grouping="byte_58" >
+      <Token name="BYTE58" />
+    </ListProduction>
+    <AssignProduction label="from_byte_58" grouping="regex" >
+      <Grouping type="byte_58" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_59" grouping="byte_59" >
+      <Token name="BYTE59" />
+    </ListProduction>
+    <AssignProduction label="from_byte_59" grouping="regex" >
+      <Grouping type="byte_59" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_5a" grouping="byte_5a" >
+      <Token name="BYTE5a" />
+    </ListProduction>
+    <AssignProduction label="from_byte_5a" grouping="regex" >
+      <Grouping type="byte_5a" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_5b" grouping="byte_5b" >
+      <Token name="BYTE5b" />
+    </ListProduction>
+    <AssignProduction label="from_byte_5b" grouping="regex" >
+      <Grouping type="byte_5b" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_5c" grouping="byte_5c" >
+      <Token name="BYTE5c" />
+    </ListProduction>
+    <AssignProduction label="from_byte_5c" grouping="regex" >
+      <Grouping type="byte_5c" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_5d" grouping="byte_5d" >
+      <Token name="BYTE5d" />
+    </ListProduction>
+    <AssignProduction label="from_byte_5d" grouping="regex" >
+      <Grouping type="byte_5d" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_5e" grouping="byte_5e" >
+      <Token name="BYTE5e" />
+    </ListProduction>
+    <AssignProduction label="from_byte_5e" grouping="regex" >
+      <Grouping type="byte_5e" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_5f" grouping="byte_5f" >
+      <Token name="BYTE5f" />
+    </ListProduction>
+    <AssignProduction label="from_byte_5f" grouping="regex" >
+      <Grouping type="byte_5f" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_60" grouping="byte_60" >
+      <Token name="BYTE60" />
+    </ListProduction>
+    <AssignProduction label="from_byte_60" grouping="regex" >
+      <Grouping type="byte_60" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_61" grouping="byte_61" >
+      <Token name="BYTE61" />
+    </ListProduction>
+    <AssignProduction label="from_byte_61" grouping="regex" >
+      <Grouping type="byte_61" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_62" grouping="byte_62" >
+      <Token name="BYTE62" />
+    </ListProduction>
+    <AssignProduction label="from_byte_62" grouping="regex" >
+      <Grouping type="byte_62" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_63" grouping="byte_63" >
+      <Token name="BYTE63" />
+    </ListProduction>
+    <AssignProduction label="from_byte_63" grouping="regex" >
+      <Grouping type="byte_63" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_64" grouping="byte_64" >
+      <Token name="BYTE64" />
+    </ListProduction>
+    <AssignProduction label="from_byte_64" grouping="regex" >
+      <Grouping type="byte_64" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_65" grouping="byte_65" >
+      <Token name="BYTE65" />
+    </ListProduction>
+    <AssignProduction label="from_byte_65" grouping="regex" >
+      <Grouping type="byte_65" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_66" grouping="byte_66" >
+      <Token name="BYTE66" />
+    </ListProduction>
+    <AssignProduction label="from_byte_66" grouping="regex" >
+      <Grouping type="byte_66" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_67" grouping="byte_67" >
+      <Token name="BYTE67" />
+    </ListProduction>
+    <AssignProduction label="from_byte_67" grouping="regex" >
+      <Grouping type="byte_67" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_68" grouping="byte_68" >
+      <Token name="BYTE68" />
+    </ListProduction>
+    <AssignProduction label="from_byte_68" grouping="regex" >
+      <Grouping type="byte_68" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_69" grouping="byte_69" >
+      <Token name="BYTE69" />
+    </ListProduction>
+    <AssignProduction label="from_byte_69" grouping="regex" >
+      <Grouping type="byte_69" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_6a" grouping="byte_6a" >
+      <Token name="BYTE6a" />
+    </ListProduction>
+    <AssignProduction label="from_byte_6a" grouping="regex" >
+      <Grouping type="byte_6a" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_6b" grouping="byte_6b" >
+      <Token name="BYTE6b" />
+    </ListProduction>
+    <AssignProduction label="from_byte_6b" grouping="regex" >
+      <Grouping type="byte_6b" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_6c" grouping="byte_6c" >
+      <Token name="BYTE6c" />
+    </ListProduction>
+    <AssignProduction label="from_byte_6c" grouping="regex" >
+      <Grouping type="byte_6c" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_6d" grouping="byte_6d" >
+      <Token name="BYTE6d" />
+    </ListProduction>
+    <AssignProduction label="from_byte_6d" grouping="regex" >
+      <Grouping type="byte_6d" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_6e" grouping="byte_6e" >
+      <Token name="BYTE6e" />
+    </ListProduction>
+    <AssignProduction label="from_byte_6e" grouping="regex" >
+      <Grouping type="byte_6e" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_6f" grouping="byte_6f" >
+      <Token name="BYTE6f" />
+    </ListProduction>
+    <AssignProduction label="from_byte_6f" grouping="regex" >
+      <Grouping type="byte_6f" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_70" grouping="byte_70" >
+      <Token name="BYTE70" />
+    </ListProduction>
+    <AssignProduction label="from_byte_70" grouping="regex" >
+      <Grouping type="byte_70" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_71" grouping="byte_71" >
+      <Token name="BYTE71" />
+    </ListProduction>
+    <AssignProduction label="from_byte_71" grouping="regex" >
+      <Grouping type="byte_71" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_72" grouping="byte_72" >
+      <Token name="BYTE72" />
+    </ListProduction>
+    <AssignProduction label="from_byte_72" grouping="regex" >
+      <Grouping type="byte_72" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_73" grouping="byte_73" >
+      <Token name="BYTE73" />
+    </ListProduction>
+    <AssignProduction label="from_byte_73" grouping="regex" >
+      <Grouping type="byte_73" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_74" grouping="byte_74" >
+      <Token name="BYTE74" />
+    </ListProduction>
+    <AssignProduction label="from_byte_74" grouping="regex" >
+      <Grouping type="byte_74" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_75" grouping="byte_75" >
+      <Token name="BYTE75" />
+    </ListProduction>
+    <AssignProduction label="from_byte_75" grouping="regex" >
+      <Grouping type="byte_75" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_76" grouping="byte_76" >
+      <Token name="BYTE76" />
+    </ListProduction>
+    <AssignProduction label="from_byte_76" grouping="regex" >
+      <Grouping type="byte_76" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_77" grouping="byte_77" >
+      <Token name="BYTE77" />
+    </ListProduction>
+    <AssignProduction label="from_byte_77" grouping="regex" >
+      <Grouping type="byte_77" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_78" grouping="byte_78" >
+      <Token name="BYTE78" />
+    </ListProduction>
+    <AssignProduction label="from_byte_78" grouping="regex" >
+      <Grouping type="byte_78" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_79" grouping="byte_79" >
+      <Token name="BYTE79" />
+    </ListProduction>
+    <AssignProduction label="from_byte_79" grouping="regex" >
+      <Grouping type="byte_79" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_7a" grouping="byte_7a" >
+      <Token name="BYTE7a" />
+    </ListProduction>
+    <AssignProduction label="from_byte_7a" grouping="regex" >
+      <Grouping type="byte_7a" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_7b" grouping="byte_7b" >
+      <Token name="BYTE7b" />
+    </ListProduction>
+    <AssignProduction label="from_byte_7b" grouping="regex" >
+      <Grouping type="byte_7b" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_7c" grouping="byte_7c" >
+      <Token name="BYTE7c" />
+    </ListProduction>
+    <AssignProduction label="from_byte_7c" grouping="regex" >
+      <Grouping type="byte_7c" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_7d" grouping="byte_7d" >
+      <Token name="BYTE7d" />
+    </ListProduction>
+    <AssignProduction label="from_byte_7d" grouping="regex" >
+      <Grouping type="byte_7d" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_7e" grouping="byte_7e" >
+      <Token name="BYTE7e" />
+    </ListProduction>
+    <AssignProduction label="from_byte_7e" grouping="regex" >
+      <Grouping type="byte_7e" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_7f" grouping="byte_7f" >
+      <Token name="BYTE7f" />
+    </ListProduction>
+    <AssignProduction label="from_byte_7f" grouping="regex" >
+      <Grouping type="byte_7f" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_80" grouping="byte_80" >
+      <Token name="BYTE80" />
+    </ListProduction>
+    <AssignProduction label="from_byte_80" grouping="regex" >
+      <Grouping type="byte_80" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_81" grouping="byte_81" >
+      <Token name="BYTE81" />
+    </ListProduction>
+    <AssignProduction label="from_byte_81" grouping="regex" >
+      <Grouping type="byte_81" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_82" grouping="byte_82" >
+      <Token name="BYTE82" />
+    </ListProduction>
+    <AssignProduction label="from_byte_82" grouping="regex" >
+      <Grouping type="byte_82" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_83" grouping="byte_83" >
+      <Token name="BYTE83" />
+    </ListProduction>
+    <AssignProduction label="from_byte_83" grouping="regex" >
+      <Grouping type="byte_83" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_84" grouping="byte_84" >
+      <Token name="BYTE84" />
+    </ListProduction>
+    <AssignProduction label="from_byte_84" grouping="regex" >
+      <Grouping type="byte_84" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_85" grouping="byte_85" >
+      <Token name="BYTE85" />
+    </ListProduction>
+    <AssignProduction label="from_byte_85" grouping="regex" >
+      <Grouping type="byte_85" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_86" grouping="byte_86" >
+      <Token name="BYTE86" />
+    </ListProduction>
+    <AssignProduction label="from_byte_86" grouping="regex" >
+      <Grouping type="byte_86" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_87" grouping="byte_87" >
+      <Token name="BYTE87" />
+    </ListProduction>
+    <AssignProduction label="from_byte_87" grouping="regex" >
+      <Grouping type="byte_87" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_88" grouping="byte_88" >
+      <Token name="BYTE88" />
+    </ListProduction>
+    <AssignProduction label="from_byte_88" grouping="regex" >
+      <Grouping type="byte_88" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_89" grouping="byte_89" >
+      <Token name="BYTE89" />
+    </ListProduction>
+    <AssignProduction label="from_byte_89" grouping="regex" >
+      <Grouping type="byte_89" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_8a" grouping="byte_8a" >
+      <Token name="BYTE8a" />
+    </ListProduction>
+    <AssignProduction label="from_byte_8a" grouping="regex" >
+      <Grouping type="byte_8a" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_8b" grouping="byte_8b" >
+      <Token name="BYTE8b" />
+    </ListProduction>
+    <AssignProduction label="from_byte_8b" grouping="regex" >
+      <Grouping type="byte_8b" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_8c" grouping="byte_8c" >
+      <Token name="BYTE8c" />
+    </ListProduction>
+    <AssignProduction label="from_byte_8c" grouping="regex" >
+      <Grouping type="byte_8c" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_8d" grouping="byte_8d" >
+      <Token name="BYTE8d" />
+    </ListProduction>
+    <AssignProduction label="from_byte_8d" grouping="regex" >
+      <Grouping type="byte_8d" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_8e" grouping="byte_8e" >
+      <Token name="BYTE8e" />
+    </ListProduction>
+    <AssignProduction label="from_byte_8e" grouping="regex" >
+      <Grouping type="byte_8e" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_8f" grouping="byte_8f" >
+      <Token name="BYTE8f" />
+    </ListProduction>
+    <AssignProduction label="from_byte_8f" grouping="regex" >
+      <Grouping type="byte_8f" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_90" grouping="byte_90" >
+      <Token name="BYTE90" />
+    </ListProduction>
+    <AssignProduction label="from_byte_90" grouping="regex" >
+      <Grouping type="byte_90" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_91" grouping="byte_91" >
+      <Token name="BYTE91" />
+    </ListProduction>
+    <AssignProduction label="from_byte_91" grouping="regex" >
+      <Grouping type="byte_91" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_92" grouping="byte_92" >
+      <Token name="BYTE92" />
+    </ListProduction>
+    <AssignProduction label="from_byte_92" grouping="regex" >
+      <Grouping type="byte_92" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_93" grouping="byte_93" >
+      <Token name="BYTE93" />
+    </ListProduction>
+    <AssignProduction label="from_byte_93" grouping="regex" >
+      <Grouping type="byte_93" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_94" grouping="byte_94" >
+      <Token name="BYTE94" />
+    </ListProduction>
+    <AssignProduction label="from_byte_94" grouping="regex" >
+      <Grouping type="byte_94" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_95" grouping="byte_95" >
+      <Token name="BYTE95" />
+    </ListProduction>
+    <AssignProduction label="from_byte_95" grouping="regex" >
+      <Grouping type="byte_95" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_96" grouping="byte_96" >
+      <Token name="BYTE96" />
+    </ListProduction>
+    <AssignProduction label="from_byte_96" grouping="regex" >
+      <Grouping type="byte_96" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_97" grouping="byte_97" >
+      <Token name="BYTE97" />
+    </ListProduction>
+    <AssignProduction label="from_byte_97" grouping="regex" >
+      <Grouping type="byte_97" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_98" grouping="byte_98" >
+      <Token name="BYTE98" />
+    </ListProduction>
+    <AssignProduction label="from_byte_98" grouping="regex" >
+      <Grouping type="byte_98" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_99" grouping="byte_99" >
+      <Token name="BYTE99" />
+    </ListProduction>
+    <AssignProduction label="from_byte_99" grouping="regex" >
+      <Grouping type="byte_99" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_9a" grouping="byte_9a" >
+      <Token name="BYTE9a" />
+    </ListProduction>
+    <AssignProduction label="from_byte_9a" grouping="regex" >
+      <Grouping type="byte_9a" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_9b" grouping="byte_9b" >
+      <Token name="BYTE9b" />
+    </ListProduction>
+    <AssignProduction label="from_byte_9b" grouping="regex" >
+      <Grouping type="byte_9b" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_9c" grouping="byte_9c" >
+      <Token name="BYTE9c" />
+    </ListProduction>
+    <AssignProduction label="from_byte_9c" grouping="regex" >
+      <Grouping type="byte_9c" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_9d" grouping="byte_9d" >
+      <Token name="BYTE9d" />
+    </ListProduction>
+    <AssignProduction label="from_byte_9d" grouping="regex" >
+      <Grouping type="byte_9d" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_9e" grouping="byte_9e" >
+      <Token name="BYTE9e" />
+    </ListProduction>
+    <AssignProduction label="from_byte_9e" grouping="regex" >
+      <Grouping type="byte_9e" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_9f" grouping="byte_9f" >
+      <Token name="BYTE9f" />
+    </ListProduction>
+    <AssignProduction label="from_byte_9f" grouping="regex" >
+      <Grouping type="byte_9f" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_a0" grouping="byte_a0" >
+      <Token name="BYTEa0" />
+    </ListProduction>
+    <AssignProduction label="from_byte_a0" grouping="regex" >
+      <Grouping type="byte_a0" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_a1" grouping="byte_a1" >
+      <Token name="BYTEa1" />
+    </ListProduction>
+    <AssignProduction label="from_byte_a1" grouping="regex" >
+      <Grouping type="byte_a1" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_a2" grouping="byte_a2" >
+      <Token name="BYTEa2" />
+    </ListProduction>
+    <AssignProduction label="from_byte_a2" grouping="regex" >
+      <Grouping type="byte_a2" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_a3" grouping="byte_a3" >
+      <Token name="BYTEa3" />
+    </ListProduction>
+    <AssignProduction label="from_byte_a3" grouping="regex" >
+      <Grouping type="byte_a3" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_a4" grouping="byte_a4" >
+      <Token name="BYTEa4" />
+    </ListProduction>
+    <AssignProduction label="from_byte_a4" grouping="regex" >
+      <Grouping type="byte_a4" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_a5" grouping="byte_a5" >
+      <Token name="BYTEa5" />
+    </ListProduction>
+    <AssignProduction label="from_byte_a5" grouping="regex" >
+      <Grouping type="byte_a5" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_a6" grouping="byte_a6" >
+      <Token name="BYTEa6" />
+    </ListProduction>
+    <AssignProduction label="from_byte_a6" grouping="regex" >
+      <Grouping type="byte_a6" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_a7" grouping="byte_a7" >
+      <Token name="BYTEa7" />
+    </ListProduction>
+    <AssignProduction label="from_byte_a7" grouping="regex" >
+      <Grouping type="byte_a7" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_a8" grouping="byte_a8" >
+      <Token name="BYTEa8" />
+    </ListProduction>
+    <AssignProduction label="from_byte_a8" grouping="regex" >
+      <Grouping type="byte_a8" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_a9" grouping="byte_a9" >
+      <Token name="BYTEa9" />
+    </ListProduction>
+    <AssignProduction label="from_byte_a9" grouping="regex" >
+      <Grouping type="byte_a9" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_aa" grouping="byte_aa" >
+      <Token name="BYTEaa" />
+    </ListProduction>
+    <AssignProduction label="from_byte_aa" grouping="regex" >
+      <Grouping type="byte_aa" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ab" grouping="byte_ab" >
+      <Token name="BYTEab" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ab" grouping="regex" >
+      <Grouping type="byte_ab" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ac" grouping="byte_ac" >
+      <Token name="BYTEac" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ac" grouping="regex" >
+      <Grouping type="byte_ac" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ad" grouping="byte_ad" >
+      <Token name="BYTEad" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ad" grouping="regex" >
+      <Grouping type="byte_ad" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ae" grouping="byte_ae" >
+      <Token name="BYTEae" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ae" grouping="regex" >
+      <Grouping type="byte_ae" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_af" grouping="byte_af" >
+      <Token name="BYTEaf" />
+    </ListProduction>
+    <AssignProduction label="from_byte_af" grouping="regex" >
+      <Grouping type="byte_af" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_b0" grouping="byte_b0" >
+      <Token name="BYTEb0" />
+    </ListProduction>
+    <AssignProduction label="from_byte_b0" grouping="regex" >
+      <Grouping type="byte_b0" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_b1" grouping="byte_b1" >
+      <Token name="BYTEb1" />
+    </ListProduction>
+    <AssignProduction label="from_byte_b1" grouping="regex" >
+      <Grouping type="byte_b1" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_b2" grouping="byte_b2" >
+      <Token name="BYTEb2" />
+    </ListProduction>
+    <AssignProduction label="from_byte_b2" grouping="regex" >
+      <Grouping type="byte_b2" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_b3" grouping="byte_b3" >
+      <Token name="BYTEb3" />
+    </ListProduction>
+    <AssignProduction label="from_byte_b3" grouping="regex" >
+      <Grouping type="byte_b3" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_b4" grouping="byte_b4" >
+      <Token name="BYTEb4" />
+    </ListProduction>
+    <AssignProduction label="from_byte_b4" grouping="regex" >
+      <Grouping type="byte_b4" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_b5" grouping="byte_b5" >
+      <Token name="BYTEb5" />
+    </ListProduction>
+    <AssignProduction label="from_byte_b5" grouping="regex" >
+      <Grouping type="byte_b5" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_b6" grouping="byte_b6" >
+      <Token name="BYTEb6" />
+    </ListProduction>
+    <AssignProduction label="from_byte_b6" grouping="regex" >
+      <Grouping type="byte_b6" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_b7" grouping="byte_b7" >
+      <Token name="BYTEb7" />
+    </ListProduction>
+    <AssignProduction label="from_byte_b7" grouping="regex" >
+      <Grouping type="byte_b7" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_b8" grouping="byte_b8" >
+      <Token name="BYTEb8" />
+    </ListProduction>
+    <AssignProduction label="from_byte_b8" grouping="regex" >
+      <Grouping type="byte_b8" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_b9" grouping="byte_b9" >
+      <Token name="BYTEb9" />
+    </ListProduction>
+    <AssignProduction label="from_byte_b9" grouping="regex" >
+      <Grouping type="byte_b9" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ba" grouping="byte_ba" >
+      <Token name="BYTEba" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ba" grouping="regex" >
+      <Grouping type="byte_ba" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_bb" grouping="byte_bb" >
+      <Token name="BYTEbb" />
+    </ListProduction>
+    <AssignProduction label="from_byte_bb" grouping="regex" >
+      <Grouping type="byte_bb" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_bc" grouping="byte_bc" >
+      <Token name="BYTEbc" />
+    </ListProduction>
+    <AssignProduction label="from_byte_bc" grouping="regex" >
+      <Grouping type="byte_bc" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_bd" grouping="byte_bd" >
+      <Token name="BYTEbd" />
+    </ListProduction>
+    <AssignProduction label="from_byte_bd" grouping="regex" >
+      <Grouping type="byte_bd" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_be" grouping="byte_be" >
+      <Token name="BYTEbe" />
+    </ListProduction>
+    <AssignProduction label="from_byte_be" grouping="regex" >
+      <Grouping type="byte_be" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_bf" grouping="byte_bf" >
+      <Token name="BYTEbf" />
+    </ListProduction>
+    <AssignProduction label="from_byte_bf" grouping="regex" >
+      <Grouping type="byte_bf" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_c0" grouping="byte_c0" >
+      <Token name="BYTEc0" />
+    </ListProduction>
+    <AssignProduction label="from_byte_c0" grouping="regex" >
+      <Grouping type="byte_c0" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_c1" grouping="byte_c1" >
+      <Token name="BYTEc1" />
+    </ListProduction>
+    <AssignProduction label="from_byte_c1" grouping="regex" >
+      <Grouping type="byte_c1" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_c2" grouping="byte_c2" >
+      <Token name="BYTEc2" />
+    </ListProduction>
+    <AssignProduction label="from_byte_c2" grouping="regex" >
+      <Grouping type="byte_c2" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_c3" grouping="byte_c3" >
+      <Token name="BYTEc3" />
+    </ListProduction>
+    <AssignProduction label="from_byte_c3" grouping="regex" >
+      <Grouping type="byte_c3" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_c4" grouping="byte_c4" >
+      <Token name="BYTEc4" />
+    </ListProduction>
+    <AssignProduction label="from_byte_c4" grouping="regex" >
+      <Grouping type="byte_c4" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_c5" grouping="byte_c5" >
+      <Token name="BYTEc5" />
+    </ListProduction>
+    <AssignProduction label="from_byte_c5" grouping="regex" >
+      <Grouping type="byte_c5" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_c6" grouping="byte_c6" >
+      <Token name="BYTEc6" />
+    </ListProduction>
+    <AssignProduction label="from_byte_c6" grouping="regex" >
+      <Grouping type="byte_c6" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_c7" grouping="byte_c7" >
+      <Token name="BYTEc7" />
+    </ListProduction>
+    <AssignProduction label="from_byte_c7" grouping="regex" >
+      <Grouping type="byte_c7" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_c8" grouping="byte_c8" >
+      <Token name="BYTEc8" />
+    </ListProduction>
+    <AssignProduction label="from_byte_c8" grouping="regex" >
+      <Grouping type="byte_c8" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_c9" grouping="byte_c9" >
+      <Token name="BYTEc9" />
+    </ListProduction>
+    <AssignProduction label="from_byte_c9" grouping="regex" >
+      <Grouping type="byte_c9" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ca" grouping="byte_ca" >
+      <Token name="BYTEca" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ca" grouping="regex" >
+      <Grouping type="byte_ca" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_cb" grouping="byte_cb" >
+      <Token name="BYTEcb" />
+    </ListProduction>
+    <AssignProduction label="from_byte_cb" grouping="regex" >
+      <Grouping type="byte_cb" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_cc" grouping="byte_cc" >
+      <Token name="BYTEcc" />
+    </ListProduction>
+    <AssignProduction label="from_byte_cc" grouping="regex" >
+      <Grouping type="byte_cc" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_cd" grouping="byte_cd" >
+      <Token name="BYTEcd" />
+    </ListProduction>
+    <AssignProduction label="from_byte_cd" grouping="regex" >
+      <Grouping type="byte_cd" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ce" grouping="byte_ce" >
+      <Token name="BYTEce" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ce" grouping="regex" >
+      <Grouping type="byte_ce" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_cf" grouping="byte_cf" >
+      <Token name="BYTEcf" />
+    </ListProduction>
+    <AssignProduction label="from_byte_cf" grouping="regex" >
+      <Grouping type="byte_cf" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_d0" grouping="byte_d0" >
+      <Token name="BYTEd0" />
+    </ListProduction>
+    <AssignProduction label="from_byte_d0" grouping="regex" >
+      <Grouping type="byte_d0" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_d1" grouping="byte_d1" >
+      <Token name="BYTEd1" />
+    </ListProduction>
+    <AssignProduction label="from_byte_d1" grouping="regex" >
+      <Grouping type="byte_d1" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_d2" grouping="byte_d2" >
+      <Token name="BYTEd2" />
+    </ListProduction>
+    <AssignProduction label="from_byte_d2" grouping="regex" >
+      <Grouping type="byte_d2" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_d3" grouping="byte_d3" >
+      <Token name="BYTEd3" />
+    </ListProduction>
+    <AssignProduction label="from_byte_d3" grouping="regex" >
+      <Grouping type="byte_d3" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_d4" grouping="byte_d4" >
+      <Token name="BYTEd4" />
+    </ListProduction>
+    <AssignProduction label="from_byte_d4" grouping="regex" >
+      <Grouping type="byte_d4" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_d5" grouping="byte_d5" >
+      <Token name="BYTEd5" />
+    </ListProduction>
+    <AssignProduction label="from_byte_d5" grouping="regex" >
+      <Grouping type="byte_d5" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_d6" grouping="byte_d6" >
+      <Token name="BYTEd6" />
+    </ListProduction>
+    <AssignProduction label="from_byte_d6" grouping="regex" >
+      <Grouping type="byte_d6" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_d7" grouping="byte_d7" >
+      <Token name="BYTEd7" />
+    </ListProduction>
+    <AssignProduction label="from_byte_d7" grouping="regex" >
+      <Grouping type="byte_d7" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_d8" grouping="byte_d8" >
+      <Token name="BYTEd8" />
+    </ListProduction>
+    <AssignProduction label="from_byte_d8" grouping="regex" >
+      <Grouping type="byte_d8" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_d9" grouping="byte_d9" >
+      <Token name="BYTEd9" />
+    </ListProduction>
+    <AssignProduction label="from_byte_d9" grouping="regex" >
+      <Grouping type="byte_d9" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_da" grouping="byte_da" >
+      <Token name="BYTEda" />
+    </ListProduction>
+    <AssignProduction label="from_byte_da" grouping="regex" >
+      <Grouping type="byte_da" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_db" grouping="byte_db" >
+      <Token name="BYTEdb" />
+    </ListProduction>
+    <AssignProduction label="from_byte_db" grouping="regex" >
+      <Grouping type="byte_db" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_dc" grouping="byte_dc" >
+      <Token name="BYTEdc" />
+    </ListProduction>
+    <AssignProduction label="from_byte_dc" grouping="regex" >
+      <Grouping type="byte_dc" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_dd" grouping="byte_dd" >
+      <Token name="BYTEdd" />
+    </ListProduction>
+    <AssignProduction label="from_byte_dd" grouping="regex" >
+      <Grouping type="byte_dd" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_de" grouping="byte_de" >
+      <Token name="BYTEde" />
+    </ListProduction>
+    <AssignProduction label="from_byte_de" grouping="regex" >
+      <Grouping type="byte_de" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_df" grouping="byte_df" >
+      <Token name="BYTEdf" />
+    </ListProduction>
+    <AssignProduction label="from_byte_df" grouping="regex" >
+      <Grouping type="byte_df" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_e0" grouping="byte_e0" >
+      <Token name="BYTEe0" />
+    </ListProduction>
+    <AssignProduction label="from_byte_e0" grouping="regex" >
+      <Grouping type="byte_e0" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_e1" grouping="byte_e1" >
+      <Token name="BYTEe1" />
+    </ListProduction>
+    <AssignProduction label="from_byte_e1" grouping="regex" >
+      <Grouping type="byte_e1" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_e2" grouping="byte_e2" >
+      <Token name="BYTEe2" />
+    </ListProduction>
+    <AssignProduction label="from_byte_e2" grouping="regex" >
+      <Grouping type="byte_e2" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_e3" grouping="byte_e3" >
+      <Token name="BYTEe3" />
+    </ListProduction>
+    <AssignProduction label="from_byte_e3" grouping="regex" >
+      <Grouping type="byte_e3" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_e4" grouping="byte_e4" >
+      <Token name="BYTEe4" />
+    </ListProduction>
+    <AssignProduction label="from_byte_e4" grouping="regex" >
+      <Grouping type="byte_e4" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_e5" grouping="byte_e5" >
+      <Token name="BYTEe5" />
+    </ListProduction>
+    <AssignProduction label="from_byte_e5" grouping="regex" >
+      <Grouping type="byte_e5" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_e6" grouping="byte_e6" >
+      <Token name="BYTEe6" />
+    </ListProduction>
+    <AssignProduction label="from_byte_e6" grouping="regex" >
+      <Grouping type="byte_e6" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_e7" grouping="byte_e7" >
+      <Token name="BYTEe7" />
+    </ListProduction>
+    <AssignProduction label="from_byte_e7" grouping="regex" >
+      <Grouping type="byte_e7" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_e8" grouping="byte_e8" >
+      <Token name="BYTEe8" />
+    </ListProduction>
+    <AssignProduction label="from_byte_e8" grouping="regex" >
+      <Grouping type="byte_e8" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_e9" grouping="byte_e9" >
+      <Token name="BYTEe9" />
+    </ListProduction>
+    <AssignProduction label="from_byte_e9" grouping="regex" >
+      <Grouping type="byte_e9" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ea" grouping="byte_ea" >
+      <Token name="BYTEea" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ea" grouping="regex" >
+      <Grouping type="byte_ea" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_eb" grouping="byte_eb" >
+      <Token name="BYTEeb" />
+    </ListProduction>
+    <AssignProduction label="from_byte_eb" grouping="regex" >
+      <Grouping type="byte_eb" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ec" grouping="byte_ec" >
+      <Token name="BYTEec" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ec" grouping="regex" >
+      <Grouping type="byte_ec" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ed" grouping="byte_ed" >
+      <Token name="BYTEed" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ed" grouping="regex" >
+      <Grouping type="byte_ed" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ee" grouping="byte_ee" >
+      <Token name="BYTEee" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ee" grouping="regex" >
+      <Grouping type="byte_ee" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ef" grouping="byte_ef" >
+      <Token name="BYTEef" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ef" grouping="regex" >
+      <Grouping type="byte_ef" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_f0" grouping="byte_f0" >
+      <Token name="BYTEf0" />
+    </ListProduction>
+    <AssignProduction label="from_byte_f0" grouping="regex" >
+      <Grouping type="byte_f0" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_f1" grouping="byte_f1" >
+      <Token name="BYTEf1" />
+    </ListProduction>
+    <AssignProduction label="from_byte_f1" grouping="regex" >
+      <Grouping type="byte_f1" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_f2" grouping="byte_f2" >
+      <Token name="BYTEf2" />
+    </ListProduction>
+    <AssignProduction label="from_byte_f2" grouping="regex" >
+      <Grouping type="byte_f2" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_f3" grouping="byte_f3" >
+      <Token name="BYTEf3" />
+    </ListProduction>
+    <AssignProduction label="from_byte_f3" grouping="regex" >
+      <Grouping type="byte_f3" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_f4" grouping="byte_f4" >
+      <Token name="BYTEf4" />
+    </ListProduction>
+    <AssignProduction label="from_byte_f4" grouping="regex" >
+      <Grouping type="byte_f4" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_f5" grouping="byte_f5" >
+      <Token name="BYTEf5" />
+    </ListProduction>
+    <AssignProduction label="from_byte_f5" grouping="regex" >
+      <Grouping type="byte_f5" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_f6" grouping="byte_f6" >
+      <Token name="BYTEf6" />
+    </ListProduction>
+    <AssignProduction label="from_byte_f6" grouping="regex" >
+      <Grouping type="byte_f6" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_f7" grouping="byte_f7" >
+      <Token name="BYTEf7" />
+    </ListProduction>
+    <AssignProduction label="from_byte_f7" grouping="regex" >
+      <Grouping type="byte_f7" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_f8" grouping="byte_f8" >
+      <Token name="BYTEf8" />
+    </ListProduction>
+    <AssignProduction label="from_byte_f8" grouping="regex" >
+      <Grouping type="byte_f8" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_f9" grouping="byte_f9" >
+      <Token name="BYTEf9" />
+    </ListProduction>
+    <AssignProduction label="from_byte_f9" grouping="regex" >
+      <Grouping type="byte_f9" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_fa" grouping="byte_fa" >
+      <Token name="BYTEfa" />
+    </ListProduction>
+    <AssignProduction label="from_byte_fa" grouping="regex" >
+      <Grouping type="byte_fa" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_fb" grouping="byte_fb" >
+      <Token name="BYTEfb" />
+    </ListProduction>
+    <AssignProduction label="from_byte_fb" grouping="regex" >
+      <Grouping type="byte_fb" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_fc" grouping="byte_fc" >
+      <Token name="BYTEfc" />
+    </ListProduction>
+    <AssignProduction label="from_byte_fc" grouping="regex" >
+      <Grouping type="byte_fc" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_fd" grouping="byte_fd" >
+      <Token name="BYTEfd" />
+    </ListProduction>
+    <AssignProduction label="from_byte_fd" grouping="regex" >
+      <Grouping type="byte_fd" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_fe" grouping="byte_fe" >
+      <Token name="BYTEfe" />
+    </ListProduction>
+    <AssignProduction label="from_byte_fe" grouping="regex" >
+      <Grouping type="byte_fe" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_byte_ff" grouping="byte_ff" >
+      <Token name="BYTEff" />
+    </ListProduction>
+    <AssignProduction label="from_byte_ff" grouping="regex" >
+      <Grouping type="byte_ff" position="1" />
+    </AssignProduction>
+   
   </Productions>
 </Language>

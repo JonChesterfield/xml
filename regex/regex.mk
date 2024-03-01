@@ -30,6 +30,8 @@ $(lemon_tmp)/%.lemon.h:	$(lemon_tmp)/%.lemon.c $(makeheaders) | $(lemon_tmp)
 
 regex/regex_parser.lemon.c:	$(lemon_tmp)/regex_parser.lemon.c
 	@cp "$<" "$@"
+#	ugly, but does hack around the unused variable warnings
+	@sed -i 's~\(#define regex_LemonCTX_FETCH ptree_context regex_ptree_context=yypParser->regex_ptree_context;\)~\0 (void)regex_ptree_context;~g' "$@"
 
 regex/regex_parser.lemon.h:	$(lemon_tmp)/regex_parser.lemon.h
 	@cp "$<" "$@"
