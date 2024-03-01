@@ -34,10 +34,6 @@
 
 #define ARENA_CONTRACT() 1
 
-#if ARENA_CONTRACT()
-#include <setjmp.h>
-#endif
-
 struct arena_module_ty;
 typedef const struct arena_module_ty *arena_module;
 
@@ -80,9 +76,6 @@ static inline bool arena_valid(arena_module mod, arena_t a);
 //
 // Module level queries
 //
-
-// Alignment values must be all be a power of two
-static bool arena_power_of_two_p(uint64_t x) { return x && !(x & (x - 1)); }
 
 // True if all calls to base_address return the same value
 static inline bool arena_base_address_constant(arena_module mod);
@@ -221,7 +214,7 @@ static inline void arena_require_func(arena_module mod, bool expr,
 }
 
 static inline arena_t arena_create(arena_module mod, uint64_t N) {
-  arena_require(arena_power_of_two_p(arena_alignment(mod)));
+  arena_require(contract_is_power_of_two(arena_alignment(mod)));
   return mod->create(N);
 }
 
@@ -275,7 +268,7 @@ static inline uint64_t arena_available(arena_module mod, arena_t a) {
 static inline uint64_t arena_increment_needed_for_alignment(arena_module mod,
                                                             uint64_t base,
                                                             uint64_t align) {
-  arena_require(arena_power_of_two_p(align));
+  arena_require(contract_is_power_of_two(align));
 
   uint64_t modulo_as_mask = (align - 1);
   uint64_t rem = base & modulo_as_mask;
@@ -344,7 +337,7 @@ static inline bool arena_request_available(arena_module mod, arena_t *a,
 static inline bool arena_pad_to_alignment(arena_module mod, arena_t *a,
                                           uint64_t align) {
   arena_require(arena_valid(mod, *a));
-  arena_require(arena_power_of_two_p(align));
+  arena_require(contract_is_power_of_two(align));
   arena_require(align <= arena_alignment(mod));
 
   uint64_t next_offset =
@@ -401,7 +394,7 @@ static inline uint64_t arena_allocate_into_existing_capacity(arena_module mod,
 static inline uint64_t arena_allocate(arena_module mod, arena_t *a,
                                       uint64_t bytes, uint64_t align) {
   arena_require(arena_valid(mod, *a));
-  arena_require(arena_power_of_two_p(align));
+  arena_require(contract_is_power_of_two(align));
   arena_require(align <= arena_alignment(mod));
   uint64_t base = (uint64_t)arena_base_address(mod, *a);
   uint64_t next = (uint64_t)arena_next_address(mod, *a);

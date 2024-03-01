@@ -2,6 +2,7 @@
 
 #include "EvilUnit/EvilUnit.h"
 
+#include "contract.h"
 #include "arena.libc.h"
 
 static const struct arena_module_ty arena_libc_jmp =
@@ -15,6 +16,65 @@ uint64_t codegen_sanity_check_allocate(arena_t *a, uint64_t bytes) {
   return arena_allocate_into_existing_capacity(m, a, bytes);
 }
 
+static MODULE(power_two_checks)
+{
+  TEST("zero")
+    {
+      CHECK(false == contract_is_power_of_two(0));
+      CHECK(true == contract_is_zero_or_power_of_two(0));      
+    }
+
+  TEST("one")
+    {
+      CHECK(contract_is_power_of_two(1));
+      CHECK(contract_is_zero_or_power_of_two(1));      
+    }
+
+  TEST("two")
+    {
+      CHECK(contract_is_power_of_two(2));
+      CHECK(contract_is_zero_or_power_of_two(2));      
+    }
+  
+  TEST("true")
+    {
+      for (unsigned i = 0; i < 64; i++)
+        {
+          uint64_t v = UINT64_C(1) << i;
+          CHECK(contract_is_power_of_two(v));
+          CHECK(contract_is_zero_or_power_of_two(v));
+        }
+    }
+
+  TEST("false")
+    {
+      CHECK(!contract_is_power_of_two(3));
+      CHECK(!contract_is_zero_or_power_of_two(3));
+
+      for (unsigned i = 5; i < 8; i++)
+        {
+          CHECK(!contract_is_power_of_two(i));
+          CHECK(!contract_is_zero_or_power_of_two(i));
+        }
+
+      CHECK(contract_is_power_of_two(8));
+      CHECK(contract_is_zero_or_power_of_two(8));
+
+      for (unsigned i = 9; i < 16; i++)
+        {
+          CHECK(!contract_is_power_of_two(i));
+          CHECK(!contract_is_zero_or_power_of_two(i));
+        }
+      
+      CHECK(contract_is_power_of_two(16));
+      CHECK(contract_is_zero_or_power_of_two(16));
+
+      CHECK(!contract_is_power_of_two(UINT64_MAX));
+      CHECK(!contract_is_zero_or_power_of_two(UINT64_MAX));
+    }
+  
+}
+              
 static MODULE(increment_for_alignment) {
   TEST("zero realignment needed") {
     CHECK(0 == arena_increment_needed_for_alignment(mod, 0, 1));
@@ -402,6 +462,7 @@ MODULE(convenience) {
 }
 
 MAIN_MODULE() {
+  DEPENDS(power_two_checks);
   DEPENDS(increment_for_alignment);
   DEPENDS(create_destroy);
   DEPENDS(arena_use_without_resizing);
