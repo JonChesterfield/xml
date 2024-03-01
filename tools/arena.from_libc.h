@@ -81,6 +81,11 @@
     return true;                                                               \
   }                                                                            \
                                                                                \
+  static void ARENA_CONCAT(PREFIX, change_allocation)(arena_t * a,             \
+                                                      uint64_t bytes) {        \
+    a->next = (uint64_t)((char *)a->base + bytes);                      \
+  }                                                                            \
+                                                                               \
   static uint64_t ARENA_CONCAT(PREFIX, allocate_into_existing_capacity)(       \
       arena_t * a, uint64_t bytes) {                                           \
     char *base = (char *)a->base;                                              \

@@ -125,6 +125,9 @@ static inline void *arena_limit_address(arena_module mod, arena_t a);
 static inline bool arena_change_capacity(arena_module mod, arena_t *a,
                                          uint64_t bytes);
 
+static inline void arena_change_allocation(arena_module mod, arena_t *a,
+                                           uint64_t bytes);
+
 // Try to increase capacity to ensure at least bytes are available
 static inline bool arena_request_available(arena_module mod, arena_t *a,
                                            uint64_t bytes);
@@ -166,6 +169,7 @@ struct arena_module_ty {
   void *(*const limit_address)(arena_t);
 
   bool (*const change_capacity)(arena_t *a, uint64_t bytes);
+  void (*const change_allocation)(arena_t *a, uint64_t bytes);
 
   uint64_t (*const allocate_into_existing_capacity)(arena_t *a, uint64_t bytes);
 
@@ -191,6 +195,7 @@ struct arena_module_ty {
     .next_address = ARENA_CONCAT(PREFIX, next_address),                        \
     .limit_address = ARENA_CONCAT(PREFIX, limit_address),                      \
     .change_capacity = ARENA_CONCAT(PREFIX, change_capacity),                  \
+    .change_allocation = ARENA_CONCAT(PREFIX, change_allocation),              \
     .allocate_into_existing_capacity =                                         \
         ARENA_CONCAT(PREFIX, allocate_into_existing_capacity),                 \
     .maybe_contract = CONTRACT,                                                \
@@ -317,6 +322,15 @@ static inline bool arena_change_capacity(arena_module mod, arena_t *a,
   }
 
   return r;
+}
+
+static inline void arena_change_allocation(arena_module mod, arena_t *a,
+                                           uint64_t bytes) {
+  arena_require(arena_valid(mod, *a));
+  arena_require(bytes <= arena_capacity(mod, *a));
+  mod->change_allocation(a, bytes);
+  arena_require(((char *)arena_base_address(mod, *a) + bytes) ==
+                (char *)arena_next_address(mod, *a));
 }
 
 static inline bool arena_request_available(arena_module mod, arena_t *a,
