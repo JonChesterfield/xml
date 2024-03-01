@@ -145,21 +145,15 @@ const char *stringtable_lookup(stringtable_t *tab, stringtable_index_t index) {
   return (const char *)arena_base_address(arena_mod, tab->arena) + v;
 }
 
-// only fails on out of memory
-stringtable_index_t stringtable_insert(stringtable_t *tab, const char *str) {
+stringtable_index_t stringtable_record(stringtable_t *tab, uint64_t N) {
   const stringtable_index_t failure = {
       .value = UINT64_MAX,
   };
-  const size_t N = __builtin_strlen(str);
 
   uint64_t arena_level = (char *)arena_next_address(arena_mod, tab->arena) -
-                         (char *)arena_base_address(arena_mod, tab->arena);
+                         (char *)arena_base_address(arena_mod, tab->arena) - N;
 
-  // Include the trailing 0
-  if (!arena_append_bytes(arena_mod, &tab->arena, (const unsigned char *)str,
-                          N + 1)) {
-    return failure;
-  }
+  const char *str = (char *)arena_next_address(arena_mod, tab->arena) - N;
 
   // Make current arena base available after allocating and before calling into
   // hashtable
@@ -189,8 +183,7 @@ stringtable_index_t stringtable_insert(stringtable_t *tab, const char *str) {
       const stringtable_index_t success = {
           .value = v,
       };
-      assert(__builtin_memcmp(str, stringtable_lookup(tab, success), N + 1) ==
-             0);
+      assert(__builtin_memcmp(str, stringtable_lookup(tab, success), N) == 0);
       return success;
     }
   }
@@ -201,8 +194,24 @@ stringtable_index_t stringtable_insert(stringtable_t *tab, const char *str) {
   const stringtable_index_t success = {
       .value = arena_level,
   };
-  assert(__builtin_memcmp(str, stringtable_lookup(tab, success), N + 1) == 0);
+  assert(__builtin_memcmp(str, stringtable_lookup(tab, success), N) == 0);
   return success;
+}
+
+// only fails on out of memory
+stringtable_index_t stringtable_insert(stringtable_t *tab, const char *str,
+                                       size_t N) {
+  const stringtable_index_t failure = {
+      .value = UINT64_MAX,
+  };
+
+  // Include the trailing 0
+  if (!arena_append_bytes(arena_mod, &tab->arena, (const unsigned char *)str,
+                          N)) {
+    return failure;
+  }
+
+  return stringtable_record(tab, N);
 }
 
 static MODULE(stringtable) {
@@ -218,7 +227,7 @@ static MODULE(stringtable) {
 
     const char *str = "foobar";
     size_t N = __builtin_strlen(str);
-    stringtable_index_t idx = stringtable_insert(&tab, str);
+    stringtable_index_t idx = stringtable_insert(&tab, str, N + 1);
     CHECK(idx.value != UINT64_MAX);
     CHECK(idx.value == 0);
 
@@ -236,7 +245,7 @@ static MODULE(stringtable) {
     size_t N = __builtin_strlen(str);
 
     {
-      stringtable_index_t idx = stringtable_insert(&tab, str);
+      stringtable_index_t idx = stringtable_insert(&tab, str, N + 1);
       CHECK(idx.value != UINT64_MAX);
       CHECK(idx.value == 0);
       const char *res = stringtable_lookup(&tab, idx);
@@ -244,7 +253,7 @@ static MODULE(stringtable) {
     }
 
     {
-      stringtable_index_t idx = stringtable_insert(&tab, str);
+      stringtable_index_t idx = stringtable_insert(&tab, str, N + 1);
       CHECK(idx.value != UINT64_MAX);
       CHECK(idx.value == 0);
       const char *res = stringtable_lookup(&tab, idx);
@@ -274,12 +283,12 @@ static MODULE(stringtable) {
 
     for (size_t rep = 0; rep < 40; rep++) {
       for (size_t i = 0; i < N; i++) {
-        stringtable_index_t idx = stringtable_insert(&tab, strs[i]);
+        size_t len = __builtin_strlen(strs[i]) + 1;
+        stringtable_index_t idx = stringtable_insert(&tab, strs[i], len);
         CHECK(idx.value != UINT64_MAX);
         CHECK(idx.value == offsets[i]);
         const char *res = stringtable_lookup(&tab, idx);
-        CHECK(__builtin_memcmp(strs[i], res, __builtin_strlen(strs[i]) + 1) ==
-              0);
+        CHECK(__builtin_memcmp(strs[i], res, len) == 0);
       }
     }
 

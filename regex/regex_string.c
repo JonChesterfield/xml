@@ -193,7 +193,7 @@ int regex_to_char_sequence(arena_module mod, arena_t *arena, ptree val) {
   }
 
   // Writes a trailing 0 in case the caller decides to pass it to printf(%s)
-  // but doesn't move the allocator line,
+  // but doesn't move the allocator line so later calls will continue the existing string
   char *next = arena_next_address(mod, *arena);
   *next = 0;
   
