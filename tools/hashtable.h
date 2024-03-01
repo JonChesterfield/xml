@@ -26,6 +26,10 @@ static inline hashtable_t hashtable_create(hashtable_module mod, uint64_t size);
 static inline void hashtable_destroy(hashtable_module mod, hashtable_t);
 static inline bool hashtable_valid(hashtable_module mod, hashtable_t);
 
+// A word of user defined state, semantics opaque to hashtable
+static inline void hashtable_store_userdata(hashtable_module mod, hashtable_t*, uint64_t);
+static inline uint64_t hashtable_load_userdata(hashtable_module mod, hashtable_t*);
+
 // Inefficient. Order of insertion independent.
 static inline bool hashtable_equal(hashtable_module mod, hashtable_t,
                                    hashtable_t);
@@ -104,6 +108,9 @@ struct hashtable_module_ty {
   hashtable_t (*const create)(uint64_t size);
   void (*const destroy)(hashtable_t);
   bool (*const valid)(hashtable_t);
+  
+  void (*const store_userdata)(hashtable_t*, uint64_t);
+  uint64_t (*const load_userdata)(hashtable_t*);
 
   const uint32_t key_align;
   const uint32_t key_size;
@@ -152,6 +159,19 @@ static inline void hashtable_destroy(hashtable_module mod, hashtable_t h) {
 
 static inline bool hashtable_valid(hashtable_module mod, hashtable_t h) {
   return mod->valid(h);
+}
+
+// A word of user defined state, semantics opaque to hashtable
+static inline void hashtable_store_userdata(hashtable_module mod, hashtable_t *h, uint64_t v)
+{
+  hashtable_require(hashtable_valid(mod, *h));
+  mod->store_userdata(h, v);
+}
+
+static inline uint64_t hashtable_load_userdata(hashtable_module mod, hashtable_t *h)
+{
+  hashtable_require(hashtable_valid(mod, *h));
+  return mod->load_userdata(h);
 }
 
 //
@@ -376,19 +396,18 @@ static inline hashtable_t hashtable_rehash(hashtable_module mod, hashtable_t h,
   const bool is_set = mod->value_size == 0;
 
   hashtable_t ret = hashtable_create(mod, N);
-
-  uint64_t cap = hashtable_capacity(mod, h);
-  for (uint64_t offset = 0; offset < cap; offset++) {
-    unsigned char *k_res = mod->location_key(h, offset);
-
-    if (!hashtable_key_is_sentinel(mod, h, k_res)) {
-      unsigned char *v_res = is_set ? 0 : mod->location_value(h, offset);
-      hashtable_insert(mod, &ret, k_res, v_res);
+  if (hashtable_valid(mod,ret))
+    {
+      uint64_t cap = hashtable_capacity(mod, h);
+      for (uint64_t offset = 0; offset < cap; offset++) {
+        unsigned char *k_res = mod->location_key(h, offset);
+        if (!hashtable_key_is_sentinel(mod, h, k_res)) {
+          unsigned char *v_res = is_set ? 0 : mod->location_value(h, offset);
+          hashtable_insert(mod, &ret, k_res, v_res);
+        }
+      }
+      hashtable_require(hashtable_equal(mod, h, ret));
     }
-  }
-
-  hashtable_require(hashtable_equal(mod, h, ret));
-
   return ret;
 }
 

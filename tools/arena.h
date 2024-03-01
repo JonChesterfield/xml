@@ -138,7 +138,7 @@ static inline bool arena_pad_to_alignment(arena_module mod, arena_t *a,
 
 // Try to append N bytes to arena
 static inline bool arena_append_bytes(arena_module mod, arena_t *a,
-                                      unsigned char *bytes, size_t N);
+                                      const unsigned char *bytes, size_t N);
 
 // Allocate bytes space, returns offset from base address. Assert / UB if
 // insufficient capacity.
@@ -371,7 +371,7 @@ static inline bool arena_pad_to_alignment(arena_module mod, arena_t *a,
 }
 
 static inline bool arena_append_bytes(arena_module mod, arena_t *a,
-                                      unsigned char *bytes, size_t N) {
+                                      const unsigned char *bytes, size_t N) {
   arena_require(arena_valid(mod, *a));
 
   uint64_t r = arena_allocate(mod, a, N, 1);

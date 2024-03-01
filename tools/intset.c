@@ -23,16 +23,6 @@ static arena_module arena_mod = &arena_libc_contract;
 _Static_assert(sizeof(hashtable_t) == intset_util_struct_sizeof, "");
 _Static_assert(sizeof(intset_t) == intset_util_struct_sizeof, "");
 
-static const uint64_t sentinel = UINT64_MAX;
-
-static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
-               const unsigned char *right) {
-  (void)h;
-  return __builtin_memcmp(left, right, 8) == 0;
-}
-
-INTSET_UTIL(arena_mod, intset_util_key_equal, contract_unit_test);
-
 static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes) {
   (void)h;
   // identity at present
@@ -41,30 +31,28 @@ static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes) {
   return r;
 }
 
-static uint64_t intset_util_lookup_offset(hashtable_t h, unsigned char *key) {
-   uint64_t hash = intset_util_key_hash(h, key);
-   return intset_util_lookup_offset_given_hash(h, key, hash);
- }
-
-
-static void intset_util_set_size(hashtable_t *h, uint64_t s) {
-  arena_t a = intset_util_hash_to_arena(*h);
-  arena_change_allocation(arena_mod, &a, s*8);
-  h->state[3] = s;
-  *h = intset_util_arena_to_hash(a);
+static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
+               const unsigned char *right) {
+  (void)h;
+  return __builtin_memcmp(left, right, 8) == 0;
 }
+
+INTSET_UTIL(arena_mod, intset_util_key_hash, intset_util_key_equal, contract_unit_test);
+
 
 static const struct hashtable_module_ty mod_state = {
     .create = intset_util_create,
     .destroy = intset_util_destroy,
     .valid = intset_util_valid,
+    .store_userdata = intset_util_store_userdata,
+    .load_userdata = intset_util_load_userdata,
     .key_align = 8,
     .key_size = 8,
     .value_align = 1,
     .value_size = 0,
     .key_hash = intset_util_key_hash,
     .key_equal = intset_util_key_equal,
-    .sentinel = (const unsigned char *)&sentinel,
+    .sentinel = (const unsigned char *)&intset_util_sentinel,
     .size = intset_util_size,
     .capacity = intset_util_capacity,
     .lookup_offset = intset_util_lookup_offset,

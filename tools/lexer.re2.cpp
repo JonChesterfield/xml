@@ -104,6 +104,7 @@ struct re2_lexer
 };
 
 #ifndef NDEBUG
+// in stddef
 static_assert(offsetof(re2_lexer, engine) == 0, "");
 #endif
 }  // namespace
