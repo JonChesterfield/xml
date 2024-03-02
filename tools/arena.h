@@ -381,7 +381,7 @@ static inline bool arena_pad_to_alignment(arena_module mod, arena_t *a,
 static inline bool arena_append_bytes(arena_module mod, arena_t *a,
                                       const unsigned char *bytes, size_t N) {
   arena_require(arena_valid(mod, *a));
-
+  if (N == 0) { return true; }
   uint64_t r = arena_allocate(mod, a, N, 1);
   if (r == UINT64_MAX) {
     return false;

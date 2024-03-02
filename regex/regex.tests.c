@@ -271,6 +271,9 @@ static MODULE(driver)
 
       CHECK(regex_in_byte_representation(regstr, N));
       CHECK(regex_driver_insert(&D, regstr, N));
+
+      stringtable_index_t index  = {.value = 0, };
+      CHECK(regex_driver_regex_to_c(&D, index));
       
       regex_driver_destroy(D);
     }

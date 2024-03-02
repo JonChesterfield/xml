@@ -275,6 +275,16 @@
     <Token name="LPAREN" literal="(" />
     <Token name="RPAREN" literal=")" />
 
+    <!--
+    a slightly different lexer could do something like:
+    <Token name="LSQUARE" literal="S" />
+    to create some of the same tokens from different text
+    Maybe worth keeping (* as two tokens instead of folding them
+    for fractionally longer names in exchange for easier conversion
+    Or regex instead of literals, though that'll carry a cost
+    <Token name="LSQUARE" regex="\[|S" />
+    -->
+
     <Token name="LSQUARE" literal="[" />
     <Token name="RSQUARE" literal="]" />
 
@@ -587,6 +597,20 @@
       <Grouping type="regex" position="1" />
     </AssignProduction>
 
+    <ListProduction label="make_empty_set" grouping="empty_set" >
+      <Token name="EMPTYSET" />
+    </ListProduction>
+    <AssignProduction label="from_empty_set" grouping="regex" >
+      <Grouping type="empty_set" position="1" />
+    </AssignProduction>
+
+    <ListProduction label="make_empty_string" grouping="empty_string" >
+      <Token name="EMPTYSTRING" />
+    </ListProduction>
+    <AssignProduction label="from_empty_string" grouping="regex" >
+      <Grouping type="empty_string" position="1" />
+    </AssignProduction>
+
     <ListProduction label="make_concat" grouping="concat" >
       <Token name="LPAREN" />
       <Token name="CONCAT" />
@@ -664,20 +688,6 @@ print(string.format([[
 ]], i, i, i, i, i))
 end
 -->
-    <ListProduction label="make_empty_set" grouping="empty_set" >
-      <Token name="EMPTYSET" />
-    </ListProduction>
-    <AssignProduction label="from_empty_set" grouping="regex" >
-      <Grouping type="empty_set" position="1" />
-    </AssignProduction>
-
-    <ListProduction label="make_empty_string" grouping="empty_string" >
-      <Token name="EMPTYSTRING" />
-    </ListProduction>
-    <AssignProduction label="from_empty_string" grouping="regex" >
-      <Grouping type="empty_string" position="1" />
-    </AssignProduction>
-
     <ListProduction label="make_byte_00" grouping="byte_00" >
       <Token name="BYTE00" />
     </ListProduction>

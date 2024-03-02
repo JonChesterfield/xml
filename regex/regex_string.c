@@ -198,6 +198,52 @@ int regex_to_char_sequence(arena_module mod, arena_t *arena, ptree val) {
   return r;
 }
 
+
+#if 0
+// Maybe factor out the switch into a table, something like:
+int regex_to_char_sequence_given_desc(arena_module mod, arena_t *arena, ptree val, struct regex_to_char_sequence_type * v)
+{
+  const struct stack_module_ty *stackmod = &stack_libc;
+
+  uint64_t depth = 0;
+  int r = regex_ptree_traverse(stackmod, val, depth, regex_to_char_sequence_pre,
+                               v, regex_to_char_sequence_elt, v,
+                               regex_to_char_sequence_post, v);
+
+  if (!arena_request_available(mod, arena, 8)) {
+    return 1;
+  }
+
+  // Writes a trailing 0 in case the caller decides to pass it to printf(%s)
+  // but doesn't move the allocator line so later calls will continue the existing string
+  char *next = arena_next_address(mod, *arena);
+  *next = 0;
+  
+  return r;
+}
+
+
+int regex_to_char_sequence(arena_module mod, arena_t *arena, ptree val) {
+
+  _Static_assert((regex_grouping_empty_set - regex_token_count) == 0,"");
+  struct regex_to_char_sequence_type v = {
+      .mod = mod,
+      .arena = arena,
+      .syntax = {
+        [regex_grouping_empty_set - regex_token_count] = {"%", "",},
+        [regex_grouping_empty_string - regex_token_count] = {"_", "",},
+        [regex_grouping_concat - regex_token_count] = {"(.", ")",},
+        [regex_grouping_kleene - regex_token_count] = {"(*", ")",},
+        [regex_grouping_or - regex_token_count] = {"(|",  ")",},
+        [regex_grouping_and - regex_token_count] = {"(&", ")",},
+        [regex_grouping_not - regex_token_count] = {"(~", ")",},
+        [regex_grouping_range - regex_token_count] = {"[", "]",},  
+      },
+  };
+
+  return regex_to_char_sequence_given_desc(mod, arena, val, &v);
+}
+#endif
 ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
   const bool verbose = false;
 

@@ -6,6 +6,8 @@
 #include "regex_string.h"
 #include "regex.ptree.h"
 
+#include <assert.h>
+
 static const uint64_t hashderiv_sentinel = UINT64_MAX;
 
 #define DRIVER_CONTRACTS 1
@@ -246,7 +248,7 @@ bool regex_driver_insert(regex_driver_t * driver, const char * bytes, size_t N)
 
 
   printf("Driver insert main loop\n");
-  uint64_t counter = 0;
+  // uint64_t counter = 0;
   while (stack_size(&stack_libc, stack) != 0)
     {
       // printf("Driver insert iteration %lu\n", counter++);
@@ -329,5 +331,37 @@ bool regex_driver_insert(regex_driver_t * driver, const char * bytes, size_t N)
   
   stack_libc_destroy(stack);
 
+  return true;
+}
+
+bool regex_driver_regex_to_c(regex_driver_t * driver, stringtable_index_t index)
+{
+  stringtable_index_t derivatives[256];
+  
+  const char * regex = stringtable_lookup(&driver->strtab, index);
+  if (!regex) { return false; }
+
+  printf("// regex %s\n", regex);
+
+  unsigned char * values = hashtable_lookup_value(hashtable_mod,
+                                                  driver->regex_to_derivatives,
+                                                  (unsigned char*)&index.value);
+  assert(values);
+
+  __builtin_memcpy(&derivatives[0], values, 256 * 8);
+  printf("{\n");
+
+  for (unsigned i = 0; i < 256; i++)
+    {
+      bool emit = (i == 255) || (derivatives[i].value != derivatives[i+1].value);
+      const char * regex = stringtable_lookup(&driver->strtab, derivatives[i]);
+      if (emit) {
+        printf("  case %u: return %s;\n", i, regex);
+      } else {
+        printf("  case %u:\n", i);
+      }
+    }
+  printf("}\n");
+  
   return true;
 }

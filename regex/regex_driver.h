@@ -22,4 +22,6 @@ bool regex_driver_valid(regex_driver_t);
 // true on success, false means invalid bytes or out of memory, or something broken internally
 bool regex_driver_insert(regex_driver_t * driver, const char * bytes, size_t N);
 
+bool regex_driver_regex_to_c(regex_driver_t * driver, stringtable_index_t index);
+
 #endif

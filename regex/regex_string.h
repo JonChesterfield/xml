@@ -3,6 +3,17 @@
 #include "../tools/arena.h"
 #include "../tools/ptree.h"
 
+// Considering supporting two different syntaxes, maybe in the same grammar
+// One is (&(*11)(~22)) style, prefix and fully parens
+// The other does things like A K11L N22I B without whitespace to represent the same
+// The latter is mangled to correspond to the C function encoding, still
+// considering how best to handle that - probably a common parser and
+// separate lexers
+// A lexer that creates the same token names but uses a different set of literals
+// would be trivial to construct, probably the right way to go. Something like
+// L for ( and R for ), keeping the same token -> grouping map used by the
+// friendlier syntax. Add a printer for the same and regex driver could use either.
+
 // construct into the passed context. N is exclusive of nul, no nul required
 ptree regex_from_char_sequence(ptree_context ctx, const char * bytes, size_t N);
 
