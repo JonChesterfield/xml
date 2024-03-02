@@ -302,8 +302,8 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
   return val;
 }
 
-void regex_split(ptree_context ctx, ptree val, ptree *edges) {
-  for (size_t i = 0; i < 256; i++) {
+void regex_split(ptree_context ctx, ptree val, ptree edges[static regex_arity]) {
+  for (size_t i = 0; i < regex_arity; i++) {
     edges[i] = regex_derivative(ctx, val, (uint8_t)i);
   }
 }

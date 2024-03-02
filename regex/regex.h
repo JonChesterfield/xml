@@ -95,7 +95,9 @@ ptree regex_nullable(ptree_context ctx, ptree val);
 ptree regex_derivative(ptree_context ctx, ptree val, uint8_t byte);
 ptree regex_canonicalise(ptree_context ctx, ptree val);
 
-void regex_split(ptree_context ctx, ptree val, ptree *edges);
+// does not currently canonicalise
+enum {regex_arity = 256};
+void regex_split(ptree_context ctx, ptree val, ptree edges[static regex_arity]);
 
 
 #endif
