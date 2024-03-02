@@ -228,7 +228,6 @@ bool regex_driver_insert(regex_driver_t * driver, const char * bytes, size_t N)
     return false;
   }
 
-
   // might be better on the heap, 2k on the stack is borderline
   stringtable_index_t derivatives[256];
   
@@ -250,14 +249,14 @@ bool regex_driver_insert(regex_driver_t * driver, const char * bytes, size_t N)
   uint64_t counter = 0;
   while (stack_size(&stack_libc, stack) != 0)
     {
-      printf("Driver insert iteration %lu\n", counter++);
+      // printf("Driver insert iteration %lu\n", counter++);
       
       stringtable_index_t active = {.value = stack_pop(&stack_libc, stack),};
 
       // Check if in the derivative table already
       if (hashtable_contains(hashtable_mod, driver->regex_to_derivatives, (unsigned char*)&active.value))
         {
-          printf("regex already split: %s\n",stringtable_lookup(&driver->strtab, active));
+          // printf("regex already split: %s\n",stringtable_lookup(&driver->strtab, active));
           continue;
         }
 

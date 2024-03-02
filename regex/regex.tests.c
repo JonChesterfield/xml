@@ -251,6 +251,7 @@ static MODULE(regex_string)
 
     free(out);
   }
+
   
   regex_ptree_destroy_context(ctx);
   arena_destroy(&arena_libc, arena);
@@ -264,7 +265,8 @@ static MODULE(driver)
       regex_driver_t D = regex_driver_create();
       CHECK(regex_driver_valid(D));
 
-      const char * regstr = "(|(*00)(|02(~cc)))";
+      const char * regstr = "(&(*(|0001))(|(*00)(|02(~cc))))";
+
       size_t N = __builtin_strlen(regstr);
 
       CHECK(regex_in_byte_representation(regstr, N));

@@ -94,9 +94,10 @@ static inline bool intset_util_valid_using_arena(arena_module mod,
                                                                                \
   static void intset_util_set_size(hashtable_t *h, uint64_t s) {               \
     arena_t a = intset_util_hash_to_arena(*h);                                 \
+    uint64_t ud = intset_util_load_userdata(h);                                \
     arena_change_allocation(arena_mod, &a, s * 8);                             \
     *h = intset_util_arena_to_hash(a);                                         \
-  }                                                                            \
+    intset_util_store_userdata(h, ud);  }                                      \
                                                                                \
   static uint64_t intset_util_capacity(hashtable_t h) {                        \
     arena_t a = intset_util_hash_to_arena(h);                                  \

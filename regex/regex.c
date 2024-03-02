@@ -151,7 +151,9 @@ static bool regex_is_not_of_empty_set(ptree val) {
 
 ptree regex_canonicalise(ptree_context ctx, ptree val) {
   if (!regex_ptree_is_expression(val))
-    return val;
+    {
+      return val;
+    }
 
   uint64_t id = regex_ptree_identifier(val);
   if (regex_grouping_id_is_single_byte(id)) {
@@ -163,7 +165,7 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
    */
 
   if (id == regex_grouping_and || id == regex_grouping_concat ||
-      id == regex_grouping_and) {
+      id == regex_grouping_or) {
     ptree r = regex_ptree_expression_element(val, 0);
     ptree s = regex_ptree_expression_element(val, 1);
 
