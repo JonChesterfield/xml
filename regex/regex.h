@@ -95,6 +95,17 @@ ptree regex_nullable(ptree_context ctx, ptree val);
 ptree regex_derivative(ptree_context ctx, ptree val, uint8_t byte);
 ptree regex_canonicalise(ptree_context ctx, ptree val);
 
+ptree regex_copy_into_context( ptree val, ptree_context ctx);
+
+static inline ptree regex_canonical_derivative(ptree_context ctx, ptree val, uint8_t byte)
+{
+  // val = regex_canonicalise(ctx, val); /// might be an optimisation
+  val = regex_derivative(ctx, val, byte);
+  val = regex_canonicalise(ctx, val);
+  return val;
+}
+
+// Expensive
 bool regex_is_canonical(ptree val);
 
 // does not currently canonicalise

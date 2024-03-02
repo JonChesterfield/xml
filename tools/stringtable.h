@@ -36,6 +36,12 @@ stringtable_index_t stringtable_insert(stringtable_t *, const char *, size_t N);
 // doesn't correspond to an entry
 const char *stringtable_lookup(stringtable_t *tab, stringtable_index_t);
 
+
+static inline bool stringtable_contains(stringtable_t *tab, stringtable_index_t index)
+{
+  return stringtable_lookup(tab, index) != 0;
+}
+
 // Stringtable has an exposed arena that it appends to
 // One can instead append a string to that arena directly, including the null
 // (while this is null terminated), provided the number of bytes appended since

@@ -1,8 +1,10 @@
 #include "regex.h"
 #include "regex.declarations.h"
 #include "regex.ptree.h"
+#include "regex_string.h"
 
 #include "../tools/arena.h"
+#include "../tools/arena.libc.h"
 #include "../tools/stack.libc.h"
 
 #include <stdio.h>
@@ -305,12 +307,40 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
   return val;
 }
 
+ptree regex_copy_into_context( ptree val, ptree_context ctx)
+{
+  if (ptree_is_failure(val)) {return ptree_failure(); }
+
+  static arena_module arena_mod = &arena_libc;
+
+  arena_t a = arena_create(arena_mod, 32);
+  int rc = regex_to_char_sequence(arena_mod, &a, val);
+
+  if (rc != 0)
+    {
+      arena_destroy(arena_mod, a);
+      return ptree_failure();
+    }
+
+  char * b = arena_base_address(arena_mod, a);
+  size_t N = arena_next_offset(arena_mod, a);
+
+  ptree res = regex_from_char_sequence( ctx, b, N);
+  arena_destroy(arena_mod, a);
+
+  return res;
+}
+
 bool regex_is_canonical(ptree val)
 {
-  if (ptree_is_failure(val)) {return false; }  
+  if (ptree_is_failure(val)) {return false; }
+
   ptree_context ctx = regex_ptree_create_context();
-  ptree res = regex_canonicalise( ctx,  val);
-  enum ptree_compare_res cmp = regex_ptree_compare(&stack_libc, val, res);  
+
+  ptree cp = regex_copy_into_context(val, ctx);
+  ptree canon = regex_canonicalise(ctx, cp);  
+  enum ptree_compare_res cmp = regex_ptree_compare(&stack_libc, val, canon);
+
   regex_ptree_destroy_context(ctx);
   return (cmp == ptree_compare_equal);
 }

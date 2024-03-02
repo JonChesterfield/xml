@@ -262,8 +262,8 @@ static MODULE(driver)
   TEST("demo")
     {
       printf("DEMO\n");
-      regex_driver_t D = regex_driver_create();
-      CHECK(regex_driver_valid(D));
+      regex_cache_t D = regex_cache_create();
+      CHECK(regex_cache_valid(D));
 
       const char * regstr = "(&(*(|0001))(|(*00)(|02(~cc))))";
 
@@ -275,7 +275,7 @@ static MODULE(driver)
       stringtable_index_t index  = {.value = 0, };
       CHECK(regex_driver_regex_to_c(&D, index));
       
-      regex_driver_destroy(D);
+      regex_cache_destroy(D);
     }
 }
 
