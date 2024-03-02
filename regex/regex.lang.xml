@@ -600,9 +600,82 @@
     <ListProduction label="make_empty_set" grouping="empty_set" >
       <Token name="EMPTYSET" />
     </ListProduction>
+
+    <!-- Either one turns the empty set into a regex, in which case no further handling is needed:
+
+
+    or one can keep it as a separate entity and pattern match the various combinations.
+    Can't do both as that makes the LALR grammar ambiguous.    
+    -->
+
     <AssignProduction label="from_empty_set" grouping="regex" >
       <Grouping type="empty_set" position="1" />
     </AssignProduction>
+
+<!--
+    <AssignProduction label="make_or_left_empty" grouping="regex" >
+      <Token name="LPAREN" />
+      <Token name="OR" />
+      <Grouping type="empty_set" />
+      <Grouping type="regex" position="1" />
+      <Token name="RPAREN" />
+    </AssignProduction>
+
+    <AssignProduction label="make_or_right_empty" grouping="regex" >
+      <Token name="LPAREN" />
+      <Token name="OR" />
+      <Grouping type="regex" position="1" />
+      <Grouping type="empty_set" />
+      <Token name="RPAREN" />
+    </AssignProduction>
+
+    <AssignProduction label="make_and_left_empty" grouping="regex" >
+      <Token name="LPAREN" />
+      <Token name="AND" />
+      <Grouping type="empty_set" position="1" />
+      <Grouping type="regex" />
+      <Token name="RPAREN" />
+    </AssignProduction>
+
+    <AssignProduction label="make_and_right_empty" grouping="regex" >
+      <Token name="LPAREN" />
+      <Token name="AND" />
+      <Grouping type="regex" />
+      <Grouping type="empty_set" position="1" />
+      <Token name="RPAREN" />
+    </AssignProduction>
+
+    <AssignProduction label="make_concat_left_empty" grouping="regex" >
+      <Token name="LPAREN" />
+      <Token name="CONCAT" />
+      <Grouping type="empty_set" position="1" />
+      <Grouping type="regex" />
+      <Token name="RPAREN" />
+    </AssignProduction>
+
+    <AssignProduction label="make_concat_right_empty" grouping="regex" >
+      <Token name="LPAREN" />
+      <Token name="CONCAT" />
+      <Grouping type="regex" />
+      <Grouping type="empty_set" position="1" />
+      <Token name="RPAREN" />
+    </AssignProduction>
+
+    <AssignProduction label="make_kleene_empty" grouping="empty_string" >
+      <Token name="LPAREN" />
+      <Token name="KLEENE" />
+      <Grouping type="empty_set" position="1" />
+      <Token name="RPAREN" />
+    </AssignProduction>
+    
+    <ListProduction label="make_not_empty" grouping="not" >
+      <Token name="LPAREN" />
+      <Token name="NOT" />
+      <Grouping type="empty_set" position="1" />
+      <Token name="RPAREN" />
+    </ListProduction>
+-->
+
 
     <ListProduction label="make_empty_string" grouping="empty_string" >
       <Token name="EMPTYSTRING" />
@@ -639,6 +712,7 @@
       <Grouping type="regex" position="2" />
       <Token name="RPAREN" />
     </ListProduction>
+
     <AssignProduction label="from_or" grouping="regex" >
       <Grouping type="or" position="1" />
     </AssignProduction>

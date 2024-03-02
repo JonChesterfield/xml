@@ -162,6 +162,7 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
 
   /*
    * Special cases involving the empty set first as they're varied and cheap
+   * Considering removing the empty set at parsing time instead.
    */
 
   if (id == regex_grouping_and || id == regex_grouping_concat ||
