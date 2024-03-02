@@ -7,6 +7,7 @@
 #include "regex.ptree.h"
 
 #include "regex_string.h"
+#include "regex_driver.h"
 
 #include <string.h>
 
@@ -255,9 +256,30 @@ static MODULE(regex_string)
   arena_destroy(&arena_libc, arena);
 }
 
+static MODULE(driver)
+{
+  TEST("demo")
+    {
+      printf("DEMO\n");
+      regex_driver_t D = regex_driver_create();
+      CHECK(regex_driver_valid(D));
+
+      const char * regstr = "(|(*00)(|02(~cc)))";
+      size_t N = __builtin_strlen(regstr);
+
+      CHECK(regex_in_byte_representation(regstr, N));
+      CHECK(regex_driver_insert(&D, regstr, N));
+      
+      regex_driver_destroy(D);
+    }
+}
+
 MAIN_MODULE() {
   DEPENDS(ptree);
+  DEPENDS(stringtable);
+  DEPENDS(intset);
   DEPENDS(regex_nullable);
   DEPENDS(regex_split);
   DEPENDS(regex_string);
+  DEPENDS(driver);
 }

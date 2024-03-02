@@ -396,6 +396,10 @@ static inline hashtable_t hashtable_rehash(hashtable_module mod, hashtable_t h,
   const bool is_set = mod->value_size == 0;
 
   hashtable_t ret = hashtable_create(mod, N);
+
+  hashtable_store_userdata(mod, &ret,
+                           hashtable_load_userdata(mod, &h));
+  
   if (hashtable_valid(mod,ret))
     {
       uint64_t cap = hashtable_capacity(mod, h);
@@ -409,6 +413,21 @@ static inline hashtable_t hashtable_rehash(hashtable_module mod, hashtable_t h,
       hashtable_require(hashtable_equal(mod, h, ret));
     }
   return ret;
+}
+
+// true on success, in which case h has been replaced
+static inline bool hashtable_rehash_double(hashtable_module mod, hashtable_t *h)
+{
+  uint64_t cap = hashtable_capacity(mod, *h);
+  hashtable_t n = hashtable_rehash(mod, *h, 2 * cap);
+
+  if (!hashtable_valid(mod, n)) {
+    return false;
+  }
+
+  hashtable_destroy(mod, *h);
+  *h = n;
+  return true;
 }
 
 #endif

@@ -66,6 +66,7 @@ static uint64_t word_from_bytes(const unsigned char *bytes) {
 }
 
 static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes) {
+  assert(hashtable_load_userdata(hashtable_mod, &h) != 0);
   char *arena_base = (char *)hashtable_load_userdata(hashtable_mod, &h);
 
   uint64_t word = word_from_bytes(bytes);
@@ -80,6 +81,7 @@ static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes) {
 
 static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
                                   const unsigned char *right) {
+  assert(hashtable_load_userdata(hashtable_mod, &h) != 0);
   char *arena_base = (char *)hashtable_load_userdata(hashtable_mod, &h);
 
   uint64_t word_left = word_from_bytes(left);
@@ -111,6 +113,7 @@ stringtable_t stringtable_create(void) {
   stringtable_t tab;
   tab.hash = intset_util_create_using_arena(arena_mod, 8);
   tab.arena = arena_create(arena_mod, 128);
+  tab.arena_mod = arena_mod;
   return tab;
 }
 
@@ -160,15 +163,9 @@ stringtable_index_t stringtable_record(stringtable_t *tab, uint64_t N) {
   pass_userdata(tab);
 
   if (hashtable_available(hashtable_mod, tab->hash) < 2) {
-    uint64_t cap = hashtable_capacity(hashtable_mod, tab->hash);
-    hashtable_t n = hashtable_rehash(hashtable_mod, tab->hash, 2 * cap);
-    if (!hashtable_valid(hashtable_mod, n)) {
-      arena_change_allocation(arena_mod, &tab->arena, arena_level);
+    if (!hashtable_rehash_double(hashtable_mod, &tab->hash)) {
       return failure;
     }
-
-    hashtable_destroy(hashtable_mod, tab->hash);
-    tab->hash = n;
     pass_userdata(tab);
   }
 
@@ -179,7 +176,6 @@ stringtable_index_t stringtable_record(stringtable_t *tab, uint64_t N) {
     if (r) {
       uint64_t v;
       __builtin_memcpy(&v, r, 8);
-      arena_change_allocation(arena_mod, &tab->arena, arena_level);
       const stringtable_index_t success = {
           .value = v,
       };
@@ -205,16 +201,25 @@ stringtable_index_t stringtable_insert(stringtable_t *tab, const char *str,
       .value = UINT64_MAX,
   };
 
+  uint64_t arena_level = (char *)arena_next_address(arena_mod, tab->arena) -
+                         (char *)arena_base_address(arena_mod, tab->arena);
+
+  
   // Include the trailing 0
   if (!arena_append_bytes(arena_mod, &tab->arena, (const unsigned char *)str,
                           N)) {
     return failure;
   }
 
-  return stringtable_record(tab, N);
+  stringtable_index_t r = stringtable_record(tab, N);
+  if (!stringtable_index_valid(r)) {
+    arena_change_allocation(arena_mod, &tab->arena, arena_level);
+  }
+
+  return r;
 }
 
-static MODULE(stringtable) {
+MODULE(stringtable) {
   TEST("create / destroy") {
     stringtable_t tab = stringtable_create();
     CHECK(stringtable_valid(tab));
@@ -295,5 +300,3 @@ static MODULE(stringtable) {
     stringtable_destroy(tab);
   }
 }
-
-MAIN_MODULE() { DEPENDS(stringtable); }

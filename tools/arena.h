@@ -116,6 +116,14 @@ static inline void *arena_next_address(arena_module mod, arena_t a);
 // Get pointer to the end of the arena
 static inline void *arena_limit_address(arena_module mod, arena_t a);
 
+// Get offset from base of the next object that will be allocated
+static inline uint64_t arena_next_offset(arena_module mod, arena_t a)
+{
+  uint64_t next_offset =
+      (char *)arena_next_address(mod, a) - (char *)arena_base_address(mod, a);
+  return next_offset;
+}
+
 //
 // Mutators
 // On reporting failure, arena argument is unchanged
@@ -354,8 +362,8 @@ static inline bool arena_pad_to_alignment(arena_module mod, arena_t *a,
   arena_require(contract_is_power_of_two(align));
   arena_require(align <= arena_alignment(mod));
 
-  uint64_t next_offset =
-      (char *)arena_next_address(mod, *a) - (char *)arena_base_address(mod, *a);
+  uint64_t next_offset = arena_next_offset(mod, *a);
+
   uint64_t n = arena_increment_needed_for_alignment(mod, next_offset, align);
   if (n > 0) {
     uint64_t r = arena_allocate(mod, a, n, 1);
@@ -411,8 +419,7 @@ static inline uint64_t arena_allocate(arena_module mod, arena_t *a,
   arena_require(contract_is_power_of_two(align));
   arena_require(align <= arena_alignment(mod));
   uint64_t base = (uint64_t)arena_base_address(mod, *a);
-  uint64_t next = (uint64_t)arena_next_address(mod, *a);
-  uint64_t offset = next - base;
+  uint64_t offset = arena_next_offset(mod, *a);
 
   uint64_t available = arena_available(mod, *a);
 

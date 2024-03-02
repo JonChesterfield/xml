@@ -19,4 +19,7 @@ regex_driver_t regex_driver_create(void);
 void regex_driver_destroy(regex_driver_t);
 bool regex_driver_valid(regex_driver_t);
 
+// true on success, false means invalid bytes or out of memory, or something broken internally
+bool regex_driver_insert(regex_driver_t * driver, const char * bytes, size_t N);
+
 #endif

@@ -302,6 +302,16 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
   return val;
 }
 
+bool regex_is_canonical(ptree val)
+{
+  if (ptree_is_failure(val)) {return false; }  
+  ptree_context ctx = regex_ptree_create_context();
+  ptree res = regex_canonicalise( ctx,  val);
+  enum ptree_compare_res cmp = regex_ptree_compare(&stack_libc, val, res);  
+  regex_ptree_destroy_context(ctx);
+  return (cmp == ptree_compare_equal);
+}
+
 void regex_split(ptree_context ctx, ptree val, ptree edges[static regex_arity]) {
   for (size_t i = 0; i < regex_arity; i++) {
     edges[i] = regex_derivative(ctx, val, (uint8_t)i);

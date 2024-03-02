@@ -279,11 +279,9 @@ static MODULE(rehash_partial) {
   intset_destroy(s);
 }
 
-MODULE(tools_intset) {
+MODULE(intset) {
   DEPENDS(create_destroy);
   DEPENDS(operations);
   DEPENDS(rehash_empty);
   DEPENDS(rehash_partial);
 }
-
-MAIN_MODULE() { DEPENDS(tools_intset); }

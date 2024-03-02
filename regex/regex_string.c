@@ -173,11 +173,9 @@ static int regex_to_char_sequence_post(ptree tree, uint64_t depth, void *p) {
   }
 }
 
-
 int regex_to_char_sequence(arena_module mod, arena_t *arena, ptree val) {
 
   const struct stack_module_ty *stackmod = &stack_libc;
-
   struct regex_to_char_sequence_type v = {
       .mod = mod,
       .arena = arena,
@@ -248,6 +246,7 @@ done:;
   regex_lexer_destroy(lexer);
 
   return res;
+
 }
 
 char * regex_to_malloced_c_string(ptree val){
@@ -276,4 +275,13 @@ char * regex_to_malloced_c_string(ptree val){
   arena_destroy(&arena_libc, arena);
 
   return heap;
+}
+
+bool regex_in_byte_representation(const char * bytes, size_t N)
+{
+  ptree_context ctx = regex_ptree_create_context();
+  ptree p = regex_from_char_sequence(ctx, bytes, N);
+  bool r = !ptree_is_failure(p);
+  regex_ptree_destroy_context(ctx);
+  return r;
 }

@@ -21,6 +21,8 @@ static inline bool stringtable_index_valid(stringtable_index_t idx) {
 typedef struct {
   hashtable_t hash;
   arena_t arena;
+
+  arena_module arena_mod; // the one used by hash and arena
 } stringtable_t;
 
 stringtable_t stringtable_create(void);
@@ -30,7 +32,8 @@ bool stringtable_valid(stringtable_t);
 // only fails on out of memory. The N includes the trailing null
 stringtable_index_t stringtable_insert(stringtable_t *, const char *, size_t N);
 
-// if index is from the table, does not fail
+// if index was from the table, does not fail. Returns 0 if the index
+// doesn't correspond to an entry
 const char *stringtable_lookup(stringtable_t *tab, stringtable_index_t);
 
 // Stringtable has an exposed arena that it appends to

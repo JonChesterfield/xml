@@ -124,7 +124,7 @@ clean::
 .PHONY: regex
 regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c regex/regex_parser.lemon.t
 
-bin/regex.tests:	$(REGEX_OBJECTS) .tools.O/lexer.re2c.o .tools.O/lexer.posix.o .tools.O/lexer.re2.o
+bin/regex.tests:	$(REGEX_OBJECTS) .tools.O/lexer.re2c.o .tools.O/lexer.posix.o .tools.O/lexer.re2.o .tools.O/stringtable.o .tools.O/intset.o
 	@mkdir -p "$(dir $@)"
 	$(CC) $(CFLAGS) $^ -o $@
 

@@ -1,6 +1,10 @@
 #include "regex_driver.h"
+#include "regex.h"
 #include "../tools/arena.libc.h"
 #include "../tools/contract.h"
+#include "../tools/stack.libc.h"
+#include "regex_string.h"
+#include "regex.ptree.h"
 
 static const uint64_t hashderiv_sentinel = UINT64_MAX;
 
@@ -33,7 +37,6 @@ static inline hashtable_t hashderiv_arena_to_hash(arena_t a) {
   h.state[3] = 0;
   return h;
 }
-
 
 // Layout could be an array of keys followed by an array of value, or
 // an array of {key, values}
@@ -89,8 +92,6 @@ static bool hashderiv_key_equal(hashtable_t h, const unsigned char *left,
   (void)h;
   return __builtin_memcmp(left, right, 8) == 0;
 }
-  
-  
 
 // Keys and values are the same length, store size in the arena metadata
 static uint64_t hashderiv_size(hashtable_t h) {                            
@@ -99,6 +100,7 @@ static uint64_t hashderiv_size(hashtable_t h) {
     (char *)arena_base_address(arena_mod, a);           
   return allocation_edge / 8;                                                
 }                                                                            
+
 static void hashderiv_set_size(hashtable_t *h, uint64_t s) {              
   arena_t a = hashderiv_hash_to_arena(*h);                                 
   arena_change_allocation(arena_mod, &a, s * 8);                             
@@ -135,11 +137,10 @@ static unsigned char *hashderiv_location_value(hashtable_t h,
   return p + offset * bytes_value_size;                                                  
 }                                                                            
 
-
-  static uint64_t hashderiv_lookup_offset(hashtable_t h,                     
+static uint64_t hashderiv_lookup_offset(hashtable_t h,                     
                                             unsigned char *key) {              
-    uint64_t hash = hashderiv_key_hash(h, key);                                          
-    uint64_t cap = hashderiv_capacity(h);                                    
+  uint64_t hash = hashderiv_key_hash(h, key);                                          
+  uint64_t cap = hashderiv_capacity(h);                                    
                                                                                
 #if DRIVER_CONTRACTS
       contract_unit_test(contract_is_power_of_two(cap), "cap offset", 10);               
@@ -168,8 +169,7 @@ static unsigned char *hashderiv_location_value(hashtable_t h,
       contract_unit_test(hashderiv_available(h) == 0, "avail 0", 7);                   
 #endif
     return UINT64_MAX;                                                         
-  }
-
+}
 
 
 static const struct hashtable_module_ty hashtable_mod_state = {
@@ -203,7 +203,7 @@ static const hashtable_module hashtable_mod = &hashtable_mod_state;
 
 regex_driver_t regex_driver_create(void) {
   regex_driver_t d;
-  d.regex_to_derivatives = hashtable_create(hashtable_mod, 4);
+  d.regex_to_derivatives = hashtable_create(hashtable_mod, 16);
   d.strtab = stringtable_create();
   return d;
 }
@@ -216,4 +216,119 @@ void regex_driver_destroy(regex_driver_t d) {
 bool regex_driver_valid(regex_driver_t d) {
   return hashtable_valid(hashtable_mod, d.regex_to_derivatives) &&
          stringtable_valid(d.strtab);
+}
+
+bool regex_driver_insert(regex_driver_t * driver, const char * bytes, size_t N)
+{
+  const bool verbose = true;
+
+  printf("Driver insert\n");
+  
+  if (!regex_in_byte_representation(bytes, N)) {
+    return false;
+  }
+
+
+  // might be better on the heap, 2k on the stack is borderline
+  stringtable_index_t derivatives[256];
+  
+  // Nul terminate it explicitly in case N accidentally missed the trailing 0
+  stringtable_index_t first = stringtable_insert(&driver->strtab, bytes, N);
+  if (!stringtable_index_valid(first)) { return false; }
+  
+  unsigned char zeros[1] = {0};
+  if (!arena_append_bytes(driver->strtab.arena_mod, &driver->strtab.arena, &zeros[0],1)) {
+    return false;
+  }
+    
+  void * stack = stack_create(&stack_libc, 8);
+  if (!stack) { return false; }
+  stack_push_assuming_capacity(&stack_libc, stack, first.value);
+
+
+  printf("Driver insert main loop\n");
+  uint64_t counter = 0;
+  while (stack_size(&stack_libc, stack) != 0)
+    {
+      printf("Driver insert iteration %lu\n", counter++);
+      
+      stringtable_index_t active = {.value = stack_pop(&stack_libc, stack),};
+
+      // Check if in the derivative table already
+      if (hashtable_contains(hashtable_mod, driver->regex_to_derivatives, (unsigned char*)&active.value))
+        {
+          printf("regex already split: %s\n",stringtable_lookup(&driver->strtab, active));
+          continue;
+        }
+
+      // Not currently an arena, so create and tear down repeatedly
+      ptree_context ptree_ctx = regex_ptree_create_context();
+
+      
+      const char * regex = stringtable_lookup(&driver->strtab, active);
+      if (!regex) { return false; }
+      size_t N = __builtin_strlen(regex);;
+
+      printf("  Try building a regex from %s\n", regex);
+      ptree tree = regex_from_char_sequence(ptree_ctx, regex, N);
+      if (ptree_is_failure(tree)) { return false; }
+
+      tree = regex_canonicalise(ptree_ctx, tree);
+      if (ptree_is_failure(tree)) { return false; }
+
+      {
+        void * r = stack_reserve( &stack_libc, stack, stack_size(&stack_libc, stack) + 256);
+        if (!r) { return false; }
+        stack = r;
+      }
+
+      for (size_t i = 0; i < 256; i++)
+        {
+          // Take derivative
+          ptree ith = regex_derivative(ptree_ctx, tree, (uint8_t)i);
+          if (ptree_is_failure(ith)) { return false; }
+
+          // Canonicalise it
+          ith = regex_canonicalise(ptree_ctx, ith);
+
+          // Serialise into the stringtable
+          uint64_t offset_before = arena_next_offset(driver->strtab.arena_mod, driver->strtab.arena);
+          int rc = regex_to_char_sequence(driver->strtab.arena_mod, &driver->strtab.arena, ith);
+          if (rc != 0) { return false; }
+          if (!arena_append_bytes(driver->strtab.arena_mod, &driver->strtab.arena, &zeros[0], 1)) {
+            return false;
+          }
+          uint64_t offset_after = arena_next_offset(driver->strtab.arena_mod, driver->strtab.arena);
+          stringtable_index_t incr =
+            stringtable_record(&driver->strtab, offset_after - offset_before);
+          if (!stringtable_index_valid(incr)) { return false; }
+
+          // Store the deduplicated one in the derivatives table          
+          derivatives[i] = incr;
+
+          // And push it on the stack
+          stack_push_assuming_capacity(&stack_libc, stack, incr.value);                    
+        }
+
+      if (hashtable_available(hashtable_mod,
+                              driver->regex_to_derivatives) < 8)
+        {
+          if (!hashtable_rehash_double(hashtable_mod,
+                                       &driver->regex_to_derivatives))
+            {
+              return false;
+            }
+        }
+      
+      hashtable_insert(hashtable_mod,
+                       &driver->regex_to_derivatives,
+                       (unsigned char*)&active.value,
+                       (unsigned char*)&derivatives[0]);
+      
+      regex_ptree_destroy_context(ptree_ctx);
+    }
+  
+  stack_libc_destroy(stack);
+
+  return true;
 }
