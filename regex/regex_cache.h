@@ -26,7 +26,7 @@ bool regex_cache_valid(regex_cache_t);
 stringtable_index_t regex_cache_insert_regex_ptree(regex_cache_t *,
                                                    ptree_context, ptree regex);
 
-// Converts bytes to a canonical form
+// Converts bytes to a canonical form. Unsigned?
 stringtable_index_t regex_cache_insert_regex_bytes(regex_cache_t *,
                                                    const char *bytes, size_t N);
 
