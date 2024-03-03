@@ -3,7 +3,7 @@
 #include "EvilUnit/EvilUnit.h"
 
 #include "hashtable.h"
-#include "intset_util.h"
+#include "intmap_util.h"
 
 #include "arena.libc.h"
 
@@ -20,8 +20,13 @@ static const struct arena_module_ty arena_libc_contract =
 
 static arena_module arena_mod = &arena_libc_contract;
 
+enum { intset_util_struct_sizeof = 4 * 8 };
+
+
 _Static_assert(sizeof(hashtable_t) == intset_util_struct_sizeof, "");
 _Static_assert(sizeof(intset_t) == intset_util_struct_sizeof, "");
+
+
 
 static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes) {
   (void)h;
@@ -37,28 +42,28 @@ static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
   return __builtin_memcmp(left, right, 8) == 0;
 }
 
-INTSET_UTIL(arena_mod, intset_util_key_hash, intset_util_key_equal, contract_unit_test);
+INTMAP_UTIL(arena_mod, 1, intset_util_key_hash, intset_util_key_equal, contract_unit_test);
 
 
 static const struct hashtable_module_ty mod_state = {
-    .create = intset_util_create,
-    .destroy = intset_util_destroy,
-    .valid = intset_util_valid,
-    .store_userdata = intset_util_store_userdata,
-    .load_userdata = intset_util_load_userdata,
+    .create = intmap_util_create,
+    .destroy = intmap_util_destroy,
+    .valid = intmap_util_valid,
+    .store_userdata = intmap_util_store_userdata,
+    .load_userdata = intmap_util_load_userdata,
     .key_align = 8,
     .key_size = 8,
     .value_align = 1,
     .value_size = 0,
     .key_hash = intset_util_key_hash,
     .key_equal = intset_util_key_equal,
-    .sentinel = (const unsigned char *)&intset_util_sentinel,
-    .size = intset_util_size,
-    .capacity = intset_util_capacity,
-    .lookup_offset = intset_util_lookup_offset,
-    .location_key = intset_util_location_key,
+    .sentinel = (const unsigned char *)&intmap_util_sentinel,
+    .size = intmap_util_size,
+    .capacity = intmap_util_capacity,
+    .lookup_offset = intmap_util_lookup_offset,
+    .location_key = intmap_util_location_key,
     .location_value = 0,
-    .set_size = intset_util_set_size,
+    .set_size = intmap_util_set_size,
     .maybe_remove = 0,
 #if INTSET_CONTRACTS
     .maybe_contract = contract_unit_test,
@@ -68,6 +73,18 @@ static const struct hashtable_module_ty mod_state = {
 };
 
 static const hashtable_module mod = &mod_state;
+
+static inline hashtable_t intset_util_to_hash(intset_t s) {
+  hashtable_t r;
+  __builtin_memcpy(&r.state, &s.state, intset_util_struct_sizeof);
+  return r;
+}
+
+static inline intset_t intset_util_to_set(hashtable_t s) {
+  intset_t r;
+  __builtin_memcpy(&r.state, &s.state, intset_util_struct_sizeof);
+  return r;
+}
 
 intset_t intset_create(uint64_t size) {
   return intset_util_to_set(hashtable_create(mod, size));

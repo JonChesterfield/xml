@@ -244,6 +244,7 @@ int regex_to_char_sequence(arena_module mod, arena_t *arena, ptree val) {
   return regex_to_char_sequence_given_desc(mod, arena, val, &v);
 }
 #endif
+
 ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
   const bool verbose = false;
 
@@ -330,4 +331,39 @@ bool regex_in_byte_representation(const char * bytes, size_t N)
   bool r = !ptree_is_failure(p);
   regex_ptree_destroy_context(ctx);
   return r;
+}
+
+stringtable_index_t regex_insert_into_stringtable(stringtable_t *strtab, ptree val)
+{
+  uint64_t offset_before =
+      arena_next_offset(strtab->arena_mod, strtab->arena);
+
+  int rc = regex_to_char_sequence(strtab->arena_mod,
+                                  &strtab->arena, val);
+  if (rc != 0) {
+    return (stringtable_index_t){
+      .value = UINT64_MAX,
+    };
+  }
+
+  unsigned char zeros[1] = {0};
+  if (!arena_append_bytes(strtab->arena_mod, &strtab->arena,
+                          &zeros[0], 1)) {
+    return (stringtable_index_t){
+        .value = UINT64_MAX,
+    };
+  }
+  uint64_t offset_after =
+      arena_next_offset(strtab->arena_mod, strtab->arena);
+
+  return stringtable_record(strtab, offset_after - offset_before);
+}
+
+ptree regex_from_stringtable(stringtable_t *tab,
+                             stringtable_index_t index,
+                             ptree_context ptree_ctx)
+{
+  const char *const bytes = stringtable_lookup(tab, index);
+  size_t N = __builtin_strlen(bytes);
+  return regex_from_char_sequence(ptree_ctx, bytes, N);
 }

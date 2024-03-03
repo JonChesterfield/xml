@@ -2,6 +2,7 @@
 #define REGEX_STRING_H_INCLUDED
 #include "../tools/arena.h"
 #include "../tools/ptree.h"
+#include "../tools/stringtable.h"
 
 // Considering supporting two different syntaxes, maybe in the same grammar
 // One is (&(*11)(~22)) style, prefix and fully parens
@@ -26,5 +27,11 @@ char * regex_to_malloced_c_string(ptree val);
 
 // bytes represent a valid regex
 bool regex_in_byte_representation(const char * bytes, size_t N);
+
+// Does _not_ canonicalise it
+stringtable_index_t regex_insert_into_stringtable(stringtable_t *, ptree val);
+
+// Writes into ptree_context
+ptree regex_from_stringtable(stringtable_t*,stringtable_index_t,ptree_context);
 
 #endif

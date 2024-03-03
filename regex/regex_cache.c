@@ -226,26 +226,7 @@ regex_cache_insert_regex_canonical_ptree(regex_cache_t *driver, ptree regex) {
     return strfail();
   }
 
-  uint64_t offset_before =
-      arena_next_offset(driver->strtab.arena_mod, driver->strtab.arena);
-
-  int rc = regex_to_char_sequence(driver->strtab.arena_mod,
-                                  &driver->strtab.arena, regex);
-  if (rc != 0) {
-    return strfail();
-  }
-
-  unsigned char zeros[1] = {0};
-  if (!arena_append_bytes(driver->strtab.arena_mod, &driver->strtab.arena,
-                          &zeros[0], 1)) {
-    return (stringtable_index_t){
-        .value = UINT64_MAX,
-    };
-  }
-  uint64_t offset_after =
-      arena_next_offset(driver->strtab.arena_mod, driver->strtab.arena);
-
-  return stringtable_record(&driver->strtab, offset_after - offset_before);
+  return regex_insert_into_stringtable(&driver->strtab, regex);
 }
 
 stringtable_index_t regex_cache_insert_regex_ptree(regex_cache_t *c,
@@ -253,7 +234,6 @@ stringtable_index_t regex_cache_insert_regex_ptree(regex_cache_t *c,
                                                    ptree regex) {
   regex = regex_canonicalise(ptree_ctx, regex);
   if (ptree_is_failure(regex)) {
-    regex_ptree_destroy_context(ptree_ctx);
     return strfail();
   }
   return regex_cache_insert_regex_canonical_ptree(c, regex);

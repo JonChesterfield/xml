@@ -1,5 +1,5 @@
 #include "stringtable.h"
-#include "intset_util.h"
+#include "intmap_util.h"
 
 #include "arena.libc.h"
 
@@ -27,28 +27,28 @@ static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes);
 static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
                                   const unsigned char *right);
 
-INTSET_UTIL(arena_mod, intset_util_key_hash, intset_util_key_equal,
+INTMAP_UTIL(arena_mod, 1, intset_util_key_hash, intset_util_key_equal,
             contract_unit_test);
 
 static const struct hashtable_module_ty hashtable_mod_state = {
-    .create = intset_util_create,
-    .destroy = intset_util_destroy,
-    .valid = intset_util_valid,
-    .store_userdata = intset_util_store_userdata,
-    .load_userdata = intset_util_load_userdata,
+    .create = intmap_util_create,
+    .destroy = intmap_util_destroy,
+    .valid = intmap_util_valid,
+    .store_userdata = intmap_util_store_userdata,
+    .load_userdata = intmap_util_load_userdata,
     .key_align = 8,
     .key_size = 8,
     .value_align = 1,
     .value_size = 0,
     .key_hash = intset_util_key_hash,
     .key_equal = intset_util_key_equal,
-    .sentinel = (const unsigned char *)&intset_util_sentinel,
-    .size = intset_util_size,
-    .capacity = intset_util_capacity,
-    .lookup_offset = intset_util_lookup_offset,
-    .location_key = intset_util_location_key,
+    .sentinel = (const unsigned char *)&intmap_util_sentinel,
+    .size = intmap_util_size,
+    .capacity = intmap_util_capacity,
+    .lookup_offset = intmap_util_lookup_offset,
+    .location_key = intmap_util_location_key,
     .location_value = 0,
-    .set_size = intset_util_set_size,
+    .set_size = intmap_util_set_size,
     .maybe_remove = 0,
 #if INTSET_CONTRACTS
     .maybe_contract = contract_unit_test,
@@ -111,19 +111,19 @@ static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
 
 stringtable_t stringtable_create(void) {
   stringtable_t tab;
-  tab.hash = intset_util_create_using_arena(arena_mod, 8);
+  tab.hash = intmap_util_create_using_arena(arena_mod, 8, true);
   tab.arena = arena_create(arena_mod, 128);
   tab.arena_mod = arena_mod;
   return tab;
 }
 
 void stringtable_destroy(stringtable_t tab) {
-  intset_util_destroy_using_arena(arena_mod, tab.hash);
+  intmap_util_destroy_using_arena(arena_mod, tab.hash);
   arena_destroy(arena_mod, tab.arena);
 }
 
 bool stringtable_valid(stringtable_t tab) {
-  return intset_util_valid_using_arena(arena_mod, tab.hash) &&
+  return intmap_util_valid_using_arena(arena_mod, tab.hash) &&
          arena_valid(arena_mod, tab.arena);
 }
 

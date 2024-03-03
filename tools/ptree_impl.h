@@ -608,10 +608,12 @@ static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
     uint64_t right_id = ptree_identifier(mod, right);
 
     if (left_id < right_id) {
+      stack_destroy(stackmod, stack);
       return ptree_compare_lesser;
     }
 
     if (left_id > right_id) {
+      stack_destroy(stackmod, stack);
       return ptree_compare_greater;
     }
 
@@ -623,9 +625,11 @@ static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
       uint64_t right_width = ptree_token_width(mod, right);
 
       if (left_width < right_width) {
+        stack_destroy(stackmod, stack);
         return ptree_compare_lesser;
       }
       if (left_width > right_width) {
+        stack_destroy(stackmod, stack);
         return ptree_compare_greater;
       }
       ptree_require(left_width == right_width);
@@ -638,9 +642,11 @@ static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
         int r = (int)right_value[i] + 256;
 
         if (l < r) {
+          stack_destroy(stackmod, stack);
           return ptree_compare_lesser;
         }
         if (r < l) {
+          stack_destroy(stackmod, stack);
           return ptree_compare_greater;
         }
       }
@@ -653,9 +659,11 @@ static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
       uint64_t right_width = ptree_expression_elements(mod, right);
 
       if (left_width < right_width) {
+        stack_destroy(stackmod, stack);
         return ptree_compare_lesser;
       }
       if (left_width > right_width) {
+        stack_destroy(stackmod, stack);
         return ptree_compare_greater;
       }
       ptree_require(left_width == right_width);
@@ -678,6 +686,7 @@ static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
       }
     }
   }
+  stack_destroy(stackmod, stack);
   return ptree_compare_equal;
 }
 
