@@ -54,6 +54,7 @@ str = str .. [[
 
   <Groupings>
     <Grouping name="regex" type="ptree" />
+    <Grouping name="some_byte" type="ptree" />
 
     <Grouping name="empty_set" type="ptree" />
     <Grouping name="empty_string" type="ptree" />
@@ -76,6 +77,11 @@ str = str .. [[
   </Groupings>
 
   <Precedences>
+<!--
+    <Nonassoc>
+      <Token name="WHITESPACE" />
+    </Nonassoc>
+-->
   </Precedences>
 
   <Productions>]]
@@ -225,17 +231,23 @@ str = str .. [[
       <Grouping type="not" position="1" />
     </AssignProduction>
 
+
 <!--
     <AssignProduction label="DiscardWSLeft" grouping="regex" >
       <Token name="WHITESPACE" />
       <Grouping type="regex" position="1" />
     </AssignProduction>
--->
 
     <AssignProduction label="DiscardWSRight" grouping="regex" >
       <Grouping type="regex" position="1" />
       <Token name="WHITESPACE" />
     </AssignProduction>
+-->
+
+    <AssignProduction label="some_byte" grouping="regex" >
+      <Grouping type="some_byte" position="1" />
+    </AssignProduction>
+
 
 ]]
 
@@ -245,7 +257,7 @@ str = str .. string.format([[
     <ListProduction label="make_byte_%02x" grouping="byte_%02x" >
       <Token name="BYTE%02x" />
     </ListProduction>
-    <AssignProduction label="from_byte_%02x" grouping="regex" >
+    <AssignProduction label="from_byte_%02x" grouping="some_byte" >
       <Grouping type="byte_%02x" position="1" />
     </AssignProduction>
 

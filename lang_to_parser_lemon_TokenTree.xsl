@@ -133,7 +133,7 @@ static ptree parser_<xsl:value-of select="$LangName"/>_ptree_from_token(ptree_co
 
   ptree <xsl:value-of select="$LangName"/>_parser_tree(<xsl:value-of select="$LangName"/>_parser_type*p)
   {
-    ptree tmp;
+    ptree tmp = ptree_failure();
     token tok = token_create_novalue("");
     <xsl:value-of select="$LangName"/>_Lemon(&amp;p->lemon, 0, tok, &amp;tmp);
     return tmp;

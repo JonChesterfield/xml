@@ -224,6 +224,8 @@ ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
       goto done;
     }
 
+    if (lexer_token.id == regex_token_WHITESPACE) { continue; }
+    
     token lemon_token = token_create(regex_token_names[lexer_token.id],
                                      lexer_token.value, lexer_token.width);
 
