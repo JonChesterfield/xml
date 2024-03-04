@@ -4,6 +4,7 @@
 #include "regex.h"
 
 #include "../tools/stack.libc.h"
+#include "../tools/intset.h"
 #include "regex_string.h"
 
 #include <assert.h>
@@ -222,7 +223,8 @@ static stringtable_index_t strfail(void) {
 // Fails if the regex is not canonical
 stringtable_index_t
 regex_cache_insert_regex_canonical_ptree(regex_cache_t *driver, ptree regex) {
-  if (!regex_is_canonical(regex)) {
+  if (ptree_is_failure(regex) ||
+      !regex_is_canonical(regex)) {
     return strfail();
   }
 
@@ -358,6 +360,28 @@ stringtable_index_t regex_cache_calculate_derivative(regex_cache_t *driver,
                                                                  ith, values);
 }
 
+static stringtable_index_t regex_cache_lookup_derivative_given_hashtable_values(regex_cache_t *driver,
+                                                                         stringtable_index_t index,
+                                                                         uint8_t ith,
+                                                                         unsigned char * values)
+{
+  assert(values != 0);
+  unsigned char *this_value = values + 8 * ith;
+  {
+    stringtable_index_t res;
+    __builtin_memcpy(&res, this_value, 8);
+    if (res.value != UINT64_MAX) {
+      // Cache hit
+      return res;
+    }
+  }
+
+  return strfail();
+}
+
+
+
+
 stringtable_index_t regex_cache_lookup_derivative(regex_cache_t *driver,
                                                   stringtable_index_t index,
                                                   uint8_t ith)
@@ -375,17 +399,7 @@ stringtable_index_t regex_cache_lookup_derivative(regex_cache_t *driver,
     return strfail();
   }
 
-  unsigned char *this_value = values + 8 * ith;
-  {
-    stringtable_index_t res;
-    __builtin_memcpy(&res, this_value, 8);
-    if (res.value != UINT64_MAX) {
-      // Cache hit
-      return res;
-    }
-  }
-
-  return strfail();
+  return regex_cache_lookup_derivative_given_hashtable_values(driver, index, ith, values);
 }
 
 bool regex_cache_all_derivatives_computed(regex_cache_t *driver,
@@ -447,4 +461,90 @@ bool regex_cache_calculate_all_derivatives(regex_cache_t *driver,
     }
   }
   return true;
+}
+
+int regex_cache_traverse(regex_cache_t * cache,
+                         stringtable_index_t root,
+                         int (*functor)(regex_cache_t *,
+                                        stringtable_index_t,
+                                        void*),
+                         void* data)
+{
+  assert(stringtable_index_valid(root));
+  stack_module stackmod = &stack_libc;
+  intset_t set = intset_create(512);
+  if (!intset_valid(set)) { return -1; }
+
+  void *stack = stack_create(stackmod, 8);
+  if (!stack) { intset_destroy(set); return -1; }
+
+  int retval = 0;
+
+  stack_push_assuming_capacity(stackmod, stack, root.value);
+  
+  for (uint64_t current_stack_size = 1; current_stack_size = stack_size(stackmod, stack), current_stack_size != 0;) {
+    stringtable_index_t active = {.value = stack_pop(stackmod, stack),};
+    current_stack_size--; // keep the local variable accurate
+    assert(active.value != UINT64_MAX);
+    if (intset_contains(set, active.value))
+      {
+        continue;
+      }
+
+    // Call it on the root
+    int f = functor(cache, active, data);
+    if (f != 0) {
+      retval = f; goto done;
+    }
+    intset_insert(&set, active.value);
+
+    // Check the derivatives are available
+    if (!regex_cache_calculate_all_derivatives(cache,
+                                               active))
+      {
+        retval = -1; goto done;
+      }
+
+    // Check allocations are sufficient
+    if (intset_available(set) < 256) {
+      if (!intset_rehash_double(&set)) {
+        retval = -1; goto done;
+      }
+    }
+    
+    {
+      void *s2 = stack_reserve(stackmod, stack, current_stack_size + 256);
+      if (!s2) {
+        stack_destroy(stackmod, stack);
+        retval = -1; goto done;
+      }
+      stack = s2;
+    }
+
+    // Push all derivatives onto the stack in reverse order
+    {
+      assert (stringtable_contains(&cache->strtab, active));
+      unsigned char *values =
+        hashtable_lookup_value(hashtable_mod, cache->regex_to_derivatives,
+                               (unsigned char *)&active.value);
+      assert(values); // from calculate_all above
+
+      for (unsigned i = 256; i--> 0; )
+        {        
+          stringtable_index_t ith_deriv =
+            regex_cache_lookup_derivative_given_hashtable_values(cache, active, (uint8_t)i, values);
+          assert(stringtable_index_valid(ith_deriv));
+          if (!intset_contains(set, ith_deriv.value)) {
+            stack_push_assuming_capacity(stackmod, stack, ith_deriv.value);
+          }
+        }
+    }
+  }
+  
+
+ done:;
+    
+  stack_destroy(stackmod, stack);
+  intset_destroy(set);
+  return retval;
 }

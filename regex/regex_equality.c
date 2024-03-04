@@ -107,6 +107,9 @@ static bool regex_canonical_equivalent_with_structures(regex_cache_t *cache,
                                                        stringtable_index_t y,
                                                        void **stack_arg,
                                                        intmap_t *map_arg) {
+
+  // stringtable does not contain ptree_failure nodes
+  
   void *stack = *stack_arg;
   intmap_t map = *map_arg;
 
@@ -130,8 +133,12 @@ static bool regex_canonical_equivalent_with_structures(regex_cache_t *cache,
       // or to do the string compare directly
       ptree_context ctx = regex_ptree_create_context();
       ptree px = regex_from_stringtable(&cache->strtab, left, ctx);
-      ptree py = regex_from_stringtable(&cache->strtab, left, ctx);
+      ptree py = regex_from_stringtable(&cache->strtab, right, ctx);
 
+      assert (!ptree_is_failure(px));
+      assert (!ptree_is_failure(py));
+
+      
       uint64_t xid = regex_ptree_identifier(px);
       uint64_t yid = regex_ptree_identifier(py);
 
@@ -144,6 +151,19 @@ static bool regex_canonical_equivalent_with_structures(regex_cache_t *cache,
         }
       }
 
+      ptree left_nullable = regex_nullable(ctx, px);
+      ptree right_nullable = regex_nullable(ctx, py);
+      assert(!ptree_is_failure(left_nullable));
+      assert(!ptree_is_failure(right_nullable));
+
+      bool left_nullable_is_empty_string = regex_is_empty_string(left_nullable);
+      bool right_nullable_is_empty_string = regex_is_empty_string(right_nullable);
+
+      if (left_nullable_is_empty_string != right_nullable_is_empty_string)
+        {
+          return false;
+        }
+      
       regex_ptree_destroy_context(ctx);
     }
 

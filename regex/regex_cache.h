@@ -52,4 +52,14 @@ bool regex_cache_all_derivatives_computed(regex_cache_t *, stringtable_index_t);
 bool regex_cache_calculate_all_derivatives(regex_cache_t *,
                                            stringtable_index_t);
 
+
+// Call functor on every regex, root first, breadth first, without repetition
+// until functor returns != 0
+int regex_cache_traverse(regex_cache_t *,
+                         stringtable_index_t,
+                         int (*functor)(regex_cache_t *,
+                                        stringtable_index_t,
+                                        void*),
+                         void*);
+
 #endif

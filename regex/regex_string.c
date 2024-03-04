@@ -10,7 +10,6 @@
 
 #include "regex_parser.lemon.t"
 
-
 #include "../tools/arena.libc.h"
 
 struct regex_to_char_sequence_type {
@@ -47,7 +46,7 @@ static int regex_to_char_sequence_pre(ptree tree, uint64_t depth, void *p) {
   if (!arena_request_available(data->mod, data->arena, 8)) {
     return 1;
   }
-  
+
   uint64_t id = regex_ptree_identifier(tree);
 
   if (regex_grouping_id_is_single_byte(id)) {
@@ -66,14 +65,12 @@ static int regex_to_char_sequence_pre(ptree tree, uint64_t depth, void *p) {
 
   switch (id) {
   case regex_grouping_empty_set: {
-    arena_push_char(data->mod, data->arena,
-                    regex_regexes[regex_token_EMPTYSET][1]);
+    arena_push_char(data->mod, data->arena, '%');
     return 0;
   }
 
   case regex_grouping_empty_string: {
-    arena_push_char(data->mod, data->arena,
-                   regex_regexes[regex_token_EMPTYSTRING][1]);
+    arena_push_char(data->mod, data->arena, '_');
     return 0;
   }
 
@@ -86,29 +83,28 @@ static int regex_to_char_sequence_pre(ptree tree, uint64_t depth, void *p) {
 
     switch (id) {
     case regex_grouping_concat: {
-      arena_push_char(data->mod, data->arena,
-                      regex_regexes[regex_token_CONCAT][1]);
+      arena_push_char(data->mod, data->arena, '.');
       return 0;
     }
 
     case regex_grouping_kleene: {
-      arena_push_char(data->mod, data->arena,
-                      regex_regexes[regex_token_KLEENE][1]);
+      arena_push_char(data->mod, data->arena, '*');
+
       return 0;
     }
 
     case regex_grouping_or: {
-      arena_push_char(data->mod, data->arena, regex_regexes[regex_token_OR][1]);
+      arena_push_char(data->mod, data->arena, '|');
       return 0;
     }
 
     case regex_grouping_and: {
-      arena_push_char(data->mod, data->arena, regex_regexes[regex_token_AND][1]);
+      arena_push_char(data->mod, data->arena, '&');
       return 0;
     }
 
     case regex_grouping_not: {
-      arena_push_char(data->mod, data->arena, regex_regexes[regex_token_NOT][1]);
+      arena_push_char(data->mod, data->arena, '~');
       return 0;
     }
 
@@ -134,7 +130,7 @@ static int regex_to_char_sequence_elt(ptree tree, uint64_t depth, void *p) {
 
   regex_ptree_as_xml(&stack_libc, stdout, tree);
   fprintf(stdout, "\n");
-  
+
   return 0;
 }
 
@@ -148,7 +144,7 @@ static int regex_to_char_sequence_post(ptree tree, uint64_t depth, void *p) {
   if (!arena_request_available(data->mod, data->arena, 8)) {
     return 1;
   }
-  
+
   if (regex_grouping_id_is_single_byte(id)) {
     return 0;
   }
@@ -191,59 +187,13 @@ int regex_to_char_sequence(arena_module mod, arena_t *arena, ptree val) {
   }
 
   // Writes a trailing 0 in case the caller decides to pass it to printf(%s)
-  // but doesn't move the allocator line so later calls will continue the existing string
+  // but doesn't move the allocator line so later calls will continue the
+  // existing string
   char *next = arena_next_address(mod, *arena);
   *next = 0;
-  
+
   return r;
 }
-
-
-#if 0
-// Maybe factor out the switch into a table, something like:
-int regex_to_char_sequence_given_desc(arena_module mod, arena_t *arena, ptree val, struct regex_to_char_sequence_type * v)
-{
-  const struct stack_module_ty *stackmod = &stack_libc;
-
-  uint64_t depth = 0;
-  int r = regex_ptree_traverse(stackmod, val, depth, regex_to_char_sequence_pre,
-                               v, regex_to_char_sequence_elt, v,
-                               regex_to_char_sequence_post, v);
-
-  if (!arena_request_available(mod, arena, 8)) {
-    return 1;
-  }
-
-  // Writes a trailing 0 in case the caller decides to pass it to printf(%s)
-  // but doesn't move the allocator line so later calls will continue the existing string
-  char *next = arena_next_address(mod, *arena);
-  *next = 0;
-  
-  return r;
-}
-
-
-int regex_to_char_sequence(arena_module mod, arena_t *arena, ptree val) {
-
-  _Static_assert((regex_grouping_empty_set - regex_token_count) == 0,"");
-  struct regex_to_char_sequence_type v = {
-      .mod = mod,
-      .arena = arena,
-      .syntax = {
-        [regex_grouping_empty_set - regex_token_count] = {"%", "",},
-        [regex_grouping_empty_string - regex_token_count] = {"_", "",},
-        [regex_grouping_concat - regex_token_count] = {"(.", ")",},
-        [regex_grouping_kleene - regex_token_count] = {"(*", ")",},
-        [regex_grouping_or - regex_token_count] = {"(|",  ")",},
-        [regex_grouping_and - regex_token_count] = {"(&", ")",},
-        [regex_grouping_not - regex_token_count] = {"(~", ")",},
-        [regex_grouping_range - regex_token_count] = {"[", "]",},  
-      },
-  };
-
-  return regex_to_char_sequence_given_desc(mod, arena, val, &v);
-}
-#endif
 
 ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
   const bool verbose = false;
@@ -279,7 +229,7 @@ ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
                                      lexer_token.value, lexer_token.width);
 
     if (!regex_ptree_identifier_valid_token(lexer_token.id)) {
-       fprintf(stderr, "Invalid lexer token id %lu\n", lexer_token.id);
+      fprintf(stderr, "Invalid lexer token id %lu\n", lexer_token.id);
       goto done;
     }
 
@@ -293,39 +243,38 @@ done:;
   regex_lexer_destroy(lexer);
 
   return res;
-
 }
 
-char * regex_to_malloced_c_string(ptree val){
+char *regex_to_malloced_c_string(ptree val) {
   arena_t arena = arena_create(&arena_libc, 64);
   ptree_context ctx = regex_ptree_create_context();
 
   uint64_t before = arena_size(&arena_libc, arena);
 
-  char * heap = 0;
-  
-  if (before == 0) {  
+  char *heap = 0;
+
+  if (before == 0) {
     int res = regex_to_char_sequence(&arena_libc, &arena, val);
     if (res == 0) {
       uint64_t after = arena_size(&arena_libc, arena);
       uint64_t size = after - before;
-      char * alloc_heap = malloc(size+1);
+      char *alloc_heap = malloc(size + 1);
       if (alloc_heap) {
         heap = alloc_heap;
-        __builtin_memcpy(heap, (char*)arena_base_address(&arena_libc, arena), size);
+        __builtin_memcpy(heap, (char *)arena_base_address(&arena_libc, arena),
+                         size);
         heap[size] = 0;
       }
     }
   }
-  
+
   regex_ptree_destroy_context(ctx);
   arena_destroy(&arena_libc, arena);
 
   return heap;
 }
 
-bool regex_in_byte_representation(const char * bytes, size_t N)
-{
+bool regex_in_byte_representation(const char *bytes, size_t N) {
   ptree_context ctx = regex_ptree_create_context();
   ptree p = regex_from_char_sequence(ctx, bytes, N);
   bool r = !ptree_is_failure(p);
@@ -333,37 +282,86 @@ bool regex_in_byte_representation(const char * bytes, size_t N)
   return r;
 }
 
-stringtable_index_t regex_insert_into_stringtable(stringtable_t *strtab, ptree val)
-{
-  uint64_t offset_before =
-      arena_next_offset(strtab->arena_mod, strtab->arena);
+stringtable_index_t regex_insert_into_stringtable(stringtable_t *strtab,
+                                                  ptree val) {
+  uint64_t offset_before = arena_next_offset(strtab->arena_mod, strtab->arena);
 
-  int rc = regex_to_char_sequence(strtab->arena_mod,
-                                  &strtab->arena, val);
+  int rc = regex_to_char_sequence(strtab->arena_mod, &strtab->arena, val);
   if (rc != 0) {
-    return (stringtable_index_t){
-      .value = UINT64_MAX,
-    };
-  }
-
-  unsigned char zeros[1] = {0};
-  if (!arena_append_bytes(strtab->arena_mod, &strtab->arena,
-                          &zeros[0], 1)) {
     return (stringtable_index_t){
         .value = UINT64_MAX,
     };
   }
-  uint64_t offset_after =
-      arena_next_offset(strtab->arena_mod, strtab->arena);
+
+  unsigned char zeros[1] = {0};
+  if (!arena_append_bytes(strtab->arena_mod, &strtab->arena, &zeros[0], 1)) {
+    return (stringtable_index_t){
+        .value = UINT64_MAX,
+    };
+  }
+  uint64_t offset_after = arena_next_offset(strtab->arena_mod, strtab->arena);
 
   return stringtable_record(strtab, offset_after - offset_before);
 }
 
-ptree regex_from_stringtable(stringtable_t *tab,
-                             stringtable_index_t index,
-                             ptree_context ptree_ctx)
-{
+ptree regex_from_stringtable(stringtable_t *tab, stringtable_index_t index,
+                             ptree_context ptree_ctx) {
   const char *const bytes = stringtable_lookup(tab, index);
   size_t N = __builtin_strlen(bytes);
   return regex_from_char_sequence(ptree_ctx, bytes, N);
+}
+
+static unsigned char regex_syntax_identifier_invert(unsigned char c) {
+  switch (c) {
+  case '(':
+    return 'L';
+  case ')':
+    return 'R';
+  case 'L':
+    return '(';
+  case 'R':
+    return ')';
+
+  case '.':
+    return 'C';
+  case 'C':
+    return '.';
+
+  case '*':
+    return 'K';
+  case '~':
+    return 'N';
+  case 'K':
+    return '*';
+  case 'N':
+    return '~';
+
+  case '&':
+    return 'A';
+  case '|':
+    return 'O';
+  case 'A':
+    return '&';
+  case 'O':
+    return '|';
+
+  case '%':
+    return 'F';
+  case '_':
+    return 'E';
+  case 'F':
+    return '%';
+  case 'E':
+    return '_';
+
+  default:
+    return c;
+  }
+}
+
+unsigned char regex_syntax_byte_to_c_identifier_byte(unsigned char c) {
+  return regex_syntax_identifier_invert(c);
+}
+unsigned char regex_c_identifer_byte_to_syntax_byte(unsigned char c) {
+  return regex_syntax_identifier_invert(c);
 }

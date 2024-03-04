@@ -34,4 +34,8 @@ stringtable_index_t regex_insert_into_stringtable(stringtable_t *, ptree val);
 // Writes into ptree_context
 ptree regex_from_stringtable(stringtable_t*,stringtable_index_t,ptree_context);
 
+// Convert from regex bytes to/from ones that C accepts in identifiers
+unsigned char regex_syntax_byte_to_c_identifier_byte(unsigned char);
+unsigned char regex_c_identifer_byte_to_syntax_byte(unsigned char);
+
 #endif

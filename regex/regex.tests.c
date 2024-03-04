@@ -252,6 +252,67 @@ static MODULE(regex_string)
     free(out);
   }
 
+  TEST("syntax to/from c identifier reversible")
+    {
+      for (unsigned i = 0; i < 256; i++)
+        {
+          unsigned char src = (unsigned char)i;
+
+          {
+            unsigned char cid = regex_syntax_byte_to_c_identifier_byte(src);
+            unsigned char syn = regex_c_identifer_byte_to_syntax_byte(cid);
+            CHECK(src == syn);
+          }
+
+          {
+            unsigned char syn = regex_c_identifer_byte_to_syntax_byte(src);
+            unsigned char cid = regex_syntax_byte_to_c_identifier_byte(syn);
+            if (src != cid) {
+              printf("I %u: src %c, syn %c, cid %c\n", i, src, syn, cid);
+            }
+            CHECK(src == cid);
+          }
+        }
+    }
+
+  TEST("syn/cid lowercase hex digits unchanged")
+    {
+      unsigned char src[16] = {'0','1','2','3','4',
+                               '5','6','7','8','9',
+                               'a','b','c','d','e','f',};
+      size_t N = sizeof(src);
+
+      for (size_t i = 0; i < N; i++)
+        {
+          CHECK(src[i] == regex_c_identifer_byte_to_syntax_byte(src[i]));
+          CHECK(src[i] == regex_syntax_byte_to_c_identifier_byte(src[i]));
+        }
+    }
+
+  TEST("specific byte conversions")
+    {
+      // parens
+      CHECK(regex_syntax_byte_to_c_identifier_byte('(') == 'L');
+      CHECK(regex_syntax_byte_to_c_identifier_byte(')') == 'R');
+
+      // concat
+      CHECK(regex_syntax_byte_to_c_identifier_byte('.') == 'C');
+            
+      // unary op
+      CHECK(regex_syntax_byte_to_c_identifier_byte('*') == 'K');
+      CHECK(regex_syntax_byte_to_c_identifier_byte('~') == 'N');
+
+      // binary op
+      CHECK(regex_syntax_byte_to_c_identifier_byte('&') == 'A');
+      CHECK(regex_syntax_byte_to_c_identifier_byte('|') == 'O');
+
+      // empty set
+      CHECK(regex_syntax_byte_to_c_identifier_byte('%') == 'F');
+
+      // empty string
+      CHECK(regex_syntax_byte_to_c_identifier_byte('_') == 'E');
+      
+    }
   
   regex_ptree_destroy_context(ctx);
   arena_destroy(&arena_libc, arena);
@@ -264,9 +325,12 @@ static MODULE(driver)
       printf("DEMO\n");
       regex_cache_t D = regex_cache_create();
       CHECK(regex_cache_valid(D));
+      const char * regstr = "";
+        
+      regstr = "(|" "(&(*(|0001))(|(*00)(|02(~cc))))" "(|(|0001)(|0203))" ")";
 
-      const char * regstr = "(&(*(|0001))(|(*00)(|02(~cc))))";
-
+      regstr =  "(|(|0001)(|0203))" ;
+      
       size_t N = __builtin_strlen(regstr);
 
       CHECK(regex_in_byte_representation(regstr, N));

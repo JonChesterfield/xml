@@ -117,6 +117,13 @@ void intset_insert(intset_t *s, uint64_t v) {
   *s = intset_util_to_set(h);
 }
 
+void intset_clear(intset_t * s)
+{
+  hashtable_t h = intset_util_to_hash(*s);
+  hashtable_clear(mod, &h);
+  *s = intset_util_to_set(h);
+}
+
 #if 0 // todo
 void intset_remove(intset_t* s, uint64_t v)
 {
