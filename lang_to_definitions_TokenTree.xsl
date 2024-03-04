@@ -30,7 +30,6 @@
   <xsl:value-of select="translate($LangName,$lowercase,$uppercase)" />
 </xsl:variable>
 
-
 <xsl:template match="Tokens">
   <Header>
     <Include value='#include "{$LangName}.declarations.h"' />
@@ -241,8 +240,30 @@
   <NL hexvalue = "0a" />  
 </xsl:template>
 
+<xsl:template match="Token" mode="Discard">
+  <ID value="    case {$LangName}_token_{@name}:" />
+  <NL hexvalue="0a" />
+</xsl:template>
 
-
+<xsl:template match="TokenDiscard">
+    <Comment value="// TokenDiscard start" />
+    <NL hexvalue="0a" />
+    <Decl value="bool {$LangName}_lexer_discard_token(enum {$LangName}_token id)" />
+    <NL hexvalue="0a" />
+    <OB value="{{" />
+    <NL hexvalue="0a" />
+    <OB value="  switch(id)" />
+    <OB value="  {{" />
+    <NL hexvalue="0a" />
+    <xsl:apply-templates select="Token" mode="Discard"/>
+    <CB value="    return true;&#xA;default:&#xA; return false;&#xA;" />
+    <CB value="  }}" />
+    <NL hexvalue="0a" />
+    <CB value="}}" />
+    <NL hexvalue="0a" />
+    <Comment value="// TokenDiscard end" />
+    <NL hexvalue="0a" />
+</xsl:template>
 
 <xsl:template name="LexerInstantiate" >
   <xsl:param name="variant"/>

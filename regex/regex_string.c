@@ -209,7 +209,6 @@ ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
 
   struct regex_parser_s parser_state;
   regex_parser_type *parser = (regex_parser_type *)&parser_state;
-
   regex_parser_initialize(parser, ctx);
 
   for (lexer_iterator_t lexer_iterator = lexer_iterator_t_create(bytes, N);

@@ -52,6 +52,13 @@ str = str .. [[
 
 str = str .. [[
 
+  <TokenDiscard>
+    <Token name="WHITESPACE" />
+  </TokenDiscard>
+]]
+
+str = str .. [[
+
   <Groupings>
     <Grouping name="regex" type="ptree" />
     <Grouping name="some_byte" type="ptree" />

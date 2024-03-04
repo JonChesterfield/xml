@@ -42,6 +42,11 @@
     <Comment value="// Lexer" />
     <NL hexvalue="0a" />
 
+    <EnumDecl value="enum" />
+    <SP value = " " />
+    <LangName value="{$LangName}_token;" />
+    <NL hexvalue="0a" />
+
     <Include value='#include "../tools/lexer.h"' />
     <NL hexvalue="0a" />
 
@@ -50,6 +55,8 @@
     <Decl value="void {$LangName}_lexer_destroy(lexer_t);" />
     <NL hexvalue="0a" />
     <Decl value="bool {$LangName}_lexer_valid(lexer_t);" />
+    <NL hexvalue="0a" />
+    <Decl value="bool {$LangName}_lexer_discard_token(enum {$LangName}_token);" />
     <NL hexvalue="0a" />
     <Decl value="lexer_token_t {$LangName}_lexer_iterator_step(lexer_t, lexer_iterator_t *);" />
     <NL hexvalue="0a" />
