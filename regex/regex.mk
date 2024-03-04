@@ -43,8 +43,6 @@ regex/regex_parser.lemon.c:	$(lemon_tmp)/regex_parser.lemon.c
 regex/regex_parser.lemon.h:	$(lemon_tmp)/regex_parser.lemon.h
 	@cp "$<" "$@"
 
-
-
 regex/regex.ptree.h:	regex/regex.ptree.h.in tools/ptree_macro_wrapper.h
 	$(CC) -E -C -P -xc $< -ffreestanding -o $@
 	clang-format -i $@
@@ -108,7 +106,8 @@ clean::
 	@rm -f regex/regex_parser.lemon.y
 
 
-$(REGEX_OBJECTS) $(REGEX_PROGRAM_OBJECTS): $(regex_tmp)/%.o: regex/%.c $(REGEX_HEADERS) | $(regex_tmp)
+$(REGEX_PROGRAM_OBJECTS): regex/regex_parser.lemon.t
+$(REGEX_OBJECTS) $(REGEX_PROGRAM_OBJECTS): $(regex_tmp)/%.o: regex/%.c $(REGEX_HEADERS) | $(regex_tmp) 
 	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
 
 $(regex_tmp)/parser_header_gen.c: | $(regex_tmp)
@@ -136,9 +135,8 @@ bin/regex_stdin_to_xml:	$(regex_tmp)/regex_stdin_to_xml.o $(REGEX_OBJECTS) $(REG
 	@mkdir -p "$(dir $@)"
 	$(CC) $(CFLAGS) $^ -o $@
 
-
 clean::
-	@rm -f bin/regex.tests
+	@rm -f bin/regex.tests bin/regex_stdin_to_xml
 
 regex/regex.lang.xml:	regex/regex.lang.xml.lua
 	@lua $^ > $@
@@ -152,6 +150,13 @@ regex/regex.byte_constructors.data:	regex/regex.byte_constructors.data.lua
 regex/regex.ptree.byte_print_array.data:	regex/regex.ptree.byte_print_array.data.lua
 	@lua $^ > $@
 
+regex/regex_stdin_to_xml.c:	scripts/write_stdin_to_xml.lua
+	@lua $^ "regex" > $@
+
 clean::
-	@rm -f regex/regex.declarations.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data
+	@rm -f regex/regex.lang.xml
+	@rm -f regex/regex.declarations.h
+	@rm -f regex/regex.byte_constructors.data
+	@rm -f regex/regex.ptree.byte_print_array.data
+	@rm -f regex/regex_stdin_to_xml.c
 
