@@ -322,10 +322,10 @@ static unsigned char regex_syntax_identifier_invert(unsigned char c) {
   case 'R':
     return ')';
 
-  case '.':
+  case ':':
     return 'C';
   case 'C':
-    return '.';
+    return ':';
 
   case '*':
     return 'K';

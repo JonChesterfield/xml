@@ -291,7 +291,7 @@
     <Token name="EMPTYSET" literal="%" />
     <Token name="EMPTYSTRING" literal="_" />
 
-    <Token name="CONCAT" literal="." />
+    <Token name="CONCAT" literal=":" />
 
     <Token name="KLEENE" literal="*" />
 

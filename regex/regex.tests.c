@@ -291,12 +291,15 @@ static MODULE(regex_string)
 
   TEST("specific byte conversions")
     {
+      // sufficient to know that 'accept' is not in the possible name set
+      CHECK(regex_syntax_byte_to_c_identifier_byte('t') == 't');
+      
       // parens
       CHECK(regex_syntax_byte_to_c_identifier_byte('(') == 'L');
       CHECK(regex_syntax_byte_to_c_identifier_byte(')') == 'R');
 
       // concat
-      CHECK(regex_syntax_byte_to_c_identifier_byte('.') == 'C');
+      CHECK(regex_syntax_byte_to_c_identifier_byte(':') == 'C');
             
       // unary op
       CHECK(regex_syntax_byte_to_c_identifier_byte('*') == 'K');

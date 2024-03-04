@@ -9,6 +9,12 @@
 
 #include <stdio.h>
 
+bool regex_nullable_p(ptree_context ctx, ptree val) {
+  ptree r = regex_nullable(ctx, val);
+  return regex_is_empty_string(r);
+}
+
+// Could be a boolean function instead of returning the regex
 ptree regex_nullable(ptree_context ctx, ptree val) {
   // Needs to return empty string or empty set on any val
   // partially tested

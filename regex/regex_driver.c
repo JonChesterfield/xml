@@ -83,6 +83,19 @@ static char *malloc_rewrite(const char *str, size_t N) {
   return res;
 }
 
+static bool nullable_gives_empty_string(regex_cache_t *cache,
+                                        stringtable_index_t active) {
+  ptree_context ctx = regex_ptree_create_context();
+  ptree px = regex_from_stringtable(&cache->strtab, active, ctx);
+
+  bool nullable_is_empty_string = regex_nullable_p(ctx, px);
+
+  regex_ptree_destroy_context(ctx);
+  return nullable_is_empty_string;
+}
+
+
+
 static int regex_to_c_traverse_function(regex_cache_t *cache,
                                         stringtable_index_t active,
                                         void *arg_data) {
@@ -97,6 +110,40 @@ static int regex_to_c_traverse_function(regex_cache_t *cache,
     return 1;
   }
 
+  {
+    char *encoded = malloc_rewrite(regex, regexN);
+    assert(encoded);
+    fprintf(
+        out,
+        "void regex_state_%s(unsigned char * start, unsigned char * cursor, "
+        "unsigned char * end, void*data)\n{\n",
+        encoded);
+    free(encoded);
+  }
+
+  {
+    ptree_context ctx = regex_ptree_create_context();
+    ptree px = regex_from_stringtable(&cache->strtab, active, ctx);
+
+    if (regex_is_empty_set(px))
+      {
+        fprintf(out, "    // regex %s is empty set\n", regex);
+        fprintf(out,
+                "    return regex_state_reject(start, cursor, end, data);\n");
+        fprintf(out, "}\n");
+        return 0;        
+      }
+
+    if (regex_nullable_p(ctx, px))
+      {
+        fprintf(out, "    // regex %s is nullable\n", regex);
+        fprintf(out,
+                "    return regex_state_accept(start, cursor, end, data);\n");
+        fprintf(out, "}\n");
+        return 0;                
+      }
+  }
+  
   intset_clear(&data->set);
 
   for (unsigned i = 0; i < 256; i++) {
@@ -109,67 +156,57 @@ static int regex_to_c_traverse_function(regex_cache_t *cache,
     intset_insert(&data->set, tmp.value);
   }
 
-  {
-    char *encoded = malloc_rewrite(regex, regexN);
-    assert(encoded);
-    fprintf(
-        out,
-        "void regex_state_%s(unsigned char * start, unsigned char * cursor, "
-        "unsigned char * end, void*data)\n{\n",
-        encoded);
-    free(encoded);
-  }
 
-  if (intset_size(data->set) == 1) {
-    const char *target = stringtable_lookup(&cache->strtab, data->derivs[0]);
-    size_t targetN = __builtin_strlen(target);
+  // todo, special case intset_size(data->set) == 1)
 
-    {
-      char *encoded = malloc_rewrite(target, targetN);
-      assert(encoded);
-      fprintf(out, "  // regex \"%s\" unconditionally calls \"%s\"\n", regex,
-              target);
-      fprintf(out, "  return regex_state_%s(start, cursor+1, end, data);\n",
-              encoded);
-      free(encoded);
-    }
-  } else {
-    fprintf(out, "  // regex \"%s\", distinct edges %zu\n", regex,
-            intset_size(data->set));
-    fprintf(out, "  switch(*cursor)\n  {\n");
-    unsigned current_deriv_start = 0;
-    stringtable_index_t current_deriv = data->derivs[0];
+  fprintf(out, "  // regex \"%s\", distinct edges %zu\n", regex,
+          intset_size(data->set));
+  fprintf(out, "  switch(*cursor)\n  {\n");
+  unsigned current_deriv_start = 0;
+  stringtable_index_t current_deriv = data->derivs[0];
 
-    for (unsigned i = 0; i < 256; i++) {
-      bool last_iter = i == 255;
+  for (unsigned i = 0; i < 256; i++) {
+    bool last_iter = i == 255;
 
-      stringtable_index_t next_deriv = last_iter ?
+    stringtable_index_t next_deriv = last_iter ?
       (stringtable_index_t){.value = 0,} :
       data->derivs[i+1];
 
-      if (last_iter || (next_deriv.value != current_deriv.value)) {
+    if (last_iter || (next_deriv.value != current_deriv.value)) {
+      const char *target = stringtable_lookup(&cache->strtab, current_deriv);
+      size_t targetN = __builtin_strlen(target);
 
-        const char *target = stringtable_lookup(&cache->strtab, current_deriv);
-        size_t targetN = __builtin_strlen(target);
+      {
+        char *encoded = malloc_rewrite(target, targetN);
+        assert(encoded);
 
-        {
-          char *encoded = malloc_rewrite(target, targetN);
-          assert(encoded);
+        ptree_context ctx = regex_ptree_create_context();
+        ptree px = regex_from_stringtable(&cache->strtab, current_deriv, ctx);
+        bool nullable = regex_nullable_p(ctx, px);
+        bool empty = regex_is_empty_set(px);
 
-          fprintf(
-              out,
-              "    case %u ... %u: return %s(start, cursor+1, end, data);\n",
-              current_deriv_start, i, encoded);
-          free(encoded);
+        const char * target = encoded;        
+        if (nullable || empty) {
+          const char * shortcase = nullable ? "nullable" : "empty set";
+          fprintf(out, "    // regex %s is %s\n", target, shortcase);          
+          target = nullable ? "accept" : "reject";
         }
 
-        // reset
-        current_deriv = next_deriv;
-        current_deriv_start = i + 1;
+        fprintf(
+                out,
+                "    case %u ... %u: return regex_state_%s(start, cursor, "
+                "end, data);\n",
+                current_deriv_start, i, target);
+        
+        free(encoded);
       }
+
+      // reset
+      current_deriv = next_deriv;
+      current_deriv_start = i + 1;
     }
-    fprintf(out, "  }\n");
   }
+  fprintf(out, "  }\n");
 
   fprintf(out, "}\n");
 
@@ -184,6 +221,16 @@ bool regex_driver_regex_to_c(regex_cache_t *cache, stringtable_index_t index) {
   if (!intset_valid(instance.set)) {
     return false;
   }
+
+  // lowercase t is not an identifier thus accept is not an encoding of a regex
+  fprintf(instance.file,
+          "void regex_state_accept(unsigned char * start, unsigned char * "
+          "cursor, unsigned char * end, void*data);\n");
+  fprintf(instance.file,
+          "void regex_state_reject(unsigned char * start, unsigned char * "
+          "cursor, unsigned char * end, void*data);\n");
+  fprintf(instance.file, "\n");
+
   bool r = regex_cache_traverse(cache, index, regex_to_c_traverse_function,
                                 (void *)&instance) == 0;
   intset_destroy(instance.set);
