@@ -84,6 +84,18 @@ RE2COPTS := --no-debug-info -W --no-generation-date
 %.cmark.html:	%.md | $(cmark)
 	@./$(cmark) --to html $^ > $@
 
+
+
+# In any directory:
+# %.TokenTree.xml -> %.TokenList.xml
+# %.TokenList.xml -> %.HexTokenList.xml
+# %.HexTokenList.xml -> %.RawBinary.xml
+include $(SELF_DIR)common/common.mk
+
+%.hex:	%.RawBinary.xml validate/subtransforms
+	xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
+
+
 #
 # make functions
 #

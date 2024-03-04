@@ -24,23 +24,23 @@ REGEX_TOOLS_OBJECTS := $(addprefix $(TOOLS_DIR_OBJ)/,lexer.re2c.o lexer.posix.o 
 
 # going to patch lemon to allow specifying filenames I think
 
-lemon_tmp := $(regex_tmp)/lemon
-$(lemon_tmp):	$(regex_tmp)
-	@mkdir -p $(lemon_tmp)
+regex_lemon_tmp := $(regex_tmp)/lemon
+$(regex_lemon_tmp):	$(regex_tmp)
+	@mkdir -p $(regex_lemon_tmp)
 
-$(lemon_tmp)/%.lemon.c:	regex/%.lemon.y $(lemon) tools/lempar.data regex/regex.lang.xml | $(lemon_tmp)
-	cp "$<" "$(lemon_tmp)/$*.lemon.y"
-	cd $(lemon_tmp) && ./../../$(lemon) -l -T../../tools/lempar.data -m "$*.lemon.y" || rm -f $@
+$(regex_lemon_tmp)/%.lemon.c:	regex/%.lemon.y $(lemon) tools/lempar.data regex/regex.lang.xml | $(regex_lemon_tmp)
+	cp "$<" "$(regex_lemon_tmp)/$*.lemon.y"
+	cd $(regex_lemon_tmp) && ./../../$(lemon) -l -T../../tools/lempar.data -m "$*.lemon.y" || rm -f $@
 
-$(lemon_tmp)/%.lemon.h:	$(lemon_tmp)/%.lemon.c $(makeheaders) | $(lemon_tmp)
-	cd $(lemon_tmp)/ && ./../../$(makeheaders) "$*.lemon.c"
+$(regex_lemon_tmp)/%.lemon.h:	$(regex_lemon_tmp)/%.lemon.c $(makeheaders) | $(regex_lemon_tmp)
+	cd $(regex_lemon_tmp)/ && ./../../$(makeheaders) "$*.lemon.c"
 
-regex/regex_parser.lemon.c:	$(lemon_tmp)/regex_parser.lemon.c
+regex/regex_parser.lemon.c:	$(regex_lemon_tmp)/regex_parser.lemon.c
 	@cp "$<" "$@"
 #	ugly, but does hack around the unused variable warnings
 	@sed -i 's~\(#define regex_LemonCTX_FETCH ptree_context regex_ptree_context=yypParser->regex_ptree_context;\)~\0 (void)regex_ptree_context;~g' "$@"
 
-regex/regex_parser.lemon.h:	$(lemon_tmp)/regex_parser.lemon.h
+regex/regex_parser.lemon.h:	$(regex_lemon_tmp)/regex_parser.lemon.h
 	@cp "$<" "$@"
 
 regex/regex.ptree.h:	regex/regex.ptree.h.in tools/ptree_macro_wrapper.h
@@ -69,14 +69,6 @@ $(regex_tmp)/regex.re2c_iterator.c.re2c:	$(regex_tmp)/regex_re2c_iterator.hex $(
 $(regex_tmp)/regex_parser.lemon.TokenTree.xml:	lang_to_parser_lemon_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
 	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
-
-# TokenList is a common form
-$(eval $(call XML_Pipeline_Template_Common,$(regex_tmp),TokenTree,TokenList))
-$(eval $(call XML_Pipeline_Template_Common,$(regex_tmp),TokenList,HexTokenList))
-$(eval $(call XML_Pipeline_Template_Common,$(regex_tmp),HexTokenList,RawBinary))
-
-$(regex_tmp)/%.hex:	$(regex_tmp)/%.RawBinary.xml validate/subtransforms
-	@xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
 
 regex/regex.lexer.declarations.h:	$(regex_tmp)/regex_declarations.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"

@@ -10,27 +10,27 @@ clean::
 # well this is grim, lemon is a bit too filename driven
 # use a directory and cd into it before calling the tools to control the output filename
 
-lemon_tmp := $(arith_tmp)/lemon
-$(lemon_tmp):	$(arith_tmp)
-	@mkdir -p $(lemon_tmp)
+arith_lemon_tmp := $(arith_tmp)/lemon
+$(arith_lemon_tmp):	$(arith_tmp)
+	@mkdir -p $(arith_lemon_tmp)
 
-$(lemon_tmp)/%.lemon.c:	arith/%.lemon.y $(lemon) tools/lempar.data arith/arith.lang.xml | $(lemon_tmp)
-	cp "$<" "$(lemon_tmp)/$*.lemon.y"
-	cd $(lemon_tmp) && ./../../$(lemon) -l -T../../tools/lempar.data -m "$*.lemon.y" || rm -f $@
+$(arith_lemon_tmp)/%.lemon.c:	arith/%.lemon.y $(lemon) tools/lempar.data arith/arith.lang.xml | $(arith_lemon_tmp)
+	cp "$<" "$(arith_lemon_tmp)/$*.lemon.y"
+	cd $(arith_lemon_tmp) && ./../../$(lemon) -l -T../../tools/lempar.data -m "$*.lemon.y" || rm -f $@
 
-$(lemon_tmp)/%.lemon.h:	$(lemon_tmp)/%.lemon.c $(makeheaders) | $(lemon_tmp)
-	cd $(lemon_tmp)/ && ./../../$(makeheaders) "$*.lemon.c"
+$(arith_lemon_tmp)/%.lemon.h:	$(arith_lemon_tmp)/%.lemon.c $(makeheaders) | $(arith_lemon_tmp)
+	cd $(arith_lemon_tmp)/ && ./../../$(makeheaders) "$*.lemon.c"
 
-arith/arith.lemon.c:	$(lemon_tmp)/arith.lemon.c
+arith/arith.lemon.c:	$(arith_lemon_tmp)/arith.lemon.c
 	@cp "$<" "$@"
 
-arith/arith.lemon.h:	$(lemon_tmp)/arith.lemon.h arith/arith.ptree.h
+arith/arith.lemon.h:	$(arith_lemon_tmp)/arith.lemon.h arith/arith.ptree.h
 	@cp "$<" "$@"
 
-arith/arith_parser.lemon.c:	$(lemon_tmp)/arith_parser.lemon.c
+arith/arith_parser.lemon.c:	$(arith_lemon_tmp)/arith_parser.lemon.c
 	@cp "$<" "$@"
 
-arith/arith_parser.lemon.h:	$(lemon_tmp)/arith_parser.lemon.h
+arith/arith_parser.lemon.h:	$(arith_lemon_tmp)/arith_parser.lemon.h
 	@cp "$<" "$@"
 
 arith/arith.ptree.h:	arith/arith.ptree.h.in tools/ptree_macro_wrapper.h
@@ -77,15 +77,6 @@ $(arith_tmp)/arith_re2c_iterator.TokenTree.xml:	lang_to_lexer_re2c_iterator_defi
 $(arith_tmp)/arith_parser.lemon.TokenTree.xml:	lang_to_parser_lemon_TokenTree.xsl arith/arith.lang.xml  | $(arith_tmp)
 	xsltproc --output $@ $^
 
-# TokenList is a common form
-$(eval $(call XML_Pipeline_Template_Common,$(arith_tmp),TokenTree,TokenList))
-$(eval $(call XML_Pipeline_Template_Common,$(arith_tmp),TokenList,HexTokenList))
-$(eval $(call XML_Pipeline_Template_Common,$(arith_tmp),HexTokenList,RawBinary))
-
-# This might be reasonable as a top level transform
-# actually, so might the %.TokenTree.xml ->  %.TokenList.xml style ones
-$(arith_tmp)/%.hex:	$(arith_tmp)/%.RawBinary.xml validate/subtransforms
-	@xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
 
 # TODO: ideally wouldn't depend on clang-format
 arith/arith.declarations.h:	$(arith_tmp)/arith_declarations.hex $(hex_to_binary)
