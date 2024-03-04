@@ -7,7 +7,6 @@
 #include "regex.lexer.declarations.h"
 
 #include "regex_parser.lemon.h"
-
 #include "regex_parser.lemon.t"
 
 #include "../tools/arena.libc.h"

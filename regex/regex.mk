@@ -10,10 +10,17 @@ clean::
 
 REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.declarations.h regex/regex_parser.lemon.h regex/regex_string.h
 
-REGEX_SOURCE := regex.ptree.c regex.tests.c regex.c regex.lexer.definitions.c regex_parser.lemon.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c regex_interpreter.c
+REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.definitions.c regex_parser.lemon.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c regex_interpreter.c
+
+
+REGEX_PROGRAM_SOURCE := regex.tests.c regex_stdin_to_xml.c
 
 REGEX_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_SOURCE:.c=.o))
+REGEX_PROGRAM_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_PROGRAM_SOURCE:.c=.o))
 
+
+
+REGEX_TOOLS_OBJECTS := $(addprefix $(TOOLS_DIR_OBJ)/,lexer.re2c.o lexer.posix.o lexer.re2.o stringtable.o intset.o intmap.o)
 
 # going to patch lemon to allow specifying filenames I think
 
@@ -101,11 +108,8 @@ clean::
 	@rm -f regex/regex_parser.lemon.y
 
 
-
-$(REGEX_OBJECTS): $(regex_tmp)/%.o: regex/%.c $(REGEX_HEADERS) | $(regex_tmp)
+$(REGEX_OBJECTS) $(REGEX_PROGRAM_OBJECTS): $(regex_tmp)/%.o: regex/%.c $(REGEX_HEADERS) | $(regex_tmp)
 	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
-
-
 
 $(regex_tmp)/parser_header_gen.c: | $(regex_tmp)
 	@echo 'int regex_Lemon_parser_header(void);' > $@
@@ -122,20 +126,22 @@ clean::
 	@rm -f regex/regex_parser.lemon.t
 
 .PHONY: regex
-regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c regex/regex_parser.lemon.t
+regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c regex/regex_parser.lemon.t bin/regex.tests bin/regex_stdin_to_xml
 
-bin/regex.tests:	$(REGEX_OBJECTS) .tools.O/lexer.re2c.o .tools.O/lexer.posix.o .tools.O/lexer.re2.o .tools.O/stringtable.o .tools.O/intset.o .tools.O/intmap.o
+bin/regex.tests:	$(regex_tmp)/regex.tests.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
 	@mkdir -p "$(dir $@)"
 	$(CC) $(CFLAGS) $^ -o $@
 
-#bin/regex:	$(regex_tmp)/regex.o $(regex_tmp)/regex.ptree.o
-#	@mkdir -p "$(dir $@)"
-#	$(CC) $(CFLAGS) $^ -o $@
+bin/regex_stdin_to_xml:	$(regex_tmp)/regex_stdin_to_xml.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) $^ -o $@
 
 
 clean::
 	@rm -f bin/regex.tests
 
+regex/regex.lang.xml:	regex/regex.lang.xml.lua
+	@lua $^ > $@
 
 regex/regex.declarations.h:	regex/regex.declarations.h.lua
 	@lua $^ > $@

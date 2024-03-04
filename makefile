@@ -57,6 +57,7 @@ cmark := bin/cmark
 # Source under TOOLS_DIR used to make binaries under TOOLS_DIR_BIN
 TOOLS_DIR := tools
 TOOLS_DIR_BIN := bin
+TOOLS_DIR_OBJ := .$(TOOLS_DIR).O
 
 include submakefiles/schemas.mk
 
@@ -303,10 +304,10 @@ arith.lexer:	$(arith_tmp)/arith.lexer.o
 arith.main:	$(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.main.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-arith.stdin_to_tree:	$(arith_tmp)/stdin_to_tree.o $(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.ptree.o $(arith_tmp)/arith.definitions.o .tools.O/lexer.posix.o .tools.O/lexer.re2.o .tools.O/lexer.re2c.o 
+arith.stdin_to_tree:	$(arith_tmp)/stdin_to_tree.o $(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.ptree.o $(arith_tmp)/arith.definitions.o $(TOOLS_DIR_OBJ)/lexer.posix.o $(TOOLS_DIR_OBJ)/lexer.re2.o $(TOOLS_DIR_OBJ)/lexer.re2c.o 
 	$(CXX) $(CXXFLAGS) $^ $(RE2LIB) -o $@
 
-arith.tests:	$(arith_tmp)/arith.tests.o $(arith_tmp)/arith.ptree.o .tools.O/generic_ptree.o
+arith.tests:	$(arith_tmp)/arith.tests.o $(arith_tmp)/arith.ptree.o $(TOOLS_DIR_OBJ)/generic_ptree.o
 	$(CXX) $(CXXFLAGS) $^ $(RE2LIB) -o $@
 
 clean::
@@ -352,7 +353,6 @@ LIBXML2_SRC := $(call rwildcard,$(TOOLS_DIR)/libxml2,*.c)
 LIBXSLT_SRC := $(call rwildcard,$(TOOLS_DIR)/libxslt,*.c)
 
 # All C, C++ get compiled to object files individually
-TOOLS_DIR_OBJ := .$(TOOLS_DIR).O
 TOOLS_C_SRC := $(call rwildcard,$(TOOLS_DIR),*.c)
 TOOLS_CPP_SRC := $(call rwildcard,$(TOOLS_DIR),*.cpp)
 
