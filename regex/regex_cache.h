@@ -54,7 +54,8 @@ bool regex_cache_calculate_all_derivatives(regex_cache_t *,
 
 
 // Call functor on every regex, root first, breadth first, without repetition
-// until functor returns != 0
+// until functor returns != 0. Will calculate derivatives and add to the cache
+// as required.
 int regex_cache_traverse(regex_cache_t *,
                          stringtable_index_t,
                          int (*functor)(regex_cache_t *,

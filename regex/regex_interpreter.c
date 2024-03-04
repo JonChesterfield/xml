@@ -22,7 +22,6 @@ uint64_t regex_interpreter_string_matches(unsigned char *regex,
 
   for (unsigned iter = 0; iter < target_len; iter++) {
     ptree_context ctx = regex_ptree_create_context();
-
     {
       ptree p = regex_from_stringtable(&cache.strtab, current, ctx);
       if (regex_nullable_p(ctx, p)) {

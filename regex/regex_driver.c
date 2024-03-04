@@ -83,19 +83,6 @@ static char *malloc_rewrite(const char *str, size_t N) {
   return res;
 }
 
-static bool nullable_gives_empty_string(regex_cache_t *cache,
-                                        stringtable_index_t active) {
-  ptree_context ctx = regex_ptree_create_context();
-  ptree px = regex_from_stringtable(&cache->strtab, active, ctx);
-
-  bool nullable_is_empty_string = regex_nullable_p(ctx, px);
-
-  regex_ptree_destroy_context(ctx);
-  return nullable_is_empty_string;
-}
-
-
-
 static int regex_to_c_traverse_function(regex_cache_t *cache,
                                         stringtable_index_t active,
                                         void *arg_data) {
