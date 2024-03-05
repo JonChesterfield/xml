@@ -8,7 +8,7 @@ clean::
 	rm -rf $(regex_tmp)
 
 
-REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.h regex/regex_parser.lemon.h regex/regex_string.h
+REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.h regex/regex.production.h regex/regex_parser.lemon.h regex/regex_string.h
 
 REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_parser.lemon.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c regex_interpreter.c
 
@@ -65,6 +65,9 @@ $(regex_tmp)/regex_lexer_re2c_iterator.TokenTree.xml:	lang_to_lexer_re2c_iterato
 $(regex_tmp)/regex.lexer_re2c_iterator.c.re2c:	$(regex_tmp)/regex_lexer_re2c_iterator.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"
 
+$(regex_tmp)/regex_production_declarations.TokenTree.xml:	lang_to_production_declarations_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
+	@xsltproc $(XSLTPROCOPTS) --output $@ $^
+
 $(regex_tmp)/regex_parser.lemon.TokenTree.xml:	lang_to_parser_lemon_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
 	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
@@ -80,6 +83,9 @@ regex/regex.lexer.c:	$(regex_tmp)/regex_lexer_definitions.hex regex/regex_lexer_
 	./$(hex_to_binary) < "$<" > "$@"
 
 
+regex/regex.production.h:	$(regex_tmp)/regex_production_declarations.hex $(hex_to_binary)
+	./$(hex_to_binary) < "$<" > "$@"
+
 regex/regex_parser.lemon.y:	$(regex_tmp)/regex_parser.lemon.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"
 
@@ -88,6 +94,7 @@ clean::
 	@rm -f regex/regex.lexer.h
 	@rm -f regex/regex_lexer_re2c_iterator_step.data
 	@rm -f regex/regex.lexer.c
+	@rm -f regex/regex.production.h
 	@rm -f regex/regex_parser.lemon.y
 
 

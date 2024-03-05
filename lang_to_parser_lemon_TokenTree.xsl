@@ -251,9 +251,7 @@ int <xsl:value-of select='$LangName'/>_Lemon_parser_header(void)
 <xsl:template match="Productions">
   <Header value="// Productions" />
   <NL hexvalue = "0a" />
-
   <xsl:apply-templates select="ListProduction|AssignProduction"/>
-  
 </xsl:template>
 
 
@@ -317,7 +315,6 @@ int <xsl:value-of select='$LangName'/>_Lemon_parser_header(void)
   <NL hexvalue="0a" />
   <EE value = "  }};" />
   <NL hexvalue="0a" />
-
 
 
   <ResTmp value = '  R = {$LangName}_ptree_expression_create_uninitialised({$LangName}_ptree_context, {$LangName}_grouping_{@grouping}, total_arity);' />
