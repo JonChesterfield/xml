@@ -23,7 +23,7 @@
   <Header>
     <Lang value="// -*-c-*-" />
     <NL hexvalue = "0a" />
-    <Include value='#include "{$LangName}.declarations.h"' />
+    <Include value='#include "{$LangName}.lexer.h"' />
     <NL hexvalue="0a" />
     <Assert value="#include &lt;assert.h&gt;" />
   </Header>
@@ -94,7 +94,7 @@ match:;
       .width = width,
   };
 }
-  </xsl:attribute>
+</xsl:attribute>
 </Suffix>
 
 </xsl:template>

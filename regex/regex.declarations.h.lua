@@ -3,7 +3,7 @@ local str = [[
 #define REGEX_DECLARATIONS_H_INCLUDED
 
 #include "regex.ptree.h"
-#include "regex.lexer.declarations.h"
+#include "regex.lexer.h"
 
 ]]
 

@@ -4,7 +4,7 @@
 
 #include "../tools/ptree_malloc_allocator.h"
 
-#include "regex.lexer.declarations.h"
+#include "regex.lexer.h"
 
 static ptree_context regex_impl_ptree_create_context(void) {
   return ptree_malloc_ptree_create_context();

@@ -61,7 +61,7 @@ typedef union <xsl:value-of select="$LangName"/>_parser_u <xsl:value-of select="
     <NL hexvalue = "0a" />
     <Header value='#include "{$LangName}.ptree.h"' />
     <NL hexvalue = "0a" />
-    <Header value='#include "{$LangName}.lexer.declarations.h"' />
+    <Header value='#include "{$LangName}.lexer.h"' />
     <NL hexvalue = "0a" />
     <Header value='#include "{$LangName}.declarations.h"' />
     <NL hexvalue = "0a" />

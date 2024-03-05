@@ -64,10 +64,10 @@ $(arith_tmp)/arith.main.o:	arith/arith.main.c arith/arith.lang.xml $(arith_tmp)
 $(arith_tmp)/arith.lexer.xml:	lang_to_lexer.xsl arith/arith.lang.xml | $(arith_tmp)
 	xsltproc --output $@ $^
 
-$(arith_tmp)/arith_declarations.TokenTree.xml:	lang_to_declarations_TokenTree.xsl arith/arith.lang.xml  | $(arith_tmp)
+$(arith_tmp)/arith_declarations.TokenTree.xml:	lang_to_lexer_declarations_TokenTree.xsl arith/arith.lang.xml  | $(arith_tmp)
 	xsltproc --output $@ $^
 
-$(arith_tmp)/arith_definitions.TokenTree.xml:	lang_to_definitions_TokenTree.xsl arith/arith.lang.xml  | $(arith_tmp)
+$(arith_tmp)/arith_definitions.TokenTree.xml:	lang_to_lexer_definitions_TokenTree.xsl arith/arith.lang.xml  | $(arith_tmp)
 	xsltproc --output $@ $^
 
 $(arith_tmp)/arith_re2c_iterator.TokenTree.xml:	lang_to_lexer_re2c_iterator_definition_TokenTree.xsl arith/arith.lang.xml  | $(arith_tmp)

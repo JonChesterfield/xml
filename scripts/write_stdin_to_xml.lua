@@ -13,7 +13,7 @@ local template = [=[#include "../tools/io_buffer.h"
 #include "LANGNAME.h"
 #include "LANGNAME.ptree.h"
 
-#include "LANGNAME.lexer.declarations.h"
+#include "LANGNAME.lexer.h"
 
 #include "LANGNAME_parser.lemon.h"
 #include "LANGNAME_parser.lemon.t"
