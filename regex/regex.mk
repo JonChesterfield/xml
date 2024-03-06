@@ -10,7 +10,7 @@ clean::
 
 REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.h regex/regex.production.h regex/regex_parser.lemon.h regex/regex_string.h
 
-REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_parser.lemon.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c regex_interpreter.c
+REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_parser.lemon.c regex_parser.bison.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c regex_interpreter.c
 
 
 REGEX_PROGRAM_SOURCE := regex.tests.c regex_stdin_to_xml.c
@@ -71,6 +71,8 @@ $(regex_tmp)/regex_production_declarations.TokenTree.xml:	lang_to_production_dec
 $(regex_tmp)/regex_parser.lemon.TokenTree.xml:	lang_to_parser_lemon_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
 	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
+$(regex_tmp)/regex_parser.bison.TokenTree.xml:	lang_to_parser_bison_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
+	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
 regex/regex.lexer.h:	$(regex_tmp)/regex_lexer_declarations.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"
@@ -89,6 +91,13 @@ regex/regex.production.h:	$(regex_tmp)/regex_production_declarations.hex $(hex_t
 regex/regex_parser.lemon.y:	$(regex_tmp)/regex_parser.lemon.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"
 
+regex/regex_parser.bison.y:	$(regex_tmp)/regex_parser.bison.hex $(hex_to_binary)
+	./$(hex_to_binary) < "$<" > "$@"
+
+# multiple output files are messy in make
+regex/regex_parser.bison.c regex/regex_parser.bison.h:	regex/regex_parser.bison.y
+	bison --no-lines --header=regex/regex_parser.bison.h $^ -o regex/regex_parser.bison.c
+regex/regex_parser.bison.h: regex/regex_parser.bison.c
 
 clean::
 	@rm -f regex/regex.lexer.h
@@ -97,6 +106,10 @@ clean::
 	@rm -f regex/regex.production.h
 	@rm -f regex/regex_parser.lemon.y
 
+	@rm -f regex/regex_parser.bison.y
+	@rm -f regex/regex_parser.bison.c
+	@rm -f regex/regex_parser.bison.h
+	@rm -f regex/regex_parser.bison.output
 
 $(REGEX_PROGRAM_OBJECTS): regex/regex_parser.lemon.t
 $(REGEX_OBJECTS) $(REGEX_PROGRAM_OBJECTS): $(regex_tmp)/%.o: regex/%.c $(REGEX_HEADERS) | $(regex_tmp) 
@@ -117,7 +130,7 @@ clean::
 	@rm -f regex/regex_parser.lemon.t
 
 .PHONY: regex
-regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c regex/regex_parser.lemon.t bin/regex.tests bin/regex_stdin_to_xml
+regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c regex/regex_parser.lemon.t bin/regex.tests bin/regex_stdin_to_xml regex/regex_parser.bison.y
 
 bin/regex.tests:	$(regex_tmp)/regex.tests.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
 	@mkdir -p "$(dir $@)"
