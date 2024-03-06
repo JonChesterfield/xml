@@ -103,7 +103,7 @@ static uint64_t hashderiv_size(hashtable_t h) {
   return allocation_edge / 8;
 }
 
-static void hashderiv_set_size(hashtable_t *h, uint64_t s) {
+static void hashderiv_assign_size(hashtable_t *h, uint64_t s) {
   arena_t a = hashderiv_hash_to_arena(*h);
   arena_change_allocation(arena_mod, &a, s * 8);
   *h = hashderiv_arena_to_hash(a);
@@ -186,7 +186,7 @@ static const struct hashtable_module_ty hashtable_mod_state = {
     .lookup_offset = hashderiv_lookup_offset,
     .location_key = hashderiv_location_key,
     .location_value = hashderiv_location_value,
-    .set_size = hashderiv_set_size,
+    .assign_size = hashderiv_assign_size,
     .maybe_remove = 0,
 #if INTSET_CONTRACTS
     .maybe_contract = contract_unit_test,

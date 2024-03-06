@@ -1,4 +1,5 @@
 #include "intmap.h"
+
 #include "EvilUnit/EvilUnit.h"
 
 #include "hashtable.h"
@@ -6,11 +7,11 @@
 
 #include "arena.libc.h"
 
-#define INTSET_CONTRACTS 1
+#define INTMAP_CONTRACTS 1
 
 static const struct arena_module_ty arena_libc_contract =
     ARENA_MODULE_INIT(arena_libc,
-#if INTSET_CONTRACTS
+#if INTMAP_CONTRACTS
                       contract_unit_test
 #else
                       0
@@ -56,12 +57,11 @@ static const struct hashtable_module_ty mod_state = {
     .sentinel = (const unsigned char *)&intmap_util_sentinel,
     .size = intmap_util_size,
     .capacity = intmap_util_capacity,
-    .lookup_offset = intmap_util_lookup_offset,
     .location_key = intmap_util_location_key,
     .location_value = intmap_util_location_value,
-    .set_size = intmap_util_set_size,
+    .assign_size = intmap_util_assign_size,
     .maybe_remove = 0,
-#if INTSET_CONTRACTS
+#if INTMAP_CONTRACTS
     .maybe_contract = contract_unit_test,
 #else
     .maybe_contract = 0,
@@ -76,19 +76,20 @@ static inline hashtable_t intmap_util_to_hash(intmap_t s) {
   return r;
 }
 
-static inline intmap_t intmap_util_to_set(hashtable_t s) {
+static inline intmap_t intmap_util_to_map(hashtable_t s) {
   intmap_t r;
   __builtin_memcpy(&r.state, &s.state, intmap_util_struct_sizeof);
   return r;
 }
 
 intmap_t intmap_create(uint64_t size) {
-  return intmap_util_to_set(hashtable_create(mod, size));
+  return intmap_util_to_map(hashtable_create(mod, size));
 }
 
 void intmap_destroy(intmap_t s) {
   hashtable_destroy(mod, intmap_util_to_hash(s));
 }
+
 bool intmap_valid(intmap_t s) {
   return hashtable_valid(mod, intmap_util_to_hash(s));
 }
@@ -98,7 +99,7 @@ bool intmap_equal(intmap_t x, intmap_t y) {
 }
 
 intmap_t intmap_rehash(intmap_t s, uint64_t size) {
-  return intmap_util_to_set(
+  return intmap_util_to_map(
       hashtable_rehash(mod, intmap_util_to_hash(s), size));
 }
 
@@ -127,5 +128,115 @@ uint64_t intmap_lookup(intmap_t s, uint64_t k) {
 void intmap_insert(intmap_t *s, uint64_t v, uint64_t k) {
   hashtable_t h = intmap_util_to_hash(*s);
   hashtable_insert(mod, &h, (unsigned char *)&v, (unsigned char *)&k);
-  *s = intmap_util_to_set(h);
+  *s = intmap_util_to_map(h);
+}
+
+void intmap_clear(intmap_t *s) {
+  hashtable_t h = intmap_util_to_hash(*s);
+  hashtable_clear(mod, &h);
+  *s = intmap_util_to_map(h);
+}
+
+#if 0 // todo
+void intmap_remove(intmap_t* s, uint64_t v)
+{
+  hashtable_remove(mod, intmap_util_to_hash(s), (unsigned char*)&v);
+}
+#endif
+
+static MODULE(create_destroy) {
+
+  TEST("module parameters") {
+    CHECK(hashtable_key_size(mod) == 8);
+    CHECK(hashtable_key_align(mod) == 8);
+    CHECK(hashtable_value_size(mod) == 8);
+    CHECK(hashtable_value_align(mod) == 8);
+  }
+
+  TEST("size 0") {
+    intmap_t a = intmap_create(0);
+    CHECK(intmap_valid(a));
+    CHECK(intmap_size(a) == 0);
+    CHECK(intmap_capacity(a) == 0);
+    intmap_destroy(a);
+  }
+
+  TEST("non-zero") {
+    intmap_t a = intmap_create(4);
+    CHECK(intmap_valid(a));
+    CHECK(intmap_size(a) == 0);
+    CHECK(intmap_capacity(a) == 4);
+    intmap_destroy(a);
+  }
+
+  TEST("non-zero, non-power-two") {
+    DEATH(intmap_create(5));
+    DEATH(intmap_create(18));
+  }
+
+  TEST("fail a precondition") {
+    intmap_t a = {0};
+    CHECK(!intmap_valid(a));
+    DEATH(intmap_destroy(a));
+  }
+}
+
+static MODULE(operations) {
+  intmap_t m = intmap_create(4);
+  CHECK(intmap_valid(m));
+  CHECK(intmap_size(m) == 0);
+  CHECK(intmap_capacity(m) == 4);
+
+  TEST("insert and retrieve single value") {
+    CHECK(intmap_size(m) == 0);
+    CHECK(!intmap_contains(m, 42));
+
+    intmap_insert(&m, 42, 101);
+    CHECK(intmap_size(m) == 1);
+    CHECK(intmap_contains(m, 42));
+    CHECK(intmap_lookup(m, 42) == 101);
+  }
+
+  TEST("insert two values") {
+    CHECK(intmap_size(m) == 0);
+    CHECK(!intmap_contains(m, 42));
+    CHECK(!intmap_contains(m, 81));
+
+    intmap_insert(&m, 42, 101);
+    CHECK(intmap_size(m) == 1);
+    CHECK(intmap_contains(m, 42));
+    CHECK(intmap_lookup(m, 42) == 101);
+
+    intmap_insert(&m, 81, 17);
+    CHECK(intmap_size(m) == 2);
+    CHECK(intmap_contains(m, 81));
+    CHECK(intmap_lookup(m, 81) == 17);
+
+    // and still contains original one
+    CHECK(intmap_contains(m, 42));
+    CHECK(intmap_lookup(m, 42) == 101);
+  }
+
+  TEST("replace existing value") {
+    CHECK(intmap_size(m) == 0);
+    CHECK(!intmap_contains(m, 42));
+    CHECK(intmap_size(m) == 0);
+
+    intmap_insert(&m, 42, 101);
+    CHECK(intmap_size(m) == 1);
+    CHECK(intmap_contains(m, 42));
+    CHECK(intmap_lookup(m, 42) == 101);
+
+    intmap_insert(&m, 42, 17);
+    CHECK(intmap_size(m) == 1);
+    CHECK(intmap_contains(m, 42));
+    CHECK(intmap_lookup(m, 42) == 17);
+  }
+
+  intmap_destroy(m);
+}
+
+MODULE(intmap) {
+  DEPENDS(create_destroy);
+  DEPENDS(operations);
 }

@@ -20,16 +20,15 @@ intset_t intset_rehash(intset_t, uint64_t size);
 uint64_t intset_size(intset_t);
 uint64_t intset_capacity(intset_t);
 
-static inline bool intset_rehash_double(intset_t *h)
-{
-  uint64_t cap = intset_capacity( *h);
-  intset_t n = intset_rehash( *h, 2 * cap);
+static inline bool intset_rehash_double(intset_t *h) {
+  uint64_t cap = intset_capacity(*h);
+  intset_t n = intset_rehash(*h, 2 * cap);
 
-  if (!intset_valid( n)) {
+  if (!intset_valid(n)) {
     return false;
   }
 
-  intset_destroy( *h);
+  intset_destroy(*h);
   *h = n;
   return true;
 }
@@ -43,5 +42,7 @@ void intset_insert(intset_t *, uint64_t);
 void intset_clear(intset_t *);
 
 // void intset_remove(intset_t*, uint64_t); // todo
+
+void intset_dump(intset_t);
 
 #endif

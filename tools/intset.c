@@ -1,13 +1,19 @@
 #include "intset.h"
 
+#define INTSET_CONTRACTS 1
+
+#if INTSET_CONTRACTS
+#else
+#define EVILUNIT_CONTRACT_DEFAULT_IMPLEMENTATION                               \
+  EVILUNIT_CONTRACT_IMPLEMENTATION_NONE
+#endif
+
 #include "EvilUnit/EvilUnit.h"
 
 #include "hashtable.h"
 #include "intmap_util.h"
 
 #include "arena.libc.h"
-
-#define INTSET_CONTRACTS 1
 
 static const struct arena_module_ty arena_libc_contract =
     ARENA_MODULE_INIT(arena_libc,
@@ -22,11 +28,8 @@ static arena_module arena_mod = &arena_libc_contract;
 
 enum { intset_util_struct_sizeof = 4 * 8 };
 
-
 _Static_assert(sizeof(hashtable_t) == intset_util_struct_sizeof, "");
 _Static_assert(sizeof(intset_t) == intset_util_struct_sizeof, "");
-
-
 
 static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes) {
   (void)h;
@@ -37,13 +40,13 @@ static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes) {
 }
 
 static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
-               const unsigned char *right) {
+                                  const unsigned char *right) {
   (void)h;
   return __builtin_memcmp(left, right, 8) == 0;
 }
 
-INTMAP_UTIL(arena_mod, 1, intset_util_key_hash, intset_util_key_equal, contract_unit_test);
-
+INTMAP_UTIL(arena_mod, 1, intset_util_key_hash, intset_util_key_equal,
+            contract_unit_test);
 
 static const struct hashtable_module_ty mod_state = {
     .create = intmap_util_create,
@@ -60,10 +63,9 @@ static const struct hashtable_module_ty mod_state = {
     .sentinel = (const unsigned char *)&intmap_util_sentinel,
     .size = intmap_util_size,
     .capacity = intmap_util_capacity,
-    .lookup_offset = intmap_util_lookup_offset,
     .location_key = intmap_util_location_key,
     .location_value = 0,
-    .set_size = intmap_util_set_size,
+    .assign_size = intmap_util_assign_size,
     .maybe_remove = 0,
 #if INTSET_CONTRACTS
     .maybe_contract = contract_unit_test,
@@ -90,18 +92,26 @@ intset_t intset_create(uint64_t size) {
   return intset_util_to_set(hashtable_create(mod, size));
 }
 
-void intset_destroy(intset_t s) { hashtable_destroy(mod, intset_util_to_hash(s)); }
-bool intset_valid(intset_t s) { return hashtable_valid(mod, intset_util_to_hash(s)); }
+void intset_destroy(intset_t s) {
+  hashtable_destroy(mod, intset_util_to_hash(s));
+}
+
+bool intset_valid(intset_t s) {
+  return hashtable_valid(mod, intset_util_to_hash(s));
+}
 
 bool intset_equal(intset_t x, intset_t y) {
   return hashtable_equal(mod, intset_util_to_hash(x), intset_util_to_hash(y));
 }
 
 intset_t intset_rehash(intset_t s, uint64_t size) {
-  return intset_util_to_set(hashtable_rehash(mod, intset_util_to_hash(s), size));
+  return intset_util_to_set(
+      hashtable_rehash(mod, intset_util_to_hash(s), size));
 }
 
-uint64_t intset_size(intset_t s) { return hashtable_size(mod, intset_util_to_hash(s)); }
+uint64_t intset_size(intset_t s) {
+  return hashtable_size(mod, intset_util_to_hash(s));
+}
 
 uint64_t intset_capacity(intset_t s) {
   return hashtable_capacity(mod, intset_util_to_hash(s));
@@ -111,17 +121,42 @@ bool intset_contains(intset_t s, uint64_t v) {
   return hashtable_contains(mod, intset_util_to_hash(s), (unsigned char *)&v);
 }
 
+// No lookup as no value to look up
+
 void intset_insert(intset_t *s, uint64_t v) {
   hashtable_t h = intset_util_to_hash(*s);
   hashtable_insert(mod, &h, (unsigned char *)&v, 0);
   *s = intset_util_to_set(h);
 }
 
-void intset_clear(intset_t * s)
-{
+void intset_clear(intset_t *s) {
   hashtable_t h = intset_util_to_hash(*s);
   hashtable_clear(mod, &h);
   *s = intset_util_to_set(h);
+}
+
+void intset_dump(intset_t s) {
+  uint64_t size = intset_size(s);
+  uint64_t capacity = intset_capacity(s);
+  hashtable_t h = intset_util_to_hash(s);
+
+  fprintf(stdout, "intset<%lu,%lu>\n", size, capacity);
+  for (uint64_t off = 0; off < capacity; off++) {
+    unsigned char *k = mod->location_key(h, off);
+
+    bool sentinel = hashtable_key_is_sentinel(mod, h, k);
+    uint64_t pref_offset = hashtable_preferred_offset(mod, h, k);
+
+    uint64_t slot_val;
+    __builtin_memcpy(&slot_val, k, 8);
+
+    if (sentinel) {
+      fprintf(stdout, "  set[%lu]: %lu available\n", off, slot_val);
+    } else {
+      fprintf(stdout, "  set[%lu]: %lu, pref %lu\n", off, slot_val,
+              pref_offset);
+    }
+  }
 }
 
 #if 0 // todo
@@ -132,6 +167,14 @@ void intset_remove(intset_t* s, uint64_t v)
 #endif
 
 static MODULE(create_destroy) {
+
+  TEST("module parameters") {
+    CHECK(hashtable_key_size(mod) == 8);
+    CHECK(hashtable_key_align(mod) == 8);
+    CHECK(hashtable_value_size(mod) == 0);
+    CHECK(hashtable_value_align(mod) == 1);
+  }
+
   TEST("size 0") {
     intset_t a = intset_create(0);
     CHECK(intset_valid(a));
@@ -171,8 +214,11 @@ static MODULE(operations) {
     CHECK(!intset_contains(s, 42));
 
     CHECK(intset_size(s) == 0);
+
     intset_insert(&s, 42);
+
     CHECK(intset_size(s) == 1);
+
     CHECK(intset_contains(s, 42));
   }
 
@@ -185,9 +231,13 @@ static MODULE(operations) {
     CHECK(intset_size(s) == 1);
     CHECK(intset_contains(s, 42));
 
+    CHECK(intset_valid(s));
+
     intset_insert(&s, 101);
     CHECK(intset_size(s) == 2);
     CHECK(intset_contains(s, 101));
+
+    CHECK(intset_valid(s));
 
     CHECK(intset_contains(s, 42));
   }
@@ -252,13 +302,15 @@ static MODULE(rehash_empty) {
 
   TEST("rehash to zero") {
     intset_t s = intset_create(4);
-    intset_rehash(s, 0);
+    intset_t t = intset_rehash(s, 0);
+    intset_destroy(t);
     intset_destroy(s);
   }
 
   TEST("rehash from zero") {
     intset_t s = intset_create(0);
-    intset_rehash(s, 4);
+    intset_t t = intset_rehash(s, 4);
+    intset_destroy(t);
     intset_destroy(s);
   }
 

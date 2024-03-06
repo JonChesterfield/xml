@@ -355,7 +355,7 @@ deepclean:: clean
 include $(SELF_DIR)vendored/vendored.mk
 
 # Simple binaries are some single file C files at top level
-SIMPLE_TOOLS_BIN := $(lemon) $(makeheaders) $(hex_to_binary) $(file_to_cdata) bin/ptree.tests bin/arena bin/stack bin/intset bin/stringtable
+SIMPLE_TOOLS_BIN := $(lemon) $(makeheaders) $(hex_to_binary) $(file_to_cdata) bin/ptree.tests bin/arena bin/stack
 
 # cmark uses multiple source files, specifically all those under the cmark directory
 CMARK_SRC:= $(wildcard $(TOOLS_DIR)/cmark/*.c)
@@ -389,6 +389,13 @@ CMARK_OBJ := $(CMARK_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 $(cmark):	$(CMARK_OBJ) | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $^ -o $@
 
+# Runs unit tests for hashtable
+HASHTABLE_SRC := $(addprefix $(TOOLS_DIR)/,hashtable.c intset.c intmap.c stringtable.c)
+HASHTABLE_OBJ := $(HASHTABLE_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
+$(TOOLS_DIR_BIN)/hashtable:	$(HASHTABLE_OBJ) | $(TOOLS_DIR_BIN)
+	@$(CC) $(CFLAGS) $^ -o $@
+
+
 # Doesnt construct a library, directly links against the objects
 LIBXML2_OBJ := $(LIBXML2_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 LIBXSLT_OBJ := $(LIBXSLT_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
@@ -402,7 +409,10 @@ $(TOOLS_DIR_BIN)/xsltproc:	$(TOOLS_DIR_OBJ)/xsltproc.o $(LIBXSLT_OBJ) $(LIBXML2_
 $(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $< -o $@
 
-tools:	$(SIMPLE_TOOLS_BIN) $(TOOLS_DIR_BIN)/cmark $(TOOLS_DIR_BIN)/xmllint $(TOOLS_DIR_BIN)/xsltproc
+tools:	$(SIMPLE_TOOLS_BIN)
+tools:	$(TOOLS_DIR_BIN)/cmark $(TOOLS_DIR_BIN)/xmllint $(TOOLS_DIR_BIN)/xsltproc
+tools:	$(TOOLS_DIR_BIN)/hashtable
+
 
 clean::
 	rm -rf $(TOOLS_DIR_BIN) $(TOOLS_DIR_OBJ)

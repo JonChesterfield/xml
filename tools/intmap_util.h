@@ -32,9 +32,8 @@ static inline uint64_t intmap_util_load_userdata(hashtable_t *h) {
 
 static const uint64_t intmap_util_sentinel = UINT64_MAX;
 
-static inline hashtable_t intmap_util_create_using_arena(arena_module mod,
-                                                         uint64_t size,
-                                                         bool is_set) {
+static inline hashtable_t
+intmap_util_create_using_arena(arena_module mod, uint64_t size, bool is_set) {
   uint64_t words = is_set ? size : 2 * size;
   arena_t a = arena_create(mod, 8 * words);
   unsigned char *p = arena_base_address(mod, a);
@@ -56,8 +55,8 @@ static inline bool intmap_util_valid_using_arena(arena_module mod,
   return arena_valid(mod, intmap_util_hash_to_arena(h));
 }
 
-#define INTMAP_UTIL(ARENA, IS_SET, KEY_HASH, KEY_EQUAL, CONTRACT)        \
-  static size_t bytes_per_elt() { return IS_SET ? 8 : 16; }              \
+#define INTMAP_UTIL(ARENA, IS_SET, KEY_HASH, KEY_EQUAL, CONTRACT)              \
+  static size_t bytes_per_elt() { return IS_SET ? 8 : 16; }                    \
   static hashtable_t intmap_util_create(uint64_t size) {                       \
     if (CONTRACT) {                                                            \
       CONTRACT(contract_is_zero_or_power_of_two(size), "size", 4);             \
@@ -75,76 +74,46 @@ static inline bool intmap_util_valid_using_arena(arena_module mod,
                                                                                \
   static uint64_t intmap_util_size(hashtable_t h) {                            \
     arena_t a = intmap_util_hash_to_arena(h);                                  \
-    uint64_t allocation_edge = arena_next_offset(ARENA,a);               \
-    return allocation_edge / bytes_per_elt();                           \
+    uint64_t allocation_edge = arena_next_offset(ARENA, a);                    \
+    uint64_t r = allocation_edge / bytes_per_elt();                            \
+    return r;                                                                  \
   }                                                                            \
                                                                                \
-  static void intmap_util_set_size(hashtable_t *h, uint64_t s) {               \
+  static void intmap_util_assign_size(hashtable_t *h, uint64_t s) {            \
     arena_t a = intmap_util_hash_to_arena(*h);                                 \
     uint64_t ud = intmap_util_load_userdata(h);                                \
-    arena_change_allocation(arena_mod, &a, s * bytes_per_elt());                             \
+    arena_change_allocation(arena_mod, &a, s *bytes_per_elt());                \
     *h = intmap_util_arena_to_hash(a);                                         \
-    intmap_util_store_userdata(h, ud);  }                                      \
+    intmap_util_store_userdata(h, ud);                                         \
+  }                                                                            \
                                                                                \
   static uint64_t intmap_util_capacity(hashtable_t h) {                        \
     arena_t a = intmap_util_hash_to_arena(h);                                  \
-    uint64_t r = arena_capacity(arena_mod, a) / bytes_per_elt();                             \
+    uint64_t r = arena_capacity(arena_mod, a) / bytes_per_elt();               \
     if (CONTRACT) {                                                            \
       CONTRACT(contract_is_zero_or_power_of_two(r), "cap", 3);                 \
     }                                                                          \
     return r;                                                                  \
   }                                                                            \
-  static uint64_t intmap_util_available(hashtable_t h) {                       \
-    return intmap_util_capacity(h) - intmap_util_size(h);                      \
+                                                                               \
+  static unsigned char *intmap_util_location_value(hashtable_t h,              \
+                                                   uint64_t offset) {          \
+    if (IS_SET) {                                                              \
+      return 0;                                                                \
+    }                                                                          \
+    arena_t a = intmap_util_hash_to_arena(h);                                  \
+    unsigned char *p = arena_base_address(ARENA, a);                           \
+    return p + (offset * bytes_per_elt()) + bytes_per_elt() / 2;               \
   }                                                                            \
                                                                                \
-  static unsigned char *intmap_util_location_value(hashtable_t h,                \
-                                                   uint64_t offset) {   \
-    if (IS_SET) {return 0; }arena_t a = intmap_util_hash_to_arena(h);   \
-    unsigned char *p = arena_base_address(ARENA, a);                           \
-    return p + (offset * bytes_per_elt()) + bytes_per_elt();            \
-  }                                                                            \
   static unsigned char *intmap_util_location_key(hashtable_t h,                \
                                                  uint64_t offset) {            \
-    if (IS_SET) (void)intmap_util_location_value; arena_t a = intmap_util_hash_to_arena(h); \
+    if (IS_SET) {                                                              \
+      (void)intmap_util_location_value;                                        \
+    }                                                                          \
+    arena_t a = intmap_util_hash_to_arena(h);                                  \
     unsigned char *p = arena_base_address(ARENA, a);                           \
-    return p + offset * bytes_per_elt();                                                     \
-  }                                                                            \
-                                                                               \
-                                                                               \
-  static uint64_t intmap_util_lookup_offset(hashtable_t h,                     \
-                                            unsigned char *key) {              \
-    uint64_t hash = KEY_HASH(h, key);                                          \
-    uint64_t cap = intmap_util_capacity(h);                                    \
-                                                                               \
-    if (CONTRACT) {                                                            \
-      CONTRACT(contract_is_power_of_two(cap), "cap offset", 10);               \
-    }                                                                          \
-                                                                               \
-    const uint64_t mask = cap - 1;                                             \
-    const uint64_t start_index = hash;                                         \
-                                                                               \
-    for (uint64_t c = 0; c < cap; c++) {                                       \
-      uint64_t index = (start_index + c) & mask;                               \
-                                                                               \
-      unsigned char *loc_key = intmap_util_location_key(h, index);             \
-                                                                               \
-      if (KEY_EQUAL(h, loc_key, key)) {                                        \
-        /* Found key */                                                        \
-        return index;                                                          \
-      }                                                                        \
-                                                                               \
-      if (KEY_EQUAL(h, loc_key, (unsigned char *)&intmap_util_sentinel)) {     \
-        /* Found a space */                                                    \
-        return index;                                                          \
-      }                                                                        \
-    }                                                                          \
-                                                                               \
-    if (CONTRACT) {                                                            \
-      CONTRACT(intmap_util_available(h) == 0, "avail 0", 7);                   \
-    }                                                                          \
-                                                                               \
-    return UINT64_MAX;                                                         \
+    return p + offset * bytes_per_elt();                                       \
   }
 
 #endif

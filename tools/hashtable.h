@@ -6,6 +6,8 @@
 
 #include "contract.h"
 
+#include <stdio.h>
+
 struct hashtable_module_ty;
 typedef const struct hashtable_module_ty *hashtable_module;
 
@@ -27,8 +29,10 @@ static inline void hashtable_destroy(hashtable_module mod, hashtable_t);
 static inline bool hashtable_valid(hashtable_module mod, hashtable_t);
 
 // A word of user defined state, semantics opaque to hashtable
-static inline void hashtable_store_userdata(hashtable_module mod, hashtable_t*, uint64_t);
-static inline uint64_t hashtable_load_userdata(hashtable_module mod, hashtable_t*);
+static inline void hashtable_store_userdata(hashtable_module mod, hashtable_t *,
+                                            uint64_t);
+static inline uint64_t hashtable_load_userdata(hashtable_module mod,
+                                               hashtable_t *);
 
 // Inefficient. Order of insertion independent.
 static inline bool hashtable_equal(hashtable_module mod, hashtable_t,
@@ -85,6 +89,21 @@ static inline uint64_t hashtable_available(hashtable_module mod, hashtable_t);
 // Mutators. All of them require available() > 0.
 //
 
+// Index into table that key would ideally be placed
+static inline uint64_t hashtable_preferred_offset(hashtable_module mod,
+                                                  hashtable_t h,
+                                                  unsigned char *key);
+
+// Whether the offset does not contain the sentinel
+static inline bool hashtable_offset_occupied(hashtable_module mod,
+                                             hashtable_t h, uint64_t offset);
+
+// Offset where key needs to be placed given existing data
+// or UINT64_MAX if it is absent and available is zero
+static inline uint64_t hashtable_lookup_offset(hashtable_module mod,
+                                               hashtable_t h,
+                                               unsigned char *key);
+
 // Test if key corresponds to a key/value pair in the table
 static inline bool hashtable_contains(hashtable_module mod, hashtable_t,
                                       unsigned char *key);
@@ -97,23 +116,27 @@ hashtable_lookup_key(hashtable_module mod, hashtable_t, unsigned char *key);
 static inline unsigned char *
 hashtable_lookup_value(hashtable_module mod, hashtable_t, unsigned char *key);
 
+// requires available > 0
 // (value_size == 0) != (value != NULL)
 static inline void hashtable_insert(hashtable_module mod, hashtable_t *,
                                     unsigned char *key, unsigned char *value);
 
 // Zero out the table
-static inline void hashtable_clear(hashtable_module mod, hashtable_t * h);
+static inline void hashtable_clear(hashtable_module mod, hashtable_t *h);
 
 static inline void hashtable_remove(hashtable_module mod, hashtable_t *,
                                     unsigned char *key);
+
+// Debugging hack
+static inline void hashtable_dump(hashtable_module mod, hashtable_t h);
 
 struct hashtable_module_ty {
   hashtable_t (*const create)(uint64_t size);
   void (*const destroy)(hashtable_t);
   bool (*const valid)(hashtable_t);
-  
-  void (*const store_userdata)(hashtable_t*, uint64_t);
-  uint64_t (*const load_userdata)(hashtable_t*);
+
+  void (*const store_userdata)(hashtable_t *, uint64_t);
+  uint64_t (*const load_userdata)(hashtable_t *);
 
   const uint32_t key_align;
   const uint32_t key_size;
@@ -127,11 +150,10 @@ struct hashtable_module_ty {
                           const unsigned char *);
 
   uint64_t (*const size)(hashtable_t);
-  uint64_t (*const capacity)(hashtable_t);
 
-  // Find the key. if it is missing, return where it should be inserted.
-  // If the key is missing and availability is zero, returns ~0  
-  uint64_t (*const lookup_offset)(hashtable_t, unsigned char *key);
+  // Hashtable has slots from [0 capacity)
+  // containing sentinel or keys
+  uint64_t (*const capacity)(hashtable_t);
 
   // key and value lookup tend to use the same offset computation
   unsigned char *(*const location_key)(hashtable_t, uint64_t offset);
@@ -139,7 +161,9 @@ struct hashtable_module_ty {
   // location_value could be 0 if value_size==0
   unsigned char *(*const location_value)(hashtable_t, uint64_t offset);
 
-  void (*const set_size)(hashtable_t *, uint64_t);
+  // Size is always computable by walking the table and checking for
+  // key_equal with sentinel but O(1) size is a good feature
+  void (*const assign_size)(hashtable_t *, uint64_t);
 
   // insert is derived from the lookups but remove may need to rearrange
   // internals and may not be available
@@ -160,19 +184,72 @@ static inline void hashtable_destroy(hashtable_module mod, hashtable_t h) {
   mod->destroy(h);
 }
 
+static inline bool hashtable_valid_verbose(hashtable_module mod, hashtable_t h,
+                                           bool verbose) {
+  if (!mod->valid(h)) {
+    return false;
+  }
+
+  uint64_t cap = mod->capacity(h);
+  const uint64_t mask = cap - 1;
+
+  for (uint64_t off = 0; off < cap; off++) {
+    unsigned char *key = mod->location_key(h, off);
+    if (hashtable_key_is_sentinel(mod, h, key)) {
+      continue;
+    }
+
+    uint64_t hash = mod->key_hash(h, key);
+    uint64_t pref = hash & mask;
+
+    // Scan linearly looking for that key
+    for (uint64_t delta = 0; delta < cap; delta++) {
+      uint64_t loc = (pref + delta) & mask;
+
+      if (loc == off) {
+        hashtable_require(key == mod->location_key(h, loc));
+        break;
+      }
+
+      unsigned char *key_loc = mod->location_key(h, loc);
+
+      if (hashtable_key_is_sentinel(mod, h, key_loc)) {
+        // Found an empty slot before the value, failure
+        if (verbose) {
+          fprintf(stdout, "Checking offset %lu, found sentinel at %lu\n", off,
+                  loc);
+        }
+        return false;
+      }
+
+      if (hashtable_key_equal(mod, h, key, key_loc)) {
+        if (verbose) {
+          fprintf(stdout, "Checking offset %lu, found key earlier at %lu\n",
+                  off, loc);
+        }
+
+        // Found an equal key before the one at current offset
+        hashtable_require(loc != off);
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 static inline bool hashtable_valid(hashtable_module mod, hashtable_t h) {
-  return mod->valid(h);
+  return hashtable_valid_verbose(mod, h, false);
 }
 
 // A word of user defined state, semantics opaque to hashtable
-static inline void hashtable_store_userdata(hashtable_module mod, hashtable_t *h, uint64_t v)
-{
+static inline void hashtable_store_userdata(hashtable_module mod,
+                                            hashtable_t *h, uint64_t v) {
   hashtable_require(hashtable_valid(mod, *h));
   mod->store_userdata(h, v);
 }
 
-static inline uint64_t hashtable_load_userdata(hashtable_module mod, hashtable_t *h)
-{
+static inline uint64_t hashtable_load_userdata(hashtable_module mod,
+                                               hashtable_t *h) {
   hashtable_require(hashtable_valid(mod, *h));
   return mod->load_userdata(h);
 }
@@ -207,7 +284,7 @@ static inline bool hashtable_key_is_sentinel(hashtable_module mod,
                                              hashtable_t h,
                                              const unsigned char *key) {
   const unsigned char *sentinel = hashtable_key_sentinel(mod);
-  return hashtable_key_equal(mod, h, key, sentinel);
+  return mod->key_equal(h, key, sentinel);
 }
 
 static inline bool hashtable_contract_active(hashtable_module mod) {
@@ -217,18 +294,34 @@ static inline bool hashtable_contract_active(hashtable_module mod) {
 // Takes key_size bytes, calculates a hash from them
 static inline uint64_t hashtable_key_hash(hashtable_module mod, hashtable_t h,
                                           unsigned char *bytes) {
+  hashtable_require(hashtable_valid(mod, h));
   return mod->key_hash(h, bytes);
 }
 
 static inline bool hashtable_key_equal(hashtable_module mod, hashtable_t h,
                                        const unsigned char *left,
                                        const unsigned char *right) {
+  hashtable_require(hashtable_valid(mod, h));
   return mod->key_equal(h, left, right);
 }
 
 static inline uint64_t hashtable_size(hashtable_module mod, hashtable_t h) {
+  if (!hashtable_valid(mod, h)) {
+    hashtable_dump(mod, h);
+  }
   hashtable_require(hashtable_valid(mod, h));
-  return mod->size(h);
+  uint64_t msize = mod->size(h);
+  if (hashtable_contract_active(mod)) {
+    uint64_t cap = hashtable_capacity(mod, h);
+    uint64_t count = 0;
+    for (uint64_t off = 0; off < cap; off++) {
+      if (!hashtable_offset_occupied(mod, h, off)) {
+        count++;
+      }
+    }
+    hashtable_require(msize == count);
+  }
+  return msize;
 }
 
 static inline uint64_t hashtable_capacity(hashtable_module mod, hashtable_t h) {
@@ -244,11 +337,63 @@ static inline uint64_t hashtable_available(hashtable_module mod,
   return hashtable_capacity(mod, h) - hashtable_size(mod, h);
 }
 
+static inline uint64_t hashtable_preferred_offset(hashtable_module mod,
+                                                  hashtable_t h,
+                                                  unsigned char *key) {
+  hashtable_require(hashtable_valid(mod, h));
+  hashtable_require(!hashtable_key_is_sentinel(mod, h, key));
+  uint64_t hash = hashtable_key_hash(mod, h, key);
+  uint64_t cap = hashtable_capacity(mod, h);
+  hashtable_require(contract_is_zero_or_power_of_two(cap));
+  const uint64_t mask = cap - 1;
+  return hash & mask;
+}
+
+static inline bool hashtable_offset_occupied(hashtable_module mod,
+                                             hashtable_t h, uint64_t offset) {
+  hashtable_require(hashtable_valid(mod, h));
+  hashtable_require(offset < hashtable_capacity(mod, h));
+  unsigned char *loc_key = mod->location_key(h, offset);
+  return hashtable_key_is_sentinel(mod, h, loc_key);
+}
+
+static inline uint64_t hashtable_lookup_offset(hashtable_module mod,
+                                               hashtable_t h,
+                                               unsigned char *key) {
+  hashtable_require(hashtable_valid(mod, h));
+  hashtable_require(!hashtable_key_is_sentinel(mod, h, key));
+  uint64_t size_before =
+      hashtable_contract_active(mod) ? hashtable_size(mod, h) : 0;
+
+  uint64_t cap = hashtable_capacity(mod, h);
+  hashtable_require(contract_is_zero_or_power_of_two(cap));
+  const uint64_t mask = cap - 1;
+  const uint64_t start_index = hashtable_preferred_offset(mod, h, key);
+
+  for (uint64_t c = 0; c < cap; c++) {
+    uint64_t index = (start_index + c) & mask;
+
+    unsigned char *loc_key = mod->location_key(h, index);
+
+    bool already_in_table = hashtable_key_equal(mod, h, loc_key, key);
+    bool slot_available =
+        already_in_table ? false : hashtable_key_is_sentinel(mod, h, loc_key);
+    if (already_in_table || slot_available) {
+      hashtable_require(index < hashtable_capacity(mod, h));
+      hashtable_require(size_before == hashtable_size(mod, h));
+      return index;
+    }
+  }
+
+  hashtable_require(size_before == hashtable_size(mod, h));
+  hashtable_require(hashtable_available(mod, h) == 0);
+  return UINT64_MAX;
+}
+
 static inline bool hashtable_contains(hashtable_module mod, hashtable_t h,
                                       unsigned char *key) {
   hashtable_require(hashtable_valid(mod, h));
-
-  uint64_t offset = mod->lookup_offset(h, key);
+  uint64_t offset = hashtable_lookup_offset(mod, h, key);
   if (offset == UINT64_MAX) {
     return false;
   }
@@ -260,7 +405,8 @@ static inline bool hashtable_contains(hashtable_module mod, hashtable_t h,
 static inline unsigned char *
 hashtable_lookup_key(hashtable_module mod, hashtable_t h, unsigned char *key) {
   hashtable_require(hashtable_valid(mod, h));
-  uint64_t offset = mod->lookup_offset(h, key);
+  hashtable_require(!hashtable_key_is_sentinel(mod, h, key));
+  uint64_t offset = hashtable_lookup_offset(mod, h, key);
   if (offset == UINT64_MAX) {
     return 0;
   }
@@ -273,8 +419,9 @@ static inline unsigned char *hashtable_lookup_value(hashtable_module mod,
                                                     hashtable_t h,
                                                     unsigned char *key) {
   hashtable_require(hashtable_valid(mod, h));
+  hashtable_require(!hashtable_key_is_sentinel(mod, h, key));
   hashtable_require(mod->value_size != 0);
-  uint64_t offset = mod->lookup_offset(h, key);
+  uint64_t offset = hashtable_lookup_offset(mod, h, key);
   if (offset == UINT64_MAX) {
     return 0;
   }
@@ -288,25 +435,37 @@ static inline unsigned char *hashtable_lookup_value(hashtable_module mod,
 static inline void hashtable_insert(hashtable_module mod, hashtable_t *h,
                                     unsigned char *key, unsigned char *value) {
   hashtable_require(hashtable_valid(mod, *h));
+  hashtable_require(!hashtable_key_is_sentinel(mod, *h, key));
+
   const bool is_set = mod->value_size == 0;
   bool have_value = value != 0;
   hashtable_require(is_set != have_value);
   hashtable_require(hashtable_available(mod, *h) > 0);
 
-  uint64_t offset = mod->lookup_offset(*h, key);
-  hashtable_require(offset != UINT64_MAX);  
+  uint64_t offset = hashtable_lookup_offset(mod, *h, key);
+  hashtable_require(offset != UINT64_MAX);
   hashtable_require(offset < hashtable_capacity(mod, *h));
-  
+
   unsigned char *k_res = mod->location_key(*h, offset);
   unsigned char *v_res = is_set ? 0 : mod->location_value(*h, offset);
 
-  if (hashtable_key_is_sentinel(mod, *h, k_res)) {
-    mod->set_size(h, hashtable_size(mod, *h) + 1);
+  const bool replacing_existing = !hashtable_key_is_sentinel(mod, *h, k_res);
+  const uint64_t size_before = hashtable_size(mod, *h);
+
+  if (!replacing_existing) {
+    mod->assign_size(h, size_before + 1);
+    hashtable_require(mod->size(*h) == (size_before + 1));
   }
 
   __builtin_memcpy(k_res, key, mod->key_size);
   if (!is_set) {
     __builtin_memcpy(v_res, value, mod->value_size);
+  }
+
+  if (replacing_existing) {
+    hashtable_require(hashtable_size(mod, *h) == size_before);
+  } else {
+    hashtable_require(hashtable_size(mod, *h) == (size_before + 1));
   }
 
   hashtable_require(hashtable_contains(mod, *h, key));
@@ -322,18 +481,16 @@ static inline void hashtable_insert(hashtable_module mod, hashtable_t *h,
   }
 }
 
-static inline void hashtable_clear(hashtable_module mod, hashtable_t * h)
-{
-  const unsigned char * sentinel = hashtable_key_sentinel(mod);
+static inline void hashtable_clear(hashtable_module mod, hashtable_t *h) {
+  const unsigned char *sentinel = hashtable_key_sentinel(mod);
   uint64_t cap = hashtable_capacity(mod, *h);
 
-  for (uint64_t offset = 0; offset < cap; offset++)
-    {
-      unsigned char *k_res = mod->location_key(*h, offset);
-      __builtin_memcpy(k_res, sentinel, mod->key_size);
-    }
+  for (uint64_t offset = 0; offset < cap; offset++) {
+    unsigned char *k_res = mod->location_key(*h, offset);
+    __builtin_memcpy(k_res, sentinel, mod->key_size);
+  }
 
-  mod->set_size(h, 0);
+  mod->assign_size(h, 0);
 
   hashtable_require(hashtable_size(mod, *h) == 0);
 }
@@ -355,6 +512,32 @@ static inline void hashtable_remove(hashtable_module mod, hashtable_t *h,
   hashtable_require(hashtable_contains(mod, *h, key) == false);
 }
 
+static inline void hashtable_dump(hashtable_module mod, hashtable_t h) {
+  uint64_t size = mod->size(h);
+  uint64_t capacity = mod->capacity(h);
+
+  fprintf(stdout, "hashtable<%lu,%lu>\n", size, capacity);
+  for (uint64_t off = 0; off < capacity; off++) {
+    unsigned char *k = mod->location_key(h, off);
+
+    uint64_t hash = mod->key_hash(h, k);
+
+    uint64_t pref_offset = hash & (capacity - 1);
+
+    uint64_t key_start = 0;
+    __builtin_memcpy(&key_start, k, mod->key_size < 8 ? mod->key_size : 8);
+
+    if (hashtable_key_is_sentinel(mod, h, k)) {
+      fprintf(stdout, "  hash[%lu]: %p/%lu available\n", off, k, key_start);
+    } else {
+      fprintf(stdout, "  hash[%lu]: %p/%lu, pref %lu\n", off, k, key_start,
+              pref_offset);
+    }
+  }
+
+  hashtable_valid_verbose(mod, h, true);
+}
+
 static inline bool hashtable_equal(hashtable_module mod, hashtable_t x,
                                    hashtable_t y) {
   hashtable_require(hashtable_valid(mod, x));
@@ -373,7 +556,7 @@ static inline bool hashtable_equal(hashtable_module mod, hashtable_t x,
   hashtable_t l = y;
 
   {
-    // See if that guess was wrong, shuffle variables if so
+    // If that guess was wrong, swap the arguments over
     uint64_t capy = hashtable_capacity(mod, y);
     if (capy > cap) {
       cap = capy;
@@ -389,8 +572,8 @@ static inline bool hashtable_equal(hashtable_module mod, hashtable_t x,
     }
 
     unsigned char *v_res = is_set ? 0 : mod->location_value(s, offset);
+    uint64_t large_offset = hashtable_lookup_offset(mod, l, k_res);
 
-    uint64_t large_offset = mod->lookup_offset(l, k_res);
     hashtable_require(large_offset < hashtable_capacity(mod, l));
     unsigned char *l_k_res = mod->location_key(l, large_offset);
 
@@ -420,27 +603,25 @@ static inline hashtable_t hashtable_rehash(hashtable_module mod, hashtable_t h,
 
   hashtable_t ret = hashtable_create(mod, N);
 
-  hashtable_store_userdata(mod, &ret,
-                           hashtable_load_userdata(mod, &h));
-  
-  if (hashtable_valid(mod,ret))
-    {
-      uint64_t cap = hashtable_capacity(mod, h);
-      for (uint64_t offset = 0; offset < cap; offset++) {
-        unsigned char *k_res = mod->location_key(h, offset);
-        if (!hashtable_key_is_sentinel(mod, h, k_res)) {
-          unsigned char *v_res = is_set ? 0 : mod->location_value(h, offset);
-          hashtable_insert(mod, &ret, k_res, v_res);
-        }
+  hashtable_store_userdata(mod, &ret, hashtable_load_userdata(mod, &h));
+
+  if (hashtable_valid(mod, ret)) {
+    uint64_t cap = hashtable_capacity(mod, h);
+    for (uint64_t offset = 0; offset < cap; offset++) {
+      unsigned char *k_res = mod->location_key(h, offset);
+      if (!hashtable_key_is_sentinel(mod, h, k_res)) {
+        unsigned char *v_res = is_set ? 0 : mod->location_value(h, offset);
+        hashtable_insert(mod, &ret, k_res, v_res);
       }
-      hashtable_require(hashtable_equal(mod, h, ret));
     }
+    hashtable_require(hashtable_equal(mod, h, ret));
+  }
   return ret;
 }
 
 // true on success, in which case h has been replaced
-static inline bool hashtable_rehash_double(hashtable_module mod, hashtable_t *h)
-{
+static inline bool hashtable_rehash_double(hashtable_module mod,
+                                           hashtable_t *h) {
   uint64_t cap = hashtable_capacity(mod, *h);
   hashtable_t n = hashtable_rehash(mod, *h, 2 * cap);
 

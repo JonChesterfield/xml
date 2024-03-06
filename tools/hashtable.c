@@ -2,12 +2,8 @@
 
 #include "EvilUnit/EvilUnit.h"
 
-
-MAIN_MODULE()
-{
+MAIN_MODULE() {
   DEPENDS(intset);
   DEPENDS(intmap);
   DEPENDS(stringtable);
 }
-
-
