@@ -209,9 +209,8 @@ ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
 
   ptree res = ptree_failure();
 
-  struct regex_parser_s parser_state;
-  regex_parser_type *parser = (regex_parser_type *)&parser_state;
-  regex_parser_initialize(parser, ctx);
+  regex_parser_lemon_state parser;
+  regex_parser_lemon_initialize(&parser, ctx);
 
   for (lexer_iterator_t lexer_iterator = lexer_iterator_t_create(bytes, N);
        !lexer_iterator_t_empty(lexer_iterator);) {
@@ -235,13 +234,13 @@ ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
       goto done;
     }
 
-    regex_parser_parse(parser, (int)lexer_token.id, lemon_token);
+    regex_parser_lemon_parse(&parser, (int)lexer_token.id, lemon_token);
   }
 
-  res = regex_parser_tree(parser);
+  res = regex_parser_lemon_tree(&parser);
 
 done:;
-  regex_parser_finalize(parser);
+  regex_parser_lemon_finalize(&parser);
   regex_lexer_destroy(lexer);
 
   return res;

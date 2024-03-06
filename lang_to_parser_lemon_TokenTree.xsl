@@ -41,7 +41,11 @@
 
 ]]>
 
-typedef union <xsl:value-of select="$LangName"/>_parser_u <xsl:value-of select="$LangName"/>_parser_type;
+// typedef union <xsl:value-of select="$LangName"/>_parser_lemon_u <xsl:value-of select="$LangName"/>_parser_lemon_type;
+
+struct <xsl:value-of select="$LangName"/>_parser_lemon_state;
+
+typedef struct <xsl:value-of select="$LangName"/>_parser_lemon_state <xsl:value-of select="$LangName"/>_parser_lemon_state;
 
 #endif // end INTERFACE
 
@@ -82,65 +86,75 @@ static ptree parser_<xsl:value-of select="$LangName"/>_ptree_from_token(ptree_co
 
 #include "<xsl:value-of select='$LangName'/>_parser.lemon.h"
 
-  struct <xsl:value-of select="$LangName"/>_parser_s {
-    char _Alignas(_Alignof(struct yyParser)) data[sizeof(struct yyParser)];
-  };
+// Implementation of "<xsl:value-of select='$LangName'/>_parser.lemon.t"
+enum {
+  <xsl:value-of select="$LangName"/>_parser_lemon_type_align = _Alignof(struct yyParser),
+  <xsl:value-of select="$LangName"/>_parser_lemon_type_size = sizeof(struct yyParser),
+};
 
-  union <xsl:value-of select="$LangName"/>_parser_u
-  {
-    struct yyParser lemon;
-    struct <xsl:value-of select="$LangName"/>_parser_s state;
-  };
+struct <xsl:value-of select="$LangName"/>_parser_lemon_state {
+  char _Alignas(<xsl:value-of select="$LangName"/>_parser_lemon_type_align) data[<xsl:value-of select="$LangName"/>_parser_lemon_type_size];
+};
 
-  _Static_assert(sizeof(union <xsl:value-of select="$LangName"/>_parser_u) == sizeof(struct yyParser),"");
+// Type aliasing workaround
+union <xsl:value-of select="$LangName"/>_parser_lemon_u
+{
+  struct yyParser lemon;
+  struct <xsl:value-of select="$LangName"/>_parser_lemon_state state;
+};
 
-  _Static_assert(_Alignof(union <xsl:value-of select="$LangName"/>_parser_u) == _Alignof(struct yyParser),"");
+// Union is the same size, align as state
+_Static_assert(sizeof(union <xsl:value-of select="$LangName"/>_parser_lemon_u) == sizeof(struct yyParser),"");
+_Static_assert(_Alignof(union <xsl:value-of select="$LangName"/>_parser_lemon_u) == _Alignof(struct yyParser),"");
 
+// Union is the same size, align as external type
+_Static_assert(sizeof(union <xsl:value-of select="$LangName"/>_parser_lemon_u) == <xsl:value-of select="$LangName"/>_parser_lemon_type_size,"");
+_Static_assert(_Alignof(union <xsl:value-of select="$LangName"/>_parser_lemon_u) == <xsl:value-of select="$LangName"/>_parser_lemon_type_align,"");
 
+typedef union <xsl:value-of select="$LangName"/>_parser_lemon_u union_type;
 
-  void <xsl:value-of select="$LangName"/>_parser_initialize(<xsl:value-of select="$LangName"/>_parser_type*p, ptree_context <xsl:value-of select="$LangName"/>_ptree_context)
-  {
-    <xsl:value-of select="$LangName"/>_LemonInit(&amp;p->lemon, <xsl:value-of select="$LangName"/>_ptree_context);
-  }
+void <xsl:value-of select="$LangName"/>_parser_lemon_initialize(<xsl:value-of select="$LangName"/>_parser_lemon_state*a, ptree_context <xsl:value-of select="$LangName"/>_ptree_context)
+{
+  union_type * p = (union_type*)a;
+  <xsl:value-of select="$LangName"/>_LemonInit(&amp;p->lemon, <xsl:value-of select="$LangName"/>_ptree_context);
+}
   
-  void <xsl:value-of select="$LangName"/>_parser_finalize(<xsl:value-of select="$LangName"/>_parser_type*p)
-  {
-    <xsl:value-of select="$LangName"/>_LemonFinalize(&amp;p->lemon);
-  }
+void <xsl:value-of select="$LangName"/>_parser_lemon_finalize(<xsl:value-of select="$LangName"/>_parser_lemon_state*a)
+{
+  union_type * p = (union_type*)a;
+  <xsl:value-of select="$LangName"/>_LemonFinalize(&amp;p->lemon);
+}
 
-  void <xsl:value-of select="$LangName"/>_parser_parse(<xsl:value-of select="$LangName"/>_parser_type*p, int id, token t)
-  {
-    assert(id > 0);
-    <xsl:value-of select="$LangName"/>_Lemon(&amp;p->lemon, id, t, 0);
-  }
+void <xsl:value-of select="$LangName"/>_parser_lemon_parse(<xsl:value-of select="$LangName"/>_parser_lemon_state*a, int id, token t)
+{
+  union_type * p = (union_type*)a;
+  assert(id > 0);
+  <xsl:value-of select="$LangName"/>_Lemon(&amp;p->lemon, id, t, 0);
+}
 
-  ptree <xsl:value-of select="$LangName"/>_parser_tree(<xsl:value-of select="$LangName"/>_parser_type*p)
-  {
-    ptree tmp = ptree_failure();
-    token tok = token_create_novalue("");
-    <xsl:value-of select="$LangName"/>_Lemon(&amp;p->lemon, 0, tok, &amp;tmp);
-    return tmp;
-  }
-
+ptree <xsl:value-of select="$LangName"/>_parser_lemon_tree(<xsl:value-of select="$LangName"/>_parser_lemon_state*a)
+{
+  union_type * p = (union_type*)a;
+  ptree tmp = ptree_failure();
+  token tok = token_create_novalue("");
+  <xsl:value-of select="$LangName"/>_Lemon(&amp;p->lemon, 0, tok, &amp;tmp);
+  return tmp;
+}
 
 #if __STDC_HOSTED__
 #include &lt;stdio.h&gt;
-int <xsl:value-of select='$LangName'/>_Lemon_parser_header(void)
+int <xsl:value-of select='$LangName'/>_parser_lemon_type_header(void)
 {
   return printf(
-  "#ifndef <xsl:value-of select='$UpcaseLangName'/>_PARSER_LEMON_H_INCLUDED\n"
-  "#define <xsl:value-of select='$UpcaseLangName'/>_PARSER_LEMON_H_INCLUDED\n"
+  "#ifndef <xsl:value-of select='$UpcaseLangName'/>_PARSER_LEMON_T_INCLUDED\n"
+  "#define <xsl:value-of select='$UpcaseLangName'/>_PARSER_LEMON_T_INCLUDED\n"
   "\n"
-  "union <xsl:value-of select='$LangName'/>_parser_u;\n"
-  "typedef union <xsl:value-of select='$LangName'/>_parser_u <xsl:value-of select='$LangName'/>_parser_type;\n"
-  "\n"
-  "typedef struct <xsl:value-of select='$LangName'/>_parser_s <xsl:value-of select='$LangName'/>_parser_s;\n"
   "enum {\n"
-  "  <xsl:value-of select='$LangName'/>_parser_type_align = %lu,\n"
-  "  <xsl:value-of select='$LangName'/>_parser_type_size = %lu,\n"
+  "  <xsl:value-of select='$LangName'/>_parser_lemon_type_align = %lu,\n"
+  "  <xsl:value-of select='$LangName'/>_parser_lemon_type_size = %lu,\n"
   "};\n"
-  "struct <xsl:value-of select='$LangName'/>_parser_s {\n"
-  "    char _Alignas(<xsl:value-of select='$LangName'/>_parser_type_align) data[<xsl:value-of select='$LangName'/>_parser_type_size];\n"
+  "struct <xsl:value-of select='$LangName'/>_parser_lemon_state {\n"
+  "    char _Alignas(<xsl:value-of select='$LangName'/>_parser_lemon_type_align) data[<xsl:value-of select='$LangName'/>_parser_lemon_type_size];\n"
   "};\n"
   "\n"
   "#endif\n",

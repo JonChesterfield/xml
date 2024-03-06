@@ -8,6 +8,11 @@ clean::
 	rm -rf $(regex_tmp)
 
 
+# Currently lemon is implemented and bison most of the way there
+# Considering also implementing byacc.
+# A top level dispatch to run through all parsers and check they made the same
+# conclusion has somewhat diminishing returns as N increases.
+
 REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.h regex/regex.production.h regex/regex_parser.lemon.h regex/regex_string.h
 
 REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_parser.lemon.c regex_parser.bison.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c regex_interpreter.c
@@ -116,8 +121,8 @@ $(REGEX_OBJECTS) $(REGEX_PROGRAM_OBJECTS): $(regex_tmp)/%.o: regex/%.c $(REGEX_H
 	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
 
 $(regex_tmp)/parser_header_gen.c: | $(regex_tmp)
-	@echo 'int regex_Lemon_parser_header(void);' > $@
-	@echo 'int main(void) { return regex_Lemon_parser_header(); }' >> $@
+	@echo 'int regex_parser_lemon_type_header(void);' > $@
+	@echo 'int main(void) { return regex_parser_lemon_type_header(); }' >> $@
 
 $(regex_tmp)/parser_header_gen: $(regex_tmp)/parser_header_gen.c $(regex_tmp)/regex_parser.lemon.o
 	$(CC) $(CFLAGS) $^ -o $@ -Wl,--unresolved-symbols=ignore-all -static

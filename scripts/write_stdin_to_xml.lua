@@ -19,6 +19,7 @@ local template = [=[#include "../tools/io_buffer.h"
 #include "LANGNAME_parser.lemon.t"
 
 #include "../tools/stack.libc.h"
+#include "../tools/lexer.h"
 
 static int print_tokens(char *data, size_t N) {
   lexer_t lexer = LANGNAME_lexer_create();
@@ -53,9 +54,8 @@ int main() {
     return 2;
   }
 
-  struct LANGNAME_parser_s parser_state;
-  LANGNAME_parser_type *parser = (LANGNAME_parser_type *)&parser_state;
-  LANGNAME_parser_initialize(parser, ctx);
+  LANGNAME_parser_lemon_state parser;
+  LANGNAME_parser_lemon_initialize(&parser, ctx);
 
   for (lexer_iterator_t lexer_iterator =
            lexer_iterator_t_create(in->data, in->N);
@@ -78,10 +78,10 @@ int main() {
       return 3;
     }
 
-    LANGNAME_parser_parse(parser, (int)lexer_token.id, lemon_token);
+    LANGNAME_parser_lemon_parse(&parser, (int)lexer_token.id, lemon_token);
   }
 
-  ptree res = LANGNAME_parser_tree(parser);
+  ptree res = LANGNAME_parser_lemon_tree(&parser);
   if (ptree_is_failure(res)) {
     int rc = print_tokens(in->data, in->N);
     if (rc != 0) {
@@ -92,7 +92,7 @@ int main() {
 
   LANGNAME_ptree_as_xml(&stack_libc, stdout, res);
 
-  LANGNAME_parser_finalize(parser);
+  LANGNAME_parser_lemon_finalize(&parser);
   LANGNAME_lexer_destroy(lexer);
   free(in);
 
