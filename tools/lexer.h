@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "lexer.t"
+
 // Expects the regex of interest to be enumerated from 1, with the
 // zeroth index reserved for an unknown/non-match, which is returned
 // as a token with id zero, width one, and value pointing to the char*
@@ -45,11 +47,6 @@ enum lexer_engines
 
 #define LEXER_RE2C_ENABLE 1
 
-typedef struct
-{
-  void *data;
-} lexer_t;
-
 // Not sure how best to specify the interface.
 // Currently nothing implements these exact symbols, but posix/multi etc
 // implement ones with related names and the language instantiations
@@ -57,18 +54,12 @@ typedef struct
 // but where the regexes array is behind the interface.
 
 #if 0
-lexer_t lexer_t_create(size_t N, const char **regexes);
+lexer_t lexer_t_create(void);
 void lexer_t_destroy(lexer_t);
 bool lexer_t_valid(lexer_t l);  // create succeeded
 lexer_token_t lexer_iterator_t_step(lexer_t, lexer_iterator_t *);
 #endif
 
-// Each lexer uses the same iterator interface
-typedef struct
-{
-  const char *cursor;
-  const char *end;
-} lexer_iterator_t;
 
 static inline lexer_iterator_t lexer_iterator_t_create(const char *bytes,
                                                        size_t len_bytes)
@@ -79,15 +70,7 @@ static inline bool lexer_iterator_t_empty(lexer_iterator_t it)
 {
   return it.cursor == it.end;
 }
-
-// The id in the token is an index into the sequence of regexes
-typedef struct
-{
-  size_t id;
-  const char *value;
-  size_t width;
-} lexer_token_t;
-
+ 
 // From the non-empty iterator, gets the current token and then increments.
 static inline bool lexer_token_t_empty(lexer_token_t token)
 {

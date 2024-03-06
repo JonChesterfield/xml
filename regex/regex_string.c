@@ -9,6 +9,8 @@
 #include "regex_parser.lemon.h"
 #include "regex_parser.lemon.t"
 
+#include "../tools/lexer.h"
+
 #include "../tools/arena.libc.h"
 
 struct regex_to_char_sequence_type {

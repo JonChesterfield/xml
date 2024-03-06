@@ -42,12 +42,12 @@
     <Comment value="// Lexer" />
     <NL hexvalue="0a" />
 
+    <Include value='#include "../tools/lexer.t"' />
+    <NL hexvalue="0a" />
+
     <EnumDecl value="enum" />
     <SP value = " " />
     <LangName value="{$LangName}_token;" />
-    <NL hexvalue="0a" />
-
-    <Include value='#include "../tools/lexer.h"' />
     <NL hexvalue="0a" />
 
     <Decl value="lexer_t {$LangName}_lexer_create(void);" />
