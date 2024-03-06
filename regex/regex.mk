@@ -120,22 +120,34 @@ $(REGEX_PROGRAM_OBJECTS): regex/regex_parser.lemon.t
 $(REGEX_OBJECTS) $(REGEX_PROGRAM_OBJECTS): $(regex_tmp)/%.o: regex/%.c $(REGEX_HEADERS) | $(regex_tmp) 
 	$(CC) $(CFLAGS) -Wno-unused-parameter -c $< -o $@
 
-$(regex_tmp)/parser_header_gen.c: | $(regex_tmp)
+$(regex_tmp)/parser_lemon_header_gen.c: | $(regex_tmp)
 	@echo 'int regex_parser_lemon_type_header(void);' > $@
 	@echo 'int main(void) { return regex_parser_lemon_type_header(); }' >> $@
 
-$(regex_tmp)/parser_header_gen: $(regex_tmp)/parser_header_gen.c $(regex_tmp)/regex_parser.lemon.o
+$(regex_tmp)/parser_bison_header_gen.c: | $(regex_tmp)
+	@echo 'int regex_parser_bison_type_header(void);' > $@
+	@echo 'int main(void) { return regex_parser_bison_type_header(); }' >> $@
+
+$(regex_tmp)/parser_lemon_header_gen: $(regex_tmp)/parser_lemon_header_gen.c $(regex_tmp)/regex_parser.lemon.o
 	$(CC) $(CFLAGS) $^ -o $@ -Wl,--unresolved-symbols=ignore-all -static
 
+$(regex_tmp)/parser_bison_header_gen: $(regex_tmp)/parser_bison_header_gen.c $(regex_tmp)/regex_parser.bison.o
+	$(CC) $(CFLAGS) $^ -o $@ -Wl,--unresolved-symbols=ignore-all -static
+
+
 $(regex_tmp)/regex_string.o:	regex/regex_parser.lemon.t
-regex/regex_parser.lemon.t:	$(regex_tmp)/parser_header_gen
+regex/regex_parser.lemon.t:	$(regex_tmp)/parser_lemon_header_gen
+	@./$< > $@
+
+regex/regex_parser.bison.t:	$(regex_tmp)/parser_bison_header_gen
 	@./$< > $@
 
 clean::
 	@rm -f regex/regex_parser.lemon.t
+	@rm -f regex/regex_parser.bison.t
 
 .PHONY: regex
-regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c regex/regex_parser.lemon.t bin/regex.tests bin/regex_stdin_to_xml regex/regex_parser.bison.y
+regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c regex/regex_parser.lemon.t regex/regex_parser.bison.t bin/regex.tests bin/regex_stdin_to_xml regex/regex_parser.bison.y
 
 bin/regex.tests:	$(regex_tmp)/regex.tests.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
 	@mkdir -p "$(dir $@)"

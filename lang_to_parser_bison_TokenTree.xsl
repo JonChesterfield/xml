@@ -96,38 +96,40 @@ void yyerror (ptree* external_context, ptree_context regex_ptree_context, char c
   }
 #endif
 
-#if 0
-#if __STDC_HOSTED__
-#include &lt;stdio.h&gt;
-int <xsl:value-of select='$LangName'/>_Lemon_parser_header(void)
-{
-  return printf(
-  "#ifndef <xsl:value-of select='$UpcaseLangName'/>_PARSER_LEMON_H_INCLUDED\n"
-  "#define <xsl:value-of select='$UpcaseLangName'/>_PARSER_LEMON_H_INCLUDED\n"
-  "\n"
-  "union <xsl:value-of select='$LangName'/>_parser_u;\n"
-  "typedef union <xsl:value-of select='$LangName'/>_parser_u <xsl:value-of select='$LangName'/>_parser_type;\n"
-  "\n"
-  "typedef struct <xsl:value-of select='$LangName'/>_parser_s <xsl:value-of select='$LangName'/>_parser_s;\n"
-  "enum {\n"
-  "  <xsl:value-of select='$LangName'/>_parser_type_align = %lu,\n"
-  "  <xsl:value-of select='$LangName'/>_parser_type_size = %lu,\n"
-  "};\n"
-  "struct <xsl:value-of select='$LangName'/>_parser_s {\n"
-  "    char _Alignas(<xsl:value-of select='$LangName'/>_parser_type_align) data[<xsl:value-of select='$LangName'/>_parser_type_size];\n"
-  "};\n"
-  "\n"
-  "#endif\n",
-  _Alignof(struct yyParser),
-  sizeof(struct yyParser)) > 0 ? 0 : 1;
-}
-#endif
-#endif
-
       </xsl:attribute>
 </Code>
 
     <CodeClose value="&#xA;}}&#xA;"/>
+
+    <CodeTryingForEnd>
+      <xsl:attribute name="value">
+
+<!-- epilogue is undocumented, should probably be writing it after another %% -->
+%code epilogue {
+#if __STDC_HOSTED__
+#include &lt;stdio.h&gt;
+int <xsl:value-of select='$LangName'/>_parser_bison_type_header(void)
+{
+  return printf(
+  "#ifndef <xsl:value-of select='$UpcaseLangName'/>_PARSER_BISON_T_INCLUDED\n"
+  "#define <xsl:value-of select='$UpcaseLangName'/>_PARSER_BISON_T_INCLUDED\n"
+  "\n"
+  "enum {\n"
+  "  <xsl:value-of select='$LangName'/>_parser_bison_type_align = %lu,\n"
+  "  <xsl:value-of select='$LangName'/>_parser_bison_type_size = %lu,\n"
+  "};\n"
+  "struct <xsl:value-of select='$LangName'/>_parser_bison_state {\n"
+  "    char _Alignas(<xsl:value-of select='$LangName'/>_parser_bison_type_align) data[<xsl:value-of select='$LangName'/>_parser_bison_type_size];\n"
+  "};\n"
+  "\n"
+  "#endif\n",
+  _Alignof(struct yypstate),
+  sizeof(struct yypstate)) > 0 ? 0 : 1;
+}
+#endif
+}
+</xsl:attribute>
+</CodeTryingForEnd>
 
 <Configuration>
 <xsl:attribute name="value">
