@@ -27,33 +27,37 @@ REGEX_PROGRAM_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_PROGRAM_SOURCE:.c=.o)
 
 REGEX_TOOLS_OBJECTS := $(addprefix $(TOOLS_DIR_OBJ)/,lexer.re2c.o lexer.posix.o lexer.re2.o stringtable.o intset.o intmap.o)
 
-# going to patch lemon to allow specifying filenames I think
 
-regex_lemon_tmp := $(regex_tmp)/lemon
-$(regex_lemon_tmp):	$(regex_tmp)
+# Lemon either overwrites the .h file, or if passed -m includes its guess at where
+# the mkheaders result would be, neither of which is helpful behaviour here
+# Leave off -m so it doesn't introduce an include of a header from the wrong directory
+# Write into temporary dir so it doesn't clobber the header
+
+# Using a tmp dir under source mostly so the .out file is more readily available
+regex_lemon_tmp := regex/lemon
+
+$(regex_lemon_tmp):    $(regex_tmp)
 	@mkdir -p $(regex_lemon_tmp)
+clean::
+	@rm -f $(regex_lemon_tmp)/regex_parser.lemon.*
+	@rmdir $(regex_lemon_tmp)
 
-$(regex_lemon_tmp)/%.lemon.c:	regex/%.lemon.y $(lemon) tools/lempar.data regex/regex.lang.xml | $(regex_lemon_tmp)
-	cp "$<" "$(regex_lemon_tmp)/$*.lemon.y"
-	cd $(regex_lemon_tmp) && ./../../$(lemon) -l -T../../tools/lempar.data -m "$*.lemon.y" || rm -f $@
-
-$(regex_lemon_tmp)/%.lemon.h:	$(regex_lemon_tmp)/%.lemon.c $(makeheaders) | $(regex_lemon_tmp)
-	cd $(regex_lemon_tmp)/ && ./../../$(makeheaders) "$*.lemon.c"
-
-regex/regex_parser.lemon.c:	$(regex_lemon_tmp)/regex_parser.lemon.c
-	@cp "$<" "$@"
+$(regex_lemon_tmp)/regex_parser.lemon.c:	regex/regex_parser.lemon.y | $(lemon) $(regex_lemon_tmp)
+	$(lemon) -l -Ttools/lempar.data regex/regex_parser.lemon.y -d$(regex_lemon_tmp)
 #	ugly, but does hack around the unused variable warnings
 	@sed -i 's~\(#define regex_LemonCTX_FETCH ptree_context regex_ptree_context=yypParser->regex_ptree_context;\)~\0 (void)regex_ptree_context;~g' "$@"
 
-regex/regex_parser.lemon.h:	$(regex_lemon_tmp)/regex_parser.lemon.h
+regex/regex_parser.lemon.c:	$(regex_lemon_tmp)/regex_parser.lemon.c
 	@cp "$<" "$@"
+
 
 regex/regex.ptree.h:	regex/regex.ptree.h.in tools/ptree_macro_wrapper.h
 	$(CC) -E -C -P -xc $< -ffreestanding -o $@
 	clang-format -i $@
 
 clean::
-	@rm -f regex/regex_parser.lemon.c regex/regex_parser.lemon.h
+	@rm -f regex/regex_parser.lemon.c
+	@rm -f regex/regex_parser.lemon.out
 	@rm -f regex/regex.ptree.h
 
 
