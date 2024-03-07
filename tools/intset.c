@@ -66,7 +66,6 @@ static const struct hashtable_module_ty mod_state = {
     .location_key = intmap_util_location_key,
     .location_value = 0,
     .assign_size = intmap_util_assign_size,
-    .maybe_remove = 0,
 #if INTSET_CONTRACTS
     .maybe_contract = contract_unit_test,
 #else
@@ -104,6 +103,11 @@ bool intset_equal(intset_t x, intset_t y) {
   return hashtable_equal(mod, intset_util_to_hash(x), intset_util_to_hash(y));
 }
 
+intset_t intset_clone(intset_t x)
+{
+  return intset_util_to_set(hashtable_clone(mod, intset_util_to_hash(x)));
+}
+
 intset_t intset_rehash(intset_t s, uint64_t size) {
   return intset_util_to_set(
       hashtable_rehash(mod, intset_util_to_hash(s), size));
@@ -129,42 +133,18 @@ void intset_insert(intset_t *s, uint64_t v) {
   *s = intset_util_to_set(h);
 }
 
+void intset_remove(intset_t* s, uint64_t v)
+{
+  hashtable_t h = intset_util_to_hash(*s);
+  hashtable_remove(mod, &h, (unsigned char *)&v);
+  *s = intset_util_to_set(h);
+}
+
 void intset_clear(intset_t *s) {
   hashtable_t h = intset_util_to_hash(*s);
   hashtable_clear(mod, &h);
   *s = intset_util_to_set(h);
 }
-
-void intset_dump(intset_t s) {
-  uint64_t size = intset_size(s);
-  uint64_t capacity = intset_capacity(s);
-  hashtable_t h = intset_util_to_hash(s);
-
-  fprintf(stdout, "intset<%lu,%lu>\n", size, capacity);
-  for (uint64_t off = 0; off < capacity; off++) {
-    unsigned char *k = mod->location_key(h, off);
-
-    bool sentinel = hashtable_key_is_sentinel(mod, h, k);
-    uint64_t pref_offset = hashtable_preferred_offset(mod, h, k);
-
-    uint64_t slot_val;
-    __builtin_memcpy(&slot_val, k, 8);
-
-    if (sentinel) {
-      fprintf(stdout, "  set[%lu]: %lu available\n", off, slot_val);
-    } else {
-      fprintf(stdout, "  set[%lu]: %lu, pref %lu\n", off, slot_val,
-              pref_offset);
-    }
-  }
-}
-
-#if 0 // todo
-void intset_remove(intset_t* s, uint64_t v)
-{
-  hashtable_remove(mod, intset_util_to_hash(s), (unsigned char*)&v);
-}
-#endif
 
 static MODULE(create_destroy) {
 
@@ -180,6 +160,9 @@ static MODULE(create_destroy) {
     CHECK(intset_valid(a));
     CHECK(intset_size(a) == 0);
     CHECK(intset_capacity(a) == 0);
+    intset_t cp = intset_clone(a);
+    CHECK(intset_equal(a,cp));
+    intset_destroy(cp);
     intset_destroy(a);
   }
 
@@ -188,6 +171,9 @@ static MODULE(create_destroy) {
     CHECK(intset_valid(a));
     CHECK(intset_size(a) == 0);
     CHECK(intset_capacity(a) == 4);
+    intset_t cp = intset_clone(a);
+    CHECK(intset_equal(a,cp));
+    intset_destroy(cp);
     intset_destroy(a);
   }
 
@@ -216,10 +202,12 @@ static MODULE(operations) {
     CHECK(intset_size(s) == 0);
 
     intset_insert(&s, 42);
-
     CHECK(intset_size(s) == 1);
-
     CHECK(intset_contains(s, 42));
+
+    intset_remove(&s, 42);
+    CHECK(intset_size(s) == 0);
+    CHECK(!intset_contains(s, 42));
   }
 
   TEST("insert two values") {
@@ -240,6 +228,12 @@ static MODULE(operations) {
     CHECK(intset_valid(s));
 
     CHECK(intset_contains(s, 42));
+
+    intset_remove(&s, 42);
+    intset_remove(&s, 101);
+    CHECK(intset_size(s) == 0);
+    CHECK(!intset_contains(s, 42));
+    CHECK(!intset_contains(s, 101));
   }
 
   TEST("dies on insert limit of capacity") {

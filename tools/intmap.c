@@ -60,7 +60,6 @@ static const struct hashtable_module_ty mod_state = {
     .location_key = intmap_util_location_key,
     .location_value = intmap_util_location_value,
     .assign_size = intmap_util_assign_size,
-    .maybe_remove = 0,
 #if INTMAP_CONTRACTS
     .maybe_contract = contract_unit_test,
 #else
@@ -98,6 +97,11 @@ bool intmap_equal(intmap_t x, intmap_t y) {
   return hashtable_equal(mod, intmap_util_to_hash(x), intmap_util_to_hash(y));
 }
 
+intmap_t intmap_clone(intmap_t x)
+{
+  return intmap_util_to_map(hashtable_clone(mod, intmap_util_to_hash(x)));
+}
+
 intmap_t intmap_rehash(intmap_t s, uint64_t size) {
   return intmap_util_to_map(
       hashtable_rehash(mod, intmap_util_to_hash(s), size));
@@ -131,18 +135,18 @@ void intmap_insert(intmap_t *s, uint64_t v, uint64_t k) {
   *s = intmap_util_to_map(h);
 }
 
+void intmap_remove(intmap_t* s, uint64_t v)
+{
+  hashtable_t h = intmap_util_to_hash(*s);
+  hashtable_remove(mod, &h, (unsigned char*)&v);
+  *s = intmap_util_to_map(h);
+}
+
 void intmap_clear(intmap_t *s) {
   hashtable_t h = intmap_util_to_hash(*s);
   hashtable_clear(mod, &h);
   *s = intmap_util_to_map(h);
 }
-
-#if 0 // todo
-void intmap_remove(intmap_t* s, uint64_t v)
-{
-  hashtable_remove(mod, intmap_util_to_hash(s), (unsigned char*)&v);
-}
-#endif
 
 static MODULE(create_destroy) {
 
@@ -215,6 +219,17 @@ static MODULE(operations) {
     // and still contains original one
     CHECK(intmap_contains(m, 42));
     CHECK(intmap_lookup(m, 42) == 101);
+
+    intmap_remove(&m, 42);
+
+    // Removed one key and not the other
+    CHECK(intmap_size(m) == 1);
+    CHECK(!intmap_contains(m, 42));
+    CHECK(intmap_lookup(m, 81) == 17);
+
+    intmap_remove(&m, 81);
+    CHECK(intmap_size(m) == 0);
+    CHECK(!intmap_contains(m, 81));
   }
 
   TEST("replace existing value") {

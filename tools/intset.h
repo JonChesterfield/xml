@@ -14,6 +14,7 @@ void intset_destroy(intset_t);
 bool intset_valid(intset_t);
 
 bool intset_equal(intset_t, intset_t);
+intset_t intset_clone(intset_t);
 
 intset_t intset_rehash(intset_t, uint64_t size);
 
@@ -39,10 +40,7 @@ static inline uint64_t intset_available(intset_t s) {
 
 bool intset_contains(intset_t, uint64_t);
 void intset_insert(intset_t *, uint64_t);
+void intset_remove(intset_t*, uint64_t);
 void intset_clear(intset_t *);
-
-// void intset_remove(intset_t*, uint64_t); // todo
-
-void intset_dump(intset_t);
 
 #endif

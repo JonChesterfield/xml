@@ -14,6 +14,7 @@ void intmap_destroy(intmap_t);
 bool intmap_valid(intmap_t);
 
 bool intmap_equal(intmap_t, intmap_t);
+intmap_t intmap_clone(intmap_t);
 
 intmap_t intmap_rehash(intmap_t, uint64_t size);
 
@@ -40,6 +41,7 @@ static inline uint64_t intmap_available(intmap_t s) {
 bool intmap_contains(intmap_t, uint64_t);
 uint64_t intmap_lookup(intmap_t, uint64_t);
 void intmap_insert(intmap_t *, uint64_t k, uint64_t v);
+void intmap_remove(intmap_t *, uint64_t);
 void intmap_clear(intmap_t *);
 
 #endif

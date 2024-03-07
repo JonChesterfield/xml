@@ -92,14 +92,13 @@ static uint64_t hashderiv_key_hash(hashtable_t h, unsigned char *bytes) {
 static bool hashderiv_key_equal(hashtable_t h, const unsigned char *left,
                                 const unsigned char *right) {
   (void)h;
-  return __builtin_memcmp(left, right, 8) == 0;
+  return __builtin_memcmp(left, right, bytes_key_size) == 0;
 }
 
 // Keys and values are the same length, store size in the arena metadata
 static uint64_t hashderiv_size(hashtable_t h) {
   arena_t a = hashderiv_hash_to_arena(h);
-  uint64_t allocation_edge = (char *)arena_next_address(arena_mod, a) -
-                             (char *)arena_base_address(arena_mod, a);
+  uint64_t allocation_edge = arena_next_offset(arena_mod, a);
   return allocation_edge / 8;
 }
 
@@ -114,9 +113,6 @@ static uint64_t hashderiv_capacity(hashtable_t h) {
   return arena_capacity(arena_mod, a) / element_size;
 }
 
-static uint64_t hashderiv_available(hashtable_t h) {
-  return hashderiv_capacity(h) - hashderiv_size(h);
-}
 
 static unsigned char *hashderiv_location_key(hashtable_t h, uint64_t offset) {
   arena_t a = hashderiv_hash_to_arena(h);
@@ -135,39 +131,6 @@ static unsigned char *hashderiv_location_value(hashtable_t h, uint64_t offset) {
   return p + offset * bytes_value_size;
 }
 
-static uint64_t hashderiv_lookup_offset(hashtable_t h, unsigned char *key) {
-  uint64_t hash = hashderiv_key_hash(h, key);
-  uint64_t cap = hashderiv_capacity(h);
-
-#if CACHE_CONTRACTS
-  contract_unit_test(contract_is_power_of_two(cap), "cap offset", 10);
-#endif
-
-  const uint64_t mask = cap - 1;
-  const uint64_t start_index = hash;
-
-  for (uint64_t c = 0; c < cap; c++) {
-    uint64_t index = (start_index + c) & mask;
-
-    unsigned char *loc_key = hashderiv_location_key(h, index);
-
-    if (hashderiv_key_equal(h, loc_key, key)) {
-      /* Found key */
-      return index;
-    }
-
-    if (hashderiv_key_equal(h, loc_key, (unsigned char *)&hashderiv_sentinel)) {
-      /* Found a space */
-      return index;
-    }
-  }
-
-#if CACHE_CONTRACTS
-  contract_unit_test(hashderiv_available(h) == 0, "avail 0", 7);
-#endif
-  return UINT64_MAX;
-}
-
 static const struct hashtable_module_ty hashtable_mod_state = {
     .create = hashderiv_create,
     .destroy = hashderiv_destroy,
@@ -183,11 +146,9 @@ static const struct hashtable_module_ty hashtable_mod_state = {
     .sentinel = (const unsigned char *)&hashderiv_sentinel,
     .size = hashderiv_size,
     .capacity = hashderiv_capacity,
-    .lookup_offset = hashderiv_lookup_offset,
     .location_key = hashderiv_location_key,
     .location_value = hashderiv_location_value,
     .assign_size = hashderiv_assign_size,
-    .maybe_remove = 0,
 #if INTSET_CONTRACTS
     .maybe_contract = contract_unit_test,
 #else

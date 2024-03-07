@@ -348,8 +348,9 @@ static MODULE(driver)
 
 MAIN_MODULE() {
   DEPENDS(ptree);
-  DEPENDS(stringtable);
   DEPENDS(intset);
+  DEPENDS(intmap);
+  DEPENDS(stringtable);
   DEPENDS(regex_nullable);
   DEPENDS(regex_split);
   DEPENDS(regex_string);

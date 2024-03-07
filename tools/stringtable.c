@@ -48,7 +48,6 @@ static const struct hashtable_module_ty hashtable_mod_state = {
     .location_key = intmap_util_location_key,
     .location_value = 0,
     .assign_size = intmap_util_assign_size,
-    .maybe_remove = 0,
 #if INTSET_CONTRACTS
     .maybe_contract = contract_unit_test,
 #else
