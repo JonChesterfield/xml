@@ -136,6 +136,9 @@ static inline bool arena_change_capacity(arena_module mod, arena_t *a,
 static inline void arena_change_allocation(arena_module mod, arena_t *a,
                                            uint64_t bytes);
 
+static inline void arena_discard_last_allocated(arena_module mod, arena_t *a,
+                                                uint64_t bytes);
+
 // Try to increase capacity to ensure at least bytes are available
 static inline bool arena_request_available(arena_module mod, arena_t *a,
                                            uint64_t bytes);
@@ -339,6 +342,17 @@ static inline void arena_change_allocation(arena_module mod, arena_t *a,
   mod->change_allocation(a, bytes);
   arena_require(((char *)arena_base_address(mod, *a) + bytes) ==
                 (char *)arena_next_address(mod, *a));
+}
+
+static inline void arena_discard_last_allocated(arena_module mod, arena_t *a,
+                                                uint64_t bytes)
+
+{
+  arena_require(arena_valid(mod, *a));
+  arena_require(bytes <= arena_size(mod, *a));
+  uint64_t next = arena_next_offset(mod, *a);
+  uint64_t revised = next - bytes;
+  arena_change_allocation(mod, a, revised);
 }
 
 static inline bool arena_request_available(arena_module mod, arena_t *a,

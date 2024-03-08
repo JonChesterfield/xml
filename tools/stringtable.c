@@ -133,6 +133,12 @@ static void pass_userdata(stringtable_t *tab) {
                            (uint64_t)arena_base_address(arena_mod, tab->arena));
 }
 
+bool stringtable_contains(stringtable_t *tab, stringtable_index_t index)
+{
+  return hashtable_contains(hashtable_mod, tab->hash,
+                            (unsigned char *)&index.value);
+}
+
 // if index is from the table, does not fail
 const char *stringtable_lookup(stringtable_t *tab, stringtable_index_t index) {
   pass_userdata(tab);
@@ -150,30 +156,36 @@ const char *stringtable_lookup(stringtable_t *tab, stringtable_index_t index) {
 }
 
 stringtable_index_t stringtable_record(stringtable_t *tab, uint64_t N) {
+  // Called to deal with the N bytes allocated at the edge of the arena
+  // On success, return an index into the arena corresponding to those bytes
+  // On failure, needs to drop those N bytes from the arena
+  // When the key is already present, also needs to drop those N bytes
   const stringtable_index_t failure = {
       .value = UINT64_MAX,
   };
 
+  size_t number_bytes_to_discard = N;
+  
   {
     // Shuffle the bytes down by 8 and write the size into that space
     if (!arena_request_available(arena_mod, &tab->arena, 8)) {
+      arena_discard_last_allocated(arena_mod, &tab->arena,
+                                   number_bytes_to_discard);
       return failure;
     }
     arena_allocate_into_existing_capacity(arena_mod, &tab->arena, 8);
+    number_bytes_to_discard += 8;
     char *str = (char *)arena_next_address(arena_mod, tab->arena) - N - 8;
     __builtin_memmove(str+8,str,N);
     __builtin_memcpy(str,&N,8);
   }
   
-  // Level of arena excluding the N bytes just appended
+  // Level of arena excluding the N bytes just appended, i.e.
+  // relative pointer to the string of interest
   uint64_t arena_level = arena_next_offset(arena_mod, tab->arena) - N;
 
+  // Absolute pointer to string of interest
   char *str = (char *)arena_next_address(arena_mod, tab->arena) - N;
-
-  
-  
-
-
   
   // Make current arena base available after allocating and before calling into
   // hashtable
@@ -181,6 +193,8 @@ stringtable_index_t stringtable_record(stringtable_t *tab, uint64_t N) {
 
   if (hashtable_available(hashtable_mod, tab->hash) < 2) {
     if (!hashtable_rehash_double(hashtable_mod, &tab->hash)) {
+      arena_discard_last_allocated(arena_mod, &tab->arena,
+                                   number_bytes_to_discard);
       return failure;
     }
     pass_userdata(tab);
@@ -191,12 +205,15 @@ stringtable_index_t stringtable_record(stringtable_t *tab, uint64_t N) {
     unsigned char *r = hashtable_lookup_key(hashtable_mod, tab->hash,
                                             (unsigned char *)&arena_level);
     if (r) {
-      uint64_t v;
-      __builtin_memcpy(&v, r, 8);
+      uint64_t v = word_from_bytes(r);
       const stringtable_index_t success = {
           .value = v,
       };
       assert(__builtin_memcmp(str, stringtable_lookup(tab, success), N) == 0);
+
+      arena_discard_last_allocated(arena_mod, &tab->arena,
+                                     number_bytes_to_discard);
+      
       return success;
     }
   }
@@ -217,22 +234,13 @@ stringtable_index_t stringtable_insert(stringtable_t *tab, const char *str,
   const stringtable_index_t failure = {
       .value = UINT64_MAX,
   };
-
-  uint64_t arena_level = arena_next_offset(arena_mod, tab->arena);
-
   
-  // Include the trailing 0
   if (!arena_append_bytes(arena_mod, &tab->arena, (const unsigned char *)str,
                           N)) {
     return failure;
   }
 
-  stringtable_index_t r = stringtable_record(tab, N);
-  if (!stringtable_index_valid(r)) {
-    arena_change_allocation(arena_mod, &tab->arena, arena_level);
-  }
-
-  return r;
+  return stringtable_record(tab, N);
 }
 
 MODULE(stringtable) {
