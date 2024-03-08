@@ -99,12 +99,15 @@ static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
   const char *L = arena_base + word_left;
   const char *R = arena_base + word_right;
 
-  uint64_t N = __builtin_strlen(L);
-  if (N != __builtin_strlen(R)) {
-    return false;
-  }
+  uint64_t left_size = word_from_bytes(L - 8);
+  uint64_t right_size = word_from_bytes(R - 8);
 
-  return __builtin_memcmp(L, R, N) == 0;
+  if (left_size != right_size)
+    {
+      return false;
+    }
+  
+  return __builtin_memcmp(L,R,left_size) == 0;  
 }
 
 stringtable_t stringtable_create(void) {
@@ -151,11 +154,27 @@ stringtable_index_t stringtable_record(stringtable_t *tab, uint64_t N) {
       .value = UINT64_MAX,
   };
 
-  uint64_t arena_level = (char *)arena_next_address(arena_mod, tab->arena) -
-                         (char *)arena_base_address(arena_mod, tab->arena) - N;
+  {
+    // Shuffle the bytes down by 8 and write the size into that space
+    if (!arena_request_available(arena_mod, &tab->arena, 8)) {
+      return failure;
+    }
+    arena_allocate_into_existing_capacity(arena_mod, &tab->arena, 8);
+    char *str = (char *)arena_next_address(arena_mod, tab->arena) - N - 8;
+    __builtin_memmove(str+8,str,N);
+    __builtin_memcpy(str,&N,8);
+  }
+  
+  // Level of arena excluding the N bytes just appended
+  uint64_t arena_level = arena_next_offset(arena_mod, tab->arena) - N;
 
-  const char *str = (char *)arena_next_address(arena_mod, tab->arena) - N;
+  char *str = (char *)arena_next_address(arena_mod, tab->arena) - N;
 
+  
+  
+
+
+  
   // Make current arena base available after allocating and before calling into
   // hashtable
   pass_userdata(tab);
@@ -199,8 +218,7 @@ stringtable_index_t stringtable_insert(stringtable_t *tab, const char *str,
       .value = UINT64_MAX,
   };
 
-  uint64_t arena_level = (char *)arena_next_address(arena_mod, tab->arena) -
-                         (char *)arena_base_address(arena_mod, tab->arena);
+  uint64_t arena_level = arena_next_offset(arena_mod, tab->arena);
 
   
   // Include the trailing 0
@@ -232,7 +250,7 @@ MODULE(stringtable) {
     size_t N = __builtin_strlen(str);
     stringtable_index_t idx = stringtable_insert(&tab, str, N + 1);
     CHECK(idx.value != UINT64_MAX);
-    CHECK(idx.value == 0);
+    CHECK(idx.value == 8);
 
     const char *res = stringtable_lookup(&tab, idx);
     CHECK(__builtin_memcmp(str, res, N + 1) == 0);
@@ -250,7 +268,7 @@ MODULE(stringtable) {
     {
       stringtable_index_t idx = stringtable_insert(&tab, str, N + 1);
       CHECK(idx.value != UINT64_MAX);
-      CHECK(idx.value == 0);
+      CHECK(idx.value == 8);
       const char *res = stringtable_lookup(&tab, idx);
       CHECK(__builtin_memcmp(str, res, N + 1) == 0);
     }
@@ -258,7 +276,7 @@ MODULE(stringtable) {
     {
       stringtable_index_t idx = stringtable_insert(&tab, str, N + 1);
       CHECK(idx.value != UINT64_MAX);
-      CHECK(idx.value == 0);
+      CHECK(idx.value == 8);
       const char *res = stringtable_lookup(&tab, idx);
       CHECK(__builtin_memcmp(str, res, N + 1) == 0);
     }
@@ -277,10 +295,10 @@ MODULE(stringtable) {
         "more",
     };
     size_t offsets[] = {
-        0,
-        7,
-        13,
-        21,
+        8+0,
+        16+7,
+        24+13,
+        32+21,
     };
     size_t N = 4;
 
