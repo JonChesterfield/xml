@@ -8,6 +8,7 @@
 #include "../tools/stack.libc.h"
 
 #include <stdio.h>
+#include <assert.h>
 
 bool regex_nullable_p(ptree_context ctx, ptree val) {
   ptree r = regex_nullable(ctx, val);
@@ -342,7 +343,8 @@ bool regex_is_canonical(ptree val)
   if (ptree_is_failure(val)) {return false; }
 
   ptree_context ctx = regex_ptree_create_context();
-
+  assert(regex_ptree_valid_context(ctx));
+ 
   ptree cp = regex_copy_into_context(val, ctx);
   ptree canon = regex_canonicalise(ctx, cp);  
   enum ptree_compare_res cmp = regex_ptree_compare(&stack_libc, val, canon);
@@ -359,6 +361,7 @@ void regex_split(ptree_context ctx, ptree val, ptree edges[static regex_arity]) 
 
 int regex_main(void) {
   ptree_context ctx = regex_ptree_create_context();
+  assert(regex_ptree_valid_context(ctx));
   ptree expr =
       regex_make_and(ctx, regex_make_byte_00(ctx), regex_make_byte_02(ctx));
 

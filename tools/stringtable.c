@@ -157,11 +157,12 @@ const char *stringtable_lookup(stringtable_t *tab, stringtable_index_t index) {
 
 size_t stringtable_lookup_size(stringtable_t *tab, stringtable_index_t index) {
   // size is stored immediately before the bytes of the string in the arena
-  unsigned char *r = stringtable_lookup(tab, index);
+  const char *r = stringtable_lookup(tab, index);
   if (!r) {
     return SIZE_MAX;
   }
-  return word_from_bytes(r-8);
+  const unsigned char * l = (const unsigned char *)r - 8;
+  return word_from_bytes(l);
 }
 
 

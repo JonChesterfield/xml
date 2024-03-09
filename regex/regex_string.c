@@ -13,6 +13,8 @@
 
 #include "../tools/arena.libc.h"
 
+#include <assert.h>
+
 struct regex_to_char_sequence_type {
   arena_module mod;
   arena_t *arena;
@@ -249,7 +251,7 @@ done:;
 char *regex_to_malloced_c_string(ptree val) {
   arena_t arena = arena_create(&arena_libc, 64);
   ptree_context ctx = regex_ptree_create_context();
-
+  assert(regex_ptree_valid_context(ctx));
   uint64_t before = arena_size(&arena_libc, arena);
 
   char *heap = 0;

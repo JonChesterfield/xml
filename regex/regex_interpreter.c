@@ -3,6 +3,8 @@
 #include "regex_cache.h"
 #include "regex_string.h"
 
+#include <assert.h>
+
 uint64_t regex_interpreter_string_matches(unsigned char *regex,
                                           size_t regex_len,
                                           unsigned char *target,
@@ -22,6 +24,7 @@ uint64_t regex_interpreter_string_matches(unsigned char *regex,
 
   for (unsigned iter = 0; iter < target_len; iter++) {
     ptree_context ctx = regex_ptree_create_context();
+    assert(regex_ptree_valid_context(ctx));
     {
       ptree p = regex_from_stringtable(&cache.strtab, current, ctx);
       if (regex_nullable_p(ctx, p)) {

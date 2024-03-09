@@ -117,6 +117,11 @@ static ptree_context ptree_malloc_ptree_create_context(void) {
   return ptree_malloc_ptree_context_to_ptree_context(res);
 }
 
+static bool ptree_malloc_ptree_valid_context(ptree_context ctx) {
+  (void)ctx;
+  return true;
+}
+
 static void ptree_malloc_ptree_destroy_context(ptree_context ctx) {
   ptree_malloc_ptree_context s =
       ptree_context_to_ptree_malloc_ptree_context(ctx);

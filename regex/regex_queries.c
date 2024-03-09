@@ -2,6 +2,8 @@
 #include "regex_string.h"
 #include "regex.h"
 
+#include <assert.h>
+
 static int func(regex_cache_t * cache,
          stringtable_index_t r,
          void* arg_data)
@@ -9,7 +11,8 @@ static int func(regex_cache_t * cache,
   regex_query_state_count_t * data = (regex_query_state_count_t*)arg_data;
 
   ptree_context ctx = regex_ptree_create_context();
-
+  assert(regex_ptree_valid_context(ctx));
+  
   // todo, would like nullable/empty etc available without allocating
   ptree p = regex_from_stringtable(&cache->strtab, r, ctx);
   if (regex_nullable_p(ctx, p)) {   

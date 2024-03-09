@@ -56,7 +56,8 @@ bool regex_ptree_equivalent(regex_cache_t *cache, ptree x, ptree y) {
 }
 
 bool regex_canonical_is_atomic(stringtable_t *tab, stringtable_index_t x) {
-  ptree_context ctx = regex_ptree_create_context();
+  ptree_context ctx = regex_ptree_create_context();  
+  assert(regex_ptree_valid_context(ctx));
   ptree p = regex_from_stringtable(tab, x, ctx);
   bool res = regex_ptree_is_atomic(p);
   regex_ptree_destroy_context(ctx);
@@ -67,6 +68,7 @@ bool regex_canonical_atomic_and_equal(stringtable_t *tab, stringtable_index_t x,
                                       stringtable_index_t y) {
   // inefficient
   ptree_context ctx = regex_ptree_create_context();
+  assert(regex_ptree_valid_context(ctx));
   ptree px = regex_from_stringtable(tab, x, ctx);
   ptree py = regex_from_stringtable(tab, y, ctx);
   bool res = regex_ptree_atomic_and_equal(px, py);
@@ -84,6 +86,7 @@ bool regex_canonical_definitionally_equal(stringtable_t *tab,
 bool regex_canonical_similar(stringtable_t *tab, stringtable_index_t x,
                              stringtable_index_t y) {
   ptree_context ctx = regex_ptree_create_context();
+  assert(regex_ptree_valid_context(ctx));
   ptree px = regex_from_stringtable(tab, x, ctx);
   ptree py = regex_from_stringtable(tab, y, ctx);
   ptree cx = regex_canonicalise(ctx, px);
@@ -132,6 +135,7 @@ static bool regex_canonical_equivalent_with_structures(regex_cache_t *cache,
       // i.e. if we create the table here or they all start with that
       // or to do the string compare directly
       ptree_context ctx = regex_ptree_create_context();
+      assert(regex_ptree_valid_context(ctx));
       ptree px = regex_from_stringtable(&cache->strtab, left, ctx);
       ptree py = regex_from_stringtable(&cache->strtab, right, ctx);
 

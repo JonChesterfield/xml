@@ -10,6 +10,10 @@ static ptree_context regex_impl_ptree_create_context(void) {
   return ptree_malloc_ptree_create_context();
 }
 
+static bool regex_impl_ptree_valid_context(ptree_context ctx) {
+  return ptree_malloc_ptree_valid_context(ctx);
+}
+
 static void regex_impl_ptree_destroy_context(ptree_context ctx) {
   ptree_malloc_ptree_destroy_context(ctx);
 }

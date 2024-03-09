@@ -46,6 +46,7 @@ typedef struct ptree_module_ty ptree_module;
 #include "ptree_macro_wrapper.h"
 
 static inline ptree_context ptree_create_context(const ptree_module *mod);
+static inline bool ptree_valid_context(const ptree_module *mod, ptree_context ctx);
 static inline void ptree_destroy_context(const ptree_module *mod,
                                          ptree_context ctx);
 
@@ -174,6 +175,7 @@ static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
 
 struct ptree_module_ty {
   ptree_context (*const create_context)(void);
+  bool (*const valid_context)(ptree_context);
   void (*const destroy_context)(ptree_context);
 
   bool (*const identifier_valid_token)(uint64_t);

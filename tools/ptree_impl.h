@@ -26,8 +26,13 @@ static inline void ptree_require_func(bool expr, const char *name, int line) {
 static inline ptree_context ptree_create_context(const ptree_module *mod) {
   return mod->create_context();
 }
+static inline bool ptree_valid_context(const ptree_module *mod, ptree_context ctx)
+{
+  return mod->valid_context(ctx);
+}
 static inline void ptree_destroy_context(const ptree_module *mod,
                                          ptree_context ctx) {
+  ptree_require(ptree_valid_context(mod, ctx));
   mod->destroy_context(ctx);
 }
 
@@ -102,6 +107,7 @@ static inline size_t ptree_token_width(const ptree_module *mod, ptree p) {
 static inline ptree ptree_from_token(const ptree_module *mod, ptree_context ctx,
                                      uint64_t id, const char *value,
                                      size_t width) {
+  ptree_require(ptree_valid_context(mod, ctx));
   ptree_require(ptree_identifier_valid_token(mod, id));
 
   ptree res = mod->from_token(ctx, id, value, width);
@@ -149,6 +155,7 @@ ptree_impl_identifier_number_elements_within_bounds(const ptree_module *mod,
 static inline ptree ptree_expression_append(const ptree_module *mod,
                                             ptree_context ctx, ptree base,
                                             ptree element) {
+  ptree_require(ptree_valid_context(mod, ctx));
   ptree_require(!ptree_is_failure(base));
   ptree_require(!ptree_is_failure(element));
   ptree_require(ptree_is_expression(mod, base));
@@ -172,6 +179,7 @@ static inline ptree ptree_expression_append(const ptree_module *mod,
 static inline ptree ptree_expression_construct(const ptree_module *mod,
                                                ptree_context ctx, uint64_t id,
                                                size_t N, ptree *elts) {
+  ptree_require(ptree_valid_context(mod, ctx));
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
   for (size_t i = 0; i < N; i++) {
@@ -193,6 +201,7 @@ static inline ptree ptree_expression_create_uninitialised(const ptree_module *mo
                                                           ptree_context ctx, uint64_t id,
                                                           size_t N)
 {
+  ptree_require(ptree_valid_context(mod, ctx));
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
 
@@ -226,6 +235,7 @@ static inline void ptree_expression_initialise_element(const ptree_module *mod, 
 
 static inline ptree ptree_expression0(const ptree_module *mod,
                                       ptree_context ctx, uint64_t id) {
+  ptree_require(ptree_valid_context(mod, ctx));
   enum { N = 0 };
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
@@ -237,6 +247,7 @@ static inline ptree ptree_expression0(const ptree_module *mod,
 static inline ptree ptree_expression1(const ptree_module *mod,
                                       ptree_context ctx, uint64_t id,
                                       ptree x0) {
+  ptree_require(ptree_valid_context(mod, ctx));
   enum { N = 1 };
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
@@ -249,6 +260,7 @@ static inline ptree ptree_expression1(const ptree_module *mod,
 static inline ptree ptree_expression2(const ptree_module *mod,
                                       ptree_context ctx, uint64_t id, ptree x0,
                                       ptree x1) {
+  ptree_require(ptree_valid_context(mod, ctx));
   enum { N = 2 };
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
@@ -261,6 +273,7 @@ static inline ptree ptree_expression2(const ptree_module *mod,
 static inline ptree ptree_expression3(const ptree_module *mod,
                                       ptree_context ctx, uint64_t id, ptree x0,
                                       ptree x1, ptree x2) {
+  ptree_require(ptree_valid_context(mod, ctx));
   enum { N = 3 };
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
@@ -273,6 +286,7 @@ static inline ptree ptree_expression3(const ptree_module *mod,
 static inline ptree ptree_expression4(const ptree_module *mod,
                                       ptree_context ctx, uint64_t id, ptree x0,
                                       ptree x1, ptree x2, ptree x3) {
+  ptree_require(ptree_valid_context(mod, ctx));
   enum { N = 4 };
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
@@ -285,6 +299,7 @@ static inline ptree ptree_expression4(const ptree_module *mod,
 static inline ptree ptree_expression5(const ptree_module *mod,
                                       ptree_context ctx, uint64_t id, ptree x0,
                                       ptree x1, ptree x2, ptree x3, ptree x4) {
+  ptree_require(ptree_valid_context(mod, ctx));
   enum { N = 5 };
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
@@ -298,6 +313,7 @@ static inline ptree ptree_expression6(const ptree_module *mod,
                                       ptree_context ctx, uint64_t id, ptree x0,
                                       ptree x1, ptree x2, ptree x3, ptree x4,
                                       ptree x5) {
+  ptree_require(ptree_valid_context(mod, ctx));
   enum { N = 6 };
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
@@ -311,6 +327,7 @@ static inline ptree ptree_expression7(const ptree_module *mod,
                                       ptree_context ctx, uint64_t id, ptree x0,
                                       ptree x1, ptree x2, ptree x3, ptree x4,
                                       ptree x5, ptree x6) {
+  ptree_require(ptree_valid_context(mod, ctx));
   enum { N = 7 };
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
@@ -324,6 +341,7 @@ static inline ptree ptree_expression8(const ptree_module *mod,
                                       ptree_context ctx, uint64_t id, ptree x0,
                                       ptree x1, ptree x2, ptree x3, ptree x4,
                                       ptree x5, ptree x6, ptree x7) {
+  ptree_require(ptree_valid_context(mod, ctx));
   enum { N = 8 };
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));

@@ -18,6 +18,8 @@ static MODULE(regex_nullable) {
   // and building a better linked structure on the fly for the versions backed
   // by libc (as opposed to areans on mmap or similar)
   ptree_context ctx = regex_ptree_create_context();
+  CHECK(regex_ptree_valid_context(ctx));
+
   ptree empty_str = regex_make_empty_string(ctx);
   ptree empty_set = regex_make_empty_set(ctx);
 
@@ -147,7 +149,8 @@ static MODULE(regex_nullable) {
 }
 
 MODULE(ptree) {
-  ptree_context ctx = regex_ptree_create_context();
+  ptree_context ctx = regex_ptree_create_context();  
+  CHECK(regex_ptree_valid_context(ctx));
   TEST("ctor/dtor") { (void)ctx; }
 
   TEST("make empty set") {
@@ -183,6 +186,7 @@ MODULE(ptree) {
 
 static MODULE(regex_split) {
   ptree_context ctx = regex_ptree_create_context();
+  CHECK(regex_ptree_valid_context(ctx));
 
   TEST("serialise") {
     arena_t arena = arena_create(&arena_libc, 64);
@@ -229,7 +233,8 @@ static MODULE(regex_string)
 {
   arena_t arena = arena_create(&arena_libc, 64);
   ptree_context ctx = regex_ptree_create_context();
-  
+  CHECK(regex_ptree_valid_context(ctx));
+
   TEST("parse and print a sequence")
   {
     const char seq[] = "(|(*00)(|02(~cc)))";

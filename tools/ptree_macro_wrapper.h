@@ -15,6 +15,7 @@
 
 #define PTREE_INSTANTIATE_DECLARE(PREFIX)                                      \
   ptree_context PTREE_CONCAT(PREFIX, create_context)(void);                    \
+  bool PTREE_CONCAT(PREFIX, valid_context)(ptree_context ctx);               \
   void PTREE_CONCAT(PREFIX, destroy_context)(ptree_context ctx);               \
   const ptree_module *PTREE_CONCAT(PREFIX, retrieve_module)(void);             \
   bool PTREE_CONCAT(PREFIX, identifier_is_failure)(uint64_t id);               \
@@ -81,6 +82,9 @@
   PTREE_INSTANTIATE_DECLARE(PREFIX);                                           \
   ptree_context PTREE_CONCAT(PREFIX, create_context)(void) {                   \
     return ptree_create_context(&MODULE);                                      \
+  }                                                                            \
+  bool PTREE_CONCAT(PREFIX, valid_context)(ptree_context ctx) {              \
+    return ptree_valid_context(&MODULE, ctx);                                \
   }                                                                            \
   void PTREE_CONCAT(PREFIX, destroy_context)(ptree_context ctx) {              \
     return ptree_destroy_context(&MODULE, ctx);                                \
@@ -226,6 +230,7 @@
 #define PTREE_INSTANTIATE_MODULE_INITIALIZER(PREFIX)                           \
   {                                                                            \
     .create_context = PTREE_CONCAT(PREFIX, create_context),                    \
+    .valid_context = PTREE_CONCAT(PREFIX, valid_context),                    \
     .destroy_context = PTREE_CONCAT(PREFIX, destroy_context),                  \
     .identifier_valid_token = PTREE_CONCAT(PREFIX, identifier_valid_token),    \
     .identifier_valid_expression =                                             \
