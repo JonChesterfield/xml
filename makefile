@@ -84,15 +84,15 @@ RE2COPTS := --no-debug-info -W --no-generation-date
 %.cmark.html:	%.md | $(cmark)
 	@./$(cmark) --to html $^ > $@
 
-
-
 # In any directory:
 # %.TokenTree.xml -> %.TokenList.xml
 # %.TokenList.xml -> %.HexTokenList.xml
 # %.HexTokenList.xml -> %.RawBinary.xml
 include $(SELF_DIR)common/common.mk
 
+# When xsltproc output is empty it fails to create an empty output file
 %.hex:	%.RawBinary.xml validate/subtransforms
+	@touch "$@"
 	xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
 
 

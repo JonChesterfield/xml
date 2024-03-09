@@ -70,7 +70,7 @@ $(arith_tmp)/arith_declarations.TokenTree.xml:	lang_to_lexer_declarations_TokenT
 $(arith_tmp)/arith_definitions.TokenTree.xml:	lang_to_lexer_definitions_TokenTree.xsl arith/arith.lang.xml  | $(arith_tmp)
 	xsltproc --output $@ $^
 
-$(arith_tmp)/arith_re2c_iterator.TokenTree.xml:	lang_to_lexer_re2c_iterator_definition_TokenTree.xsl arith/arith.lang.xml  | $(arith_tmp)
+$(arith_tmp)/arith_re2c_iterator.TokenTree.xml:	lang_to_lexer_re2c_iterator_TokenTree.xsl arith/arith.lang.xml  | $(arith_tmp)
 	xsltproc --output $@ $^
 
 

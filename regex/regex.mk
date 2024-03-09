@@ -15,8 +15,7 @@ clean::
 
 REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.h regex/regex.production.h regex/regex_parser.lemon.h regex/regex_string.h
 
-REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_parser.lemon.c regex_parser.bison.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c regex_interpreter.c
-
+REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_parser.lemon.c regex_parser.bison.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c regex_interpreter.c regex.production.assign.c regex.production.list.c
 
 REGEX_PROGRAM_SOURCE := regex.tests.c regex_stdin_to_xml.c
 
@@ -68,20 +67,27 @@ $(regex_tmp)/regex_lexer_declarations.TokenTree.xml:	lang_to_lexer_declarations_
 $(regex_tmp)/regex_lexer_definitions.TokenTree.xml:	lang_to_lexer_definitions_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
 	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
-$(regex_tmp)/regex_lexer_re2c_iterator.TokenTree.xml:	lang_to_lexer_re2c_iterator_definition_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
+$(regex_tmp)/regex_lexer_re2c_iterator.TokenTree.xml:	lang_to_lexer_re2c_iterator_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
 	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
-$(regex_tmp)/regex.lexer_re2c_iterator.c.re2c:	$(regex_tmp)/regex_lexer_re2c_iterator.hex $(hex_to_binary)
-	./$(hex_to_binary) < "$<" > "$@"
+$(regex_tmp)/regex_parser_bison.TokenTree.xml:	lang_to_parser_bison_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
+	@xsltproc $(XSLTPROCOPTS) --output $@ $^
+
+$(regex_tmp)/regex_parser_lemon.TokenTree.xml:	lang_to_parser_lemon_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
+	@xsltproc $(XSLTPROCOPTS) --output $@ $^
+
+$(regex_tmp)/regex_production_assign.TokenTree.xml:	lang_to_production_assign_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
+	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
 $(regex_tmp)/regex_production_declarations.TokenTree.xml:	lang_to_production_declarations_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
 	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
-$(regex_tmp)/regex_parser.lemon.TokenTree.xml:	lang_to_parser_lemon_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
+$(regex_tmp)/regex_production_list.TokenTree.xml:	lang_to_production_list_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
 	@xsltproc $(XSLTPROCOPTS) --output $@ $^
 
-$(regex_tmp)/regex_parser.bison.TokenTree.xml:	lang_to_parser_bison_TokenTree.xsl regex/regex.lang.xml  | $(regex_tmp)
-	@xsltproc $(XSLTPROCOPTS) --output $@ $^
+
+$(regex_tmp)/regex.lexer_re2c_iterator.c.re2c:	$(regex_tmp)/regex_lexer_re2c_iterator.hex $(hex_to_binary)
+	./$(hex_to_binary) < "$<" > "$@"
 
 regex/regex.lexer.h:	$(regex_tmp)/regex_lexer_declarations.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"
@@ -97,10 +103,22 @@ regex/regex.lexer.c:	$(regex_tmp)/regex_lexer_definitions.hex regex/regex_lexer_
 regex/regex.production.h:	$(regex_tmp)/regex_production_declarations.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"
 
-regex/regex_parser.lemon.y:	$(regex_tmp)/regex_parser.lemon.hex $(hex_to_binary)
+regex/regex.production.assign.c:	$(regex_tmp)/regex_production_assign.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"
 
-regex/regex_parser.bison.y:	$(regex_tmp)/regex_parser.bison.hex $(hex_to_binary)
+regex/regex.production.list.c:	$(regex_tmp)/regex_production_list.hex $(hex_to_binary)
+	./$(hex_to_binary) < "$<" > "$@"
+
+clean::
+	@rm -f regex/regex.production.h
+	@rm -f regex/regex.production.assign.c
+	@rm -f regex/regex.production.list.c
+
+
+regex/regex_parser.lemon.y:	$(regex_tmp)/regex_parser_lemon.hex $(hex_to_binary)
+	./$(hex_to_binary) < "$<" > "$@"
+
+regex/regex_parser.bison.y:	$(regex_tmp)/regex_parser_bison.hex $(hex_to_binary)
 	./$(hex_to_binary) < "$<" > "$@"
 
 # multiple output files are messy in make
@@ -112,7 +130,6 @@ clean::
 	@rm -f regex/regex.lexer.h
 	@rm -f regex/regex_lexer_re2c_iterator_step.data
 	@rm -f regex/regex.lexer.c
-	@rm -f regex/regex.production.h
 	@rm -f regex/regex_parser.lemon.y
 
 	@rm -f regex/regex_parser.bison.y
@@ -151,7 +168,7 @@ clean::
 	@rm -f regex/regex_parser.bison.t
 
 .PHONY: regex
-regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c regex/regex_parser.lemon.t regex/regex_parser.bison.t bin/regex.tests bin/regex_stdin_to_xml regex/regex_parser.bison.y
+regex:	$(REGEX_OBJECTS) regex/regex_parser.lemon.c regex/regex_parser.lemon.t regex/regex_parser.bison.t bin/regex.tests bin/regex_stdin_to_xml regex/regex_parser.bison.y regex/regex.production.assign.c regex/regex.production.list.c
 
 bin/regex.tests:	$(regex_tmp)/regex.tests.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
 	@mkdir -p "$(dir $@)"

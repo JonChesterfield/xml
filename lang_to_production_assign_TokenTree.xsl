@@ -17,41 +17,14 @@
   <xsl:value-of select="/Language/LanguageName"></xsl:value-of>
 </xsl:variable>
 
-<xsl:variable name="lowercase" select="'abcdefghijklmnopqrstuvwxyz'" />
-<xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'" />
-<xsl:variable name="UpcaseLangName" >
-  <xsl:value-of select="translate($LangName,$lowercase,$uppercase)" />
-</xsl:variable>
-
 <xsl:template match="Productions">
   <Header>
-    <Header0 value ="#ifndef {$UpcaseLangName}_PRODUCTION_DECLARATIONS_H_INCLUDED" />
+    <Include value ='#include "{$LangName}.production.h"' />
     <NL hexvalue="0a" />
-    <Header1 value ="#define {$UpcaseLangName}_PRODUCTION_DECLARATIONS_H_INCLUDED" />
-    <NL hexvalue="0a0a" />
-
-    <Header value='#include "../tools/token.h"' />
-    <NL hexvalue = "0a" />
-    <Header value='#include "{$LangName}.ptree.h"' />
-    <NL hexvalue = "0a" />
+    <Include value ='#include "{$LangName}.declarations.h"' />
+    <NL hexvalue="0a" />
   </Header>
-
-  <xsl:apply-templates select="ListProduction|AssignProduction"/>
-
-  <NL hexvalue="0a0a" />
-  <Footer>
-    <Footer0 value="#endif /* {$UpcaseLangName}_LEXER_DECLARATIONS_H_INCLUDED */" />
-  </Footer>
-</xsl:template>
-
-<xsl:template match="ListProduction">
-  <NL hexvalue="0a" />
-  <Label value="// ListProduction {@label} -&gt; {$LangName}_grouping_{@grouping}" />
-  <NL hexvalue="0a" />
-  <ResultType value = "ptree {$LangName}_list_production_{@label}(ptree_context ctx" />
-  <xsl:apply-templates select="Grouping|Token" mode="ProductionFormals"/>
-  <CL value=");" />
-  <NL hexvalue="0a" />
+  <xsl:apply-templates select="AssignProduction"/>
 </xsl:template>
 
 <xsl:template match="AssignProduction">
@@ -60,20 +33,49 @@
   <NL hexvalue="0a" />
   <ResultType value = "ptree {$LangName}_assign_production_{@label}(ptree_context ctx" />
   <xsl:apply-templates select="Grouping|Token" mode="ProductionFormals"/>
-  <CL value=");" />
+  <CL value=")" />
+  <NL hexvalue="0a" />
+  <OB value="{{" />
+  <NL hexvalue="0a" />
+  <xsl:apply-templates select="Grouping|Token" mode="AssignProductionArg"/>
+  <R value="  return R;" />
+  <NL hexvalue="0a" />
+  <CB value="}}" />
   <NL hexvalue="0a" />
 </xsl:template>
 
 <xsl:template match="Grouping" mode="ProductionFormals">
-  <NL hexvalue="20" />
-  <COMMA value="," />
+  <COMMA value=", " />
   <GroupingProduction value="ptree /*{@type}*/ x{position()}" />
 </xsl:template>
 
 <xsl:template match="Token" mode="ProductionFormals">
-  <NL hexvalue="20" />
-  <COMMA value="," />
+  <COMMA value=", " />
   <TokenProduction value="token /*{@name}*/ x{position()}" />
+</xsl:template>
+
+<xsl:template match="Grouping" mode="AssignProductionArg">
+  <xsl:choose>
+    <xsl:when test="@position">
+      <P value="  ptree R = x{position()};" />
+    </xsl:when>
+    <xsl:otherwise>
+      <P value="  (void)x{position()};" />
+    </xsl:otherwise>
+  </xsl:choose>
+  <NL hexvalue="0a" />
+</xsl:template>
+
+<xsl:template match="Token" mode="AssignProductionArg">
+  <xsl:choose>
+    <xsl:when test="@position">
+      <P value="  ptree R = parser_{$LangName}_ptree_from_token(ctx, {$LangName}_token_{@name}, x{position()});" />
+    </xsl:when>
+    <xsl:otherwise>
+      <P value="  (void)x{position()};" />
+    </xsl:otherwise>
+  </xsl:choose>
+  <NL hexvalue="0a" />
 </xsl:template>
 
 <xsl:template match="@*">
