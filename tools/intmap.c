@@ -25,21 +25,19 @@ enum { intmap_util_struct_sizeof = 4 * 8 };
 _Static_assert(sizeof(hashtable_t) == intmap_util_struct_sizeof, "");
 _Static_assert(sizeof(intmap_t) == intmap_util_struct_sizeof, "");
 
-static uint64_t intmap_util_key_hash(hashtable_user_t user, hashtable_t h,
+static uint64_t intmap_util_key_hash(hashtable_user_t user,
                                      unsigned char *bytes) {
   (void)user;
-  (void)h;
   // identity at present
   uint64_t r;
   __builtin_memcpy(&r, bytes, 8);
   return r;
 }
 
-static bool intmap_util_key_equal(hashtable_user_t user, hashtable_t h,
+static bool intmap_util_key_equal(hashtable_user_t user, 
                                   const unsigned char *left,
                                   const unsigned char *right) {
   (void)user;
-  (void)h;
   return __builtin_memcmp(left, right, 8) == 0;
 }
 

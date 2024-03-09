@@ -74,19 +74,19 @@ static inline bool hashderiv_valid(hashtable_user_t user, hashtable_t h) {
   return arena_valid(arena_mod, hashderiv_hash_to_arena(h));
 }
 
-static uint64_t hashderiv_key_hash(hashtable_user_t user, hashtable_t h,
+static uint64_t hashderiv_key_hash(hashtable_user_t user,
                                    unsigned char *bytes) {
-  (void)h;
+  (void)user;
   // identity at present
   uint64_t r;
   __builtin_memcpy(&r, bytes, 8);
   return r;
 }
 
-static bool hashderiv_key_equal(hashtable_user_t user, hashtable_t h,
+static bool hashderiv_key_equal(hashtable_user_t user, 
                                 const unsigned char *left,
                                 const unsigned char *right) {
-  (void)h;
+  (void)user;
   return __builtin_memcmp(left, right, bytes_key_size) == 0;
 }
 

@@ -23,9 +23,9 @@ static const struct arena_module_ty arena_libc_contract =
 
 static arena_module arena_mod = &arena_libc_contract;
 
-static uint64_t intset_util_key_hash(hashtable_user_t, hashtable_t h,
+static uint64_t intset_util_key_hash(hashtable_user_t,
                                      unsigned char *bytes);
-static bool intset_util_key_equal(hashtable_user_t, hashtable_t h,
+static bool intset_util_key_equal(hashtable_user_t, 
                                   const unsigned char *left,
                                   const unsigned char *right);
 
@@ -63,7 +63,7 @@ static uint64_t word_from_bytes(const unsigned char *bytes) {
   return r;
 }
 
-static uint64_t intset_util_key_hash(hashtable_user_t user, hashtable_t h,
+static uint64_t intset_util_key_hash(hashtable_user_t user,
                                      unsigned char *bytes) {
   (void)user;
   char *arena_base = (char *)user.state;
@@ -78,7 +78,7 @@ static uint64_t intset_util_key_hash(hashtable_user_t user, hashtable_t h,
   return str[0]; // not a good hash
 }
 
-static bool intset_util_key_equal(hashtable_user_t user, hashtable_t h,
+static bool intset_util_key_equal(hashtable_user_t user, 
                                   const unsigned char *left,
                                   const unsigned char *right) {
   (void)user;
