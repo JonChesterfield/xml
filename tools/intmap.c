@@ -25,7 +25,9 @@ enum { intmap_util_struct_sizeof = 4 * 8 };
 _Static_assert(sizeof(hashtable_t) == intmap_util_struct_sizeof, "");
 _Static_assert(sizeof(intmap_t) == intmap_util_struct_sizeof, "");
 
-static uint64_t intmap_util_key_hash(hashtable_t h, unsigned char *bytes) {
+static uint64_t intmap_util_key_hash(hashtable_user_t user, hashtable_t h,
+                                     unsigned char *bytes) {
+  (void)user;
   (void)h;
   // identity at present
   uint64_t r;
@@ -33,8 +35,10 @@ static uint64_t intmap_util_key_hash(hashtable_t h, unsigned char *bytes) {
   return r;
 }
 
-static bool intmap_util_key_equal(hashtable_t h, const unsigned char *left,
+static bool intmap_util_key_equal(hashtable_user_t user, hashtable_t h,
+                                  const unsigned char *left,
                                   const unsigned char *right) {
+  (void)user;
   (void)h;
   return __builtin_memcmp(left, right, 8) == 0;
 }
@@ -46,8 +50,6 @@ static const struct hashtable_module_ty mod_state = {
     .create = intmap_util_create,
     .destroy = intmap_util_destroy,
     .valid = intmap_util_valid,
-    .store_userdata = intmap_util_store_userdata,
-    .load_userdata = intmap_util_load_userdata,
     .key_align = 8,
     .key_size = 8,
     .value_align = 8,
@@ -82,46 +84,48 @@ static inline intmap_t intmap_util_to_map(hashtable_t s) {
 }
 
 intmap_t intmap_create(uint64_t size) {
-  return intmap_util_to_map(hashtable_create(mod, size));
+  return intmap_util_to_map(hashtable_create(mod, (hashtable_user_t){0}, size));
 }
 
 void intmap_destroy(intmap_t s) {
-  hashtable_destroy(mod, intmap_util_to_hash(s));
+  hashtable_destroy(mod, (hashtable_user_t){0}, intmap_util_to_hash(s));
 }
 
 bool intmap_valid(intmap_t s) {
-  return hashtable_valid(mod, intmap_util_to_hash(s));
+  return hashtable_valid(mod, (hashtable_user_t){0}, intmap_util_to_hash(s));
 }
 
 bool intmap_equal(intmap_t x, intmap_t y) {
-  return hashtable_equal(mod, intmap_util_to_hash(x), intmap_util_to_hash(y));
+  return hashtable_equal(mod, (hashtable_user_t){0}, intmap_util_to_hash(x),
+                         intmap_util_to_hash(y));
 }
 
-intmap_t intmap_clone(intmap_t x)
-{
-  return intmap_util_to_map(hashtable_clone(mod, intmap_util_to_hash(x)));
+intmap_t intmap_clone(intmap_t x) {
+  return intmap_util_to_map(
+      hashtable_clone(mod, (hashtable_user_t){0}, intmap_util_to_hash(x)));
 }
 
 intmap_t intmap_rehash(intmap_t s, uint64_t size) {
-  return intmap_util_to_map(
-      hashtable_rehash(mod, intmap_util_to_hash(s), size));
+  return intmap_util_to_map(hashtable_rehash(mod, (hashtable_user_t){0},
+                                             intmap_util_to_hash(s), size));
 }
 
 uint64_t intmap_size(intmap_t s) {
-  return hashtable_size(mod, intmap_util_to_hash(s));
+  return hashtable_size(mod, (hashtable_user_t){0}, intmap_util_to_hash(s));
 }
 
 uint64_t intmap_capacity(intmap_t s) {
-  return hashtable_capacity(mod, intmap_util_to_hash(s));
+  return hashtable_capacity(mod, (hashtable_user_t){0}, intmap_util_to_hash(s));
 }
 
 bool intmap_contains(intmap_t s, uint64_t k) {
-  return hashtable_contains(mod, intmap_util_to_hash(s), (unsigned char *)&k);
+  return hashtable_contains(mod, (hashtable_user_t){0}, intmap_util_to_hash(s),
+                            (unsigned char *)&k);
 }
 
 uint64_t intmap_lookup(intmap_t s, uint64_t k) {
-  unsigned char *v =
-      hashtable_lookup_value(mod, intmap_util_to_hash(s), (unsigned char *)&k);
+  unsigned char *v = hashtable_lookup_value(
+      mod, (hashtable_user_t){0}, intmap_util_to_hash(s), (unsigned char *)&k);
   uint64_t res = UINT64_MAX;
   if (v) {
     __builtin_memcpy(&res, v, 8);
@@ -131,20 +135,20 @@ uint64_t intmap_lookup(intmap_t s, uint64_t k) {
 
 void intmap_insert(intmap_t *s, uint64_t v, uint64_t k) {
   hashtable_t h = intmap_util_to_hash(*s);
-  hashtable_insert(mod, &h, (unsigned char *)&v, (unsigned char *)&k);
+  hashtable_insert(mod, (hashtable_user_t){0}, &h, (unsigned char *)&v,
+                   (unsigned char *)&k);
   *s = intmap_util_to_map(h);
 }
 
-void intmap_remove(intmap_t* s, uint64_t v)
-{
+void intmap_remove(intmap_t *s, uint64_t v) {
   hashtable_t h = intmap_util_to_hash(*s);
-  hashtable_remove(mod, &h, (unsigned char*)&v);
+  hashtable_remove(mod, (hashtable_user_t){0}, &h, (unsigned char *)&v);
   *s = intmap_util_to_map(h);
 }
 
 void intmap_clear(intmap_t *s) {
   hashtable_t h = intmap_util_to_hash(*s);
-  hashtable_clear(mod, &h);
+  hashtable_clear(mod, (hashtable_user_t){0}, &h);
   *s = intmap_util_to_map(h);
 }
 

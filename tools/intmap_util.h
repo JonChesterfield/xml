@@ -22,14 +22,6 @@ static inline hashtable_t intmap_util_arena_to_hash(arena_t a) {
   return h;
 }
 
-static inline void intmap_util_store_userdata(hashtable_t *h, uint64_t v) {
-  h->state[3] = v;
-}
-
-static inline uint64_t intmap_util_load_userdata(hashtable_t *h) {
-  return h->state[3];
-}
-
 static const uint64_t intmap_util_sentinel = UINT64_MAX;
 
 static inline hashtable_t
@@ -57,37 +49,43 @@ static inline bool intmap_util_valid_using_arena(arena_module mod,
 
 #define INTMAP_UTIL(ARENA, IS_SET, KEY_HASH, KEY_EQUAL, CONTRACT)              \
   static size_t bytes_per_elt() { return IS_SET ? 8 : 16; }                    \
-  static hashtable_t intmap_util_create(uint64_t size) {                       \
+  static hashtable_t intmap_util_create(hashtable_user_t user,                 \
+                                        uint64_t size) {                       \
+    (void)user;                                                                \
     if (CONTRACT) {                                                            \
       CONTRACT(contract_is_zero_or_power_of_two(size), "size", 4);             \
     }                                                                          \
     return intmap_util_create_using_arena(ARENA, size, IS_SET);                \
   }                                                                            \
                                                                                \
-  static void intmap_util_destroy(hashtable_t h) {                             \
+  static void intmap_util_destroy(hashtable_user_t user, hashtable_t h) {      \
+    (void)user;                                                                \
     intmap_util_destroy_using_arena(ARENA, h);                                 \
   }                                                                            \
                                                                                \
-  static bool intmap_util_valid(hashtable_t h) {                               \
+  static bool intmap_util_valid(hashtable_user_t user, hashtable_t h) {        \
+    (void)user;                                                                \
     return intmap_util_valid_using_arena(ARENA, h);                            \
   }                                                                            \
                                                                                \
-  static uint64_t intmap_util_size(hashtable_t h) {                            \
+  static uint64_t intmap_util_size(hashtable_user_t user, hashtable_t h) {     \
+    (void)user;                                                                \
     arena_t a = intmap_util_hash_to_arena(h);                                  \
     uint64_t allocation_edge = arena_next_offset(ARENA, a);                    \
     uint64_t r = allocation_edge / bytes_per_elt();                            \
     return r;                                                                  \
   }                                                                            \
                                                                                \
-  static void intmap_util_assign_size(hashtable_t *h, uint64_t s) {            \
+  static void intmap_util_assign_size(hashtable_user_t user, hashtable_t *h,   \
+                                      uint64_t s) {                            \
+    (void)user;                                                                \
     arena_t a = intmap_util_hash_to_arena(*h);                                 \
-    uint64_t ud = intmap_util_load_userdata(h);                                \
     arena_change_allocation(arena_mod, &a, s *bytes_per_elt());                \
     *h = intmap_util_arena_to_hash(a);                                         \
-    intmap_util_store_userdata(h, ud);                                         \
   }                                                                            \
                                                                                \
-  static uint64_t intmap_util_capacity(hashtable_t h) {                        \
+  static uint64_t intmap_util_capacity(hashtable_user_t user, hashtable_t h) { \
+    (void)user;                                                                \
     arena_t a = intmap_util_hash_to_arena(h);                                  \
     uint64_t r = arena_capacity(arena_mod, a) / bytes_per_elt();               \
     if (CONTRACT) {                                                            \
@@ -96,8 +94,9 @@ static inline bool intmap_util_valid_using_arena(arena_module mod,
     return r;                                                                  \
   }                                                                            \
                                                                                \
-  static unsigned char *intmap_util_location_value(hashtable_t h,              \
-                                                   uint64_t offset) {          \
+  static unsigned char *intmap_util_location_value(                            \
+      hashtable_user_t user, hashtable_t h, uint64_t offset) {                 \
+    (void)user;                                                                \
     if (IS_SET) {                                                              \
       return 0;                                                                \
     }                                                                          \
@@ -106,8 +105,9 @@ static inline bool intmap_util_valid_using_arena(arena_module mod,
     return p + (offset * bytes_per_elt()) + bytes_per_elt() / 2;               \
   }                                                                            \
                                                                                \
-  static unsigned char *intmap_util_location_key(hashtable_t h,                \
-                                                 uint64_t offset) {            \
+  static unsigned char *intmap_util_location_key(                              \
+      hashtable_user_t user, hashtable_t h, uint64_t offset) {                 \
+    (void)user;                                                                \
     if (IS_SET) {                                                              \
       (void)intmap_util_location_value;                                        \
     }                                                                          \

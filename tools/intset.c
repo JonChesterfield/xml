@@ -31,7 +31,9 @@ enum { intset_util_struct_sizeof = 4 * 8 };
 _Static_assert(sizeof(hashtable_t) == intset_util_struct_sizeof, "");
 _Static_assert(sizeof(intset_t) == intset_util_struct_sizeof, "");
 
-static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes) {
+static uint64_t intset_util_key_hash(hashtable_user_t user, hashtable_t h,
+                                     unsigned char *bytes) {
+  (void)user;
   (void)h;
   // identity at present
   uint64_t r;
@@ -39,8 +41,10 @@ static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes) {
   return r;
 }
 
-static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
+static bool intset_util_key_equal(hashtable_user_t user, hashtable_t h,
+                                  const unsigned char *left,
                                   const unsigned char *right) {
+  (void)user;
   (void)h;
   return __builtin_memcmp(left, right, 8) == 0;
 }
@@ -52,8 +56,6 @@ static const struct hashtable_module_ty mod_state = {
     .create = intmap_util_create,
     .destroy = intmap_util_destroy,
     .valid = intmap_util_valid,
-    .store_userdata = intmap_util_store_userdata,
-    .load_userdata = intmap_util_load_userdata,
     .key_align = 8,
     .key_size = 8,
     .value_align = 1,
@@ -88,61 +90,62 @@ static inline intset_t intset_util_to_set(hashtable_t s) {
 }
 
 intset_t intset_create(uint64_t size) {
-  return intset_util_to_set(hashtable_create(mod, size));
+  return intset_util_to_set(hashtable_create(mod, (hashtable_user_t){0}, size));
 }
 
 void intset_destroy(intset_t s) {
-  hashtable_destroy(mod, intset_util_to_hash(s));
+  hashtable_destroy(mod, (hashtable_user_t){0}, intset_util_to_hash(s));
 }
 
 bool intset_valid(intset_t s) {
-  return hashtable_valid(mod, intset_util_to_hash(s));
+  return hashtable_valid(mod, (hashtable_user_t){0}, intset_util_to_hash(s));
 }
 
 bool intset_equal(intset_t x, intset_t y) {
-  return hashtable_equal(mod, intset_util_to_hash(x), intset_util_to_hash(y));
+  return hashtable_equal(mod, (hashtable_user_t){0}, intset_util_to_hash(x),
+                         intset_util_to_hash(y));
 }
 
-intset_t intset_clone(intset_t x)
-{
-  return intset_util_to_set(hashtable_clone(mod, intset_util_to_hash(x)));
+intset_t intset_clone(intset_t x) {
+  return intset_util_to_set(
+      hashtable_clone(mod, (hashtable_user_t){0}, intset_util_to_hash(x)));
 }
 
 intset_t intset_rehash(intset_t s, uint64_t size) {
-  return intset_util_to_set(
-      hashtable_rehash(mod, intset_util_to_hash(s), size));
+  return intset_util_to_set(hashtable_rehash(mod, (hashtable_user_t){0},
+                                             intset_util_to_hash(s), size));
 }
 
 uint64_t intset_size(intset_t s) {
-  return hashtable_size(mod, intset_util_to_hash(s));
+  return hashtable_size(mod, (hashtable_user_t){0}, intset_util_to_hash(s));
 }
 
 uint64_t intset_capacity(intset_t s) {
-  return hashtable_capacity(mod, intset_util_to_hash(s));
+  return hashtable_capacity(mod, (hashtable_user_t){0}, intset_util_to_hash(s));
 }
 
 bool intset_contains(intset_t s, uint64_t v) {
-  return hashtable_contains(mod, intset_util_to_hash(s), (unsigned char *)&v);
+  return hashtable_contains(mod, (hashtable_user_t){0}, intset_util_to_hash(s),
+                            (unsigned char *)&v);
 }
 
 // No lookup as no value to look up
 
 void intset_insert(intset_t *s, uint64_t v) {
   hashtable_t h = intset_util_to_hash(*s);
-  hashtable_insert(mod, &h, (unsigned char *)&v, 0);
+  hashtable_insert(mod, (hashtable_user_t){0}, &h, (unsigned char *)&v, 0);
   *s = intset_util_to_set(h);
 }
 
-void intset_remove(intset_t* s, uint64_t v)
-{
+void intset_remove(intset_t *s, uint64_t v) {
   hashtable_t h = intset_util_to_hash(*s);
-  hashtable_remove(mod, &h, (unsigned char *)&v);
+  hashtable_remove(mod, (hashtable_user_t){0}, &h, (unsigned char *)&v);
   *s = intset_util_to_set(h);
 }
 
 void intset_clear(intset_t *s) {
   hashtable_t h = intset_util_to_hash(*s);
-  hashtable_clear(mod, &h);
+  hashtable_clear(mod, (hashtable_user_t){0}, &h);
   *s = intset_util_to_set(h);
 }
 
@@ -161,7 +164,7 @@ static MODULE(create_destroy) {
     CHECK(intset_size(a) == 0);
     CHECK(intset_capacity(a) == 0);
     intset_t cp = intset_clone(a);
-    CHECK(intset_equal(a,cp));
+    CHECK(intset_equal(a, cp));
     intset_destroy(cp);
     intset_destroy(a);
   }
@@ -172,7 +175,7 @@ static MODULE(create_destroy) {
     CHECK(intset_size(a) == 0);
     CHECK(intset_capacity(a) == 4);
     intset_t cp = intset_clone(a);
-    CHECK(intset_equal(a,cp));
+    CHECK(intset_equal(a, cp));
     intset_destroy(cp);
     intset_destroy(a);
   }

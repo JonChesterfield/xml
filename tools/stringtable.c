@@ -23,8 +23,10 @@ static const struct arena_module_ty arena_libc_contract =
 
 static arena_module arena_mod = &arena_libc_contract;
 
-static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes);
-static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
+static uint64_t intset_util_key_hash(hashtable_user_t, hashtable_t h,
+                                     unsigned char *bytes);
+static bool intset_util_key_equal(hashtable_user_t, hashtable_t h,
+                                  const unsigned char *left,
                                   const unsigned char *right);
 
 INTMAP_UTIL(arena_mod, 1, intset_util_key_hash, intset_util_key_equal,
@@ -34,8 +36,6 @@ static const struct hashtable_module_ty hashtable_mod_state = {
     .create = intmap_util_create,
     .destroy = intmap_util_destroy,
     .valid = intmap_util_valid,
-    .store_userdata = intmap_util_store_userdata,
-    .load_userdata = intmap_util_load_userdata,
     .key_align = 8,
     .key_size = 8,
     .value_align = 1,
@@ -63,9 +63,10 @@ static uint64_t word_from_bytes(const unsigned char *bytes) {
   return r;
 }
 
-static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes) {
-  assert(hashtable_load_userdata(hashtable_mod, &h) != 0);
-  char *arena_base = (char *)hashtable_load_userdata(hashtable_mod, &h);
+static uint64_t intset_util_key_hash(hashtable_user_t user, hashtable_t h,
+                                     unsigned char *bytes) {
+  (void)user;
+  char *arena_base = (char *)user.state;
 
   uint64_t word = word_from_bytes(bytes);
   assert(word != UINT64_MAX);
@@ -77,10 +78,12 @@ static uint64_t intset_util_key_hash(hashtable_t h, unsigned char *bytes) {
   return str[0]; // not a good hash
 }
 
-static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
+static bool intset_util_key_equal(hashtable_user_t user, hashtable_t h,
+                                  const unsigned char *left,
                                   const unsigned char *right) {
-  assert(hashtable_load_userdata(hashtable_mod, &h) != 0);
-  char *arena_base = (char *)hashtable_load_userdata(hashtable_mod, &h);
+  (void)user;
+
+  char *arena_base = (char *)user.state;
 
   uint64_t word_left = word_from_bytes(left);
   uint64_t word_right = word_from_bytes(right);
@@ -102,12 +105,11 @@ static bool intset_util_key_equal(hashtable_t h, const unsigned char *left,
   uint64_t left_size = word_from_bytes(L - 8);
   uint64_t right_size = word_from_bytes(R - 8);
 
-  if (left_size != right_size)
-    {
-      return false;
-    }
-  
-  return __builtin_memcmp(L,R,left_size) == 0;  
+  if (left_size != right_size) {
+    return false;
+  }
+
+  return __builtin_memcmp(L, R, left_size) == 0;
 }
 
 stringtable_t stringtable_create(void) {
@@ -128,23 +130,22 @@ bool stringtable_valid(stringtable_t tab) {
          arena_valid(arena_mod, tab.arena);
 }
 
-static void pass_userdata(stringtable_t *tab) {
-  hashtable_store_userdata(hashtable_mod, &tab->hash,
-                           (uint64_t)arena_base_address(arena_mod, tab->arena));
+static hashtable_user_t stringtable_to_userdata(stringtable_t *tab) {
+  return (hashtable_user_t){
+      .state = (uint64_t)arena_base_address(arena_mod, tab->arena)};
 }
 
-bool stringtable_contains(stringtable_t *tab, stringtable_index_t index)
-{
-  return hashtable_contains(hashtable_mod, tab->hash,
-                            (unsigned char *)&index.value);
+bool stringtable_contains(stringtable_t *tab, stringtable_index_t index) {
+  return hashtable_contains(hashtable_mod, stringtable_to_userdata(tab),
+                            tab->hash, (unsigned char *)&index.value);
 }
 
 // if index is from the table, does not fail
 const char *stringtable_lookup(stringtable_t *tab, stringtable_index_t index) {
-  pass_userdata(tab);
 
-  unsigned char *r = hashtable_lookup_key(hashtable_mod, tab->hash,
-                                          (unsigned char *)&index.value);
+  unsigned char *r =
+      hashtable_lookup_key(hashtable_mod, stringtable_to_userdata(tab),
+                           tab->hash, (unsigned char *)&index.value);
   if (!r) {
     return 0;
   }
@@ -165,7 +166,7 @@ stringtable_index_t stringtable_record(stringtable_t *tab, uint64_t N) {
   };
 
   size_t number_bytes_to_discard = N;
-  
+
   {
     // Shuffle the bytes down by 8 and write the size into that space
     if (!arena_request_available(arena_mod, &tab->arena, 8)) {
@@ -176,34 +177,35 @@ stringtable_index_t stringtable_record(stringtable_t *tab, uint64_t N) {
     arena_allocate_into_existing_capacity(arena_mod, &tab->arena, 8);
     number_bytes_to_discard += 8;
     char *str = (char *)arena_next_address(arena_mod, tab->arena) - N - 8;
-    __builtin_memmove(str+8,str,N);
-    __builtin_memcpy(str,&N,8);
+    __builtin_memmove(str + 8, str, N);
+    __builtin_memcpy(str, &N, 8);
   }
-  
+
   // Level of arena excluding the N bytes just appended, i.e.
   // relative pointer to the string of interest
   uint64_t arena_level = arena_next_offset(arena_mod, tab->arena) - N;
 
   // Absolute pointer to string of interest
   char *str = (char *)arena_next_address(arena_mod, tab->arena) - N;
-  
+
   // Make current arena base available after allocating and before calling into
   // hashtable
-  pass_userdata(tab);
 
-  if (hashtable_available(hashtable_mod, tab->hash) < 2) {
-    if (!hashtable_rehash_double(hashtable_mod, &tab->hash)) {
+  if (hashtable_available(hashtable_mod, stringtable_to_userdata(tab),
+                          tab->hash) < 2) {
+    if (!hashtable_rehash_double(hashtable_mod, stringtable_to_userdata(tab),
+                                 &tab->hash)) {
       arena_discard_last_allocated(arena_mod, &tab->arena,
                                    number_bytes_to_discard);
       return failure;
     }
-    pass_userdata(tab);
   }
 
   // Check for existing value and deallocate str if present
   {
-    unsigned char *r = hashtable_lookup_key(hashtable_mod, tab->hash,
-                                            (unsigned char *)&arena_level);
+    unsigned char *r =
+        hashtable_lookup_key(hashtable_mod, stringtable_to_userdata(tab),
+                             tab->hash, (unsigned char *)&arena_level);
     if (r) {
       uint64_t v = word_from_bytes(r);
       const stringtable_index_t success = {
@@ -212,14 +214,15 @@ stringtable_index_t stringtable_record(stringtable_t *tab, uint64_t N) {
       assert(__builtin_memcmp(str, stringtable_lookup(tab, success), N) == 0);
 
       arena_discard_last_allocated(arena_mod, &tab->arena,
-                                     number_bytes_to_discard);
-      
+                                   number_bytes_to_discard);
+
       return success;
     }
   }
 
   // Record it
-  hashtable_insert(hashtable_mod, &tab->hash, (unsigned char *)&arena_level, 0);
+  hashtable_insert(hashtable_mod, stringtable_to_userdata(tab), &tab->hash,
+                   (unsigned char *)&arena_level, 0);
 
   const stringtable_index_t success = {
       .value = arena_level,
@@ -234,7 +237,7 @@ stringtable_index_t stringtable_insert(stringtable_t *tab, const char *str,
   const stringtable_index_t failure = {
       .value = UINT64_MAX,
   };
-  
+
   if (!arena_append_bytes(arena_mod, &tab->arena, (const unsigned char *)str,
                           N)) {
     return failure;
@@ -303,10 +306,10 @@ MODULE(stringtable) {
         "more",
     };
     size_t offsets[] = {
-        8+0,
-        16+7,
-        24+13,
-        32+21,
+        8 + 0,
+        16 + 7,
+        24 + 13,
+        32 + 21,
     };
     size_t N = 4;
 

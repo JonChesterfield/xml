@@ -3,8 +3,8 @@
 #include "../tools/contract.h"
 #include "regex.h"
 
-#include "../tools/stack.libc.h"
 #include "../tools/intset.h"
+#include "../tools/stack.libc.h"
 #include "regex_string.h"
 
 #include <assert.h>
@@ -52,7 +52,8 @@ enum {
   element_size = bytes_key_size + bytes_value_size,
 };
 
-static inline hashtable_t hashderiv_create(uint64_t size) {
+static inline hashtable_t hashderiv_create(hashtable_user_t user,
+                                           uint64_t size) {
   arena_t a = arena_create(arena_mod, element_size * size);
   unsigned char *p = arena_base_address(arena_mod, a);
 
@@ -65,23 +66,16 @@ static inline hashtable_t hashderiv_create(uint64_t size) {
   return hashderiv_arena_to_hash(a);
 }
 
-static inline void hashderiv_destroy(hashtable_t h) {
+static inline void hashderiv_destroy(hashtable_user_t user, hashtable_t h) {
   arena_destroy(arena_mod, hashderiv_hash_to_arena(h));
 }
 
-static inline bool hashderiv_valid(hashtable_t h) {
+static inline bool hashderiv_valid(hashtable_user_t user, hashtable_t h) {
   return arena_valid(arena_mod, hashderiv_hash_to_arena(h));
 }
 
-static inline void hashderiv_store_userdata(hashtable_t *h, uint64_t v) {
-  h->state[3] = v;
-}
-
-static inline uint64_t hashderiv_load_userdata(hashtable_t *h) {
-  return h->state[3];
-}
-
-static uint64_t hashderiv_key_hash(hashtable_t h, unsigned char *bytes) {
+static uint64_t hashderiv_key_hash(hashtable_user_t user, hashtable_t h,
+                                   unsigned char *bytes) {
   (void)h;
   // identity at present
   uint64_t r;
@@ -89,41 +83,44 @@ static uint64_t hashderiv_key_hash(hashtable_t h, unsigned char *bytes) {
   return r;
 }
 
-static bool hashderiv_key_equal(hashtable_t h, const unsigned char *left,
+static bool hashderiv_key_equal(hashtable_user_t user, hashtable_t h,
+                                const unsigned char *left,
                                 const unsigned char *right) {
   (void)h;
   return __builtin_memcmp(left, right, bytes_key_size) == 0;
 }
 
 // Keys and values are the same length, store size in the arena metadata
-static uint64_t hashderiv_size(hashtable_t h) {
+static uint64_t hashderiv_size(hashtable_user_t user, hashtable_t h) {
   arena_t a = hashderiv_hash_to_arena(h);
   uint64_t allocation_edge = arena_next_offset(arena_mod, a);
   return allocation_edge / 8;
 }
 
-static void hashderiv_assign_size(hashtable_t *h, uint64_t s) {
+static void hashderiv_assign_size(hashtable_user_t user, hashtable_t *h,
+                                  uint64_t s) {
   arena_t a = hashderiv_hash_to_arena(*h);
   arena_change_allocation(arena_mod, &a, s * 8);
   *h = hashderiv_arena_to_hash(a);
 }
 
-static uint64_t hashderiv_capacity(hashtable_t h) {
+static uint64_t hashderiv_capacity(hashtable_user_t user, hashtable_t h) {
   arena_t a = hashderiv_hash_to_arena(h);
   return arena_capacity(arena_mod, a) / element_size;
 }
 
-
-static unsigned char *hashderiv_location_key(hashtable_t h, uint64_t offset) {
+static unsigned char *hashderiv_location_key(hashtable_user_t user,
+                                             hashtable_t h, uint64_t offset) {
   arena_t a = hashderiv_hash_to_arena(h);
   unsigned char *p = arena_base_address(arena_mod, a);
   return p + offset * bytes_key_size;
 }
 
-static unsigned char *hashderiv_location_value(hashtable_t h, uint64_t offset) {
+static unsigned char *hashderiv_location_value(hashtable_user_t user,
+                                               hashtable_t h, uint64_t offset) {
   arena_t a = hashderiv_hash_to_arena(h);
   unsigned char *p = arena_base_address(arena_mod, a);
-  uint64_t capacity = hashderiv_capacity(h);
+  uint64_t capacity = hashderiv_capacity((hashtable_user_t){0}, h);
 
   // Step over the keys
   p += capacity * bytes_key_size;
@@ -135,8 +132,6 @@ static const struct hashtable_module_ty hashtable_mod_state = {
     .create = hashderiv_create,
     .destroy = hashderiv_destroy,
     .valid = hashderiv_valid,
-    .store_userdata = hashderiv_store_userdata,
-    .load_userdata = hashderiv_load_userdata,
     .key_align = 8,
     .key_size = bytes_key_size,
     .value_align = 8,
@@ -160,18 +155,21 @@ const hashtable_module hashtable_mod = &hashtable_mod_state;
 
 regex_cache_t regex_cache_create(void) {
   regex_cache_t d;
-  d.regex_to_derivatives = hashtable_create(hashtable_mod, 16);
+  d.regex_to_derivatives =
+      hashtable_create(hashtable_mod, (hashtable_user_t){0}, 16);
   d.strtab = stringtable_create();
   return d;
 }
 
 void regex_cache_destroy(regex_cache_t d) {
-  hashtable_destroy(hashtable_mod, d.regex_to_derivatives);
+  hashtable_destroy(hashtable_mod, (hashtable_user_t){0},
+                    d.regex_to_derivatives);
   stringtable_destroy(d.strtab);
 }
 
 bool regex_cache_valid(regex_cache_t d) {
-  return hashtable_valid(hashtable_mod, d.regex_to_derivatives) &&
+  return hashtable_valid(hashtable_mod, (hashtable_user_t){0},
+                         d.regex_to_derivatives) &&
          stringtable_valid(d.strtab);
 }
 
@@ -184,8 +182,7 @@ static stringtable_index_t strfail(void) {
 // Fails if the regex is not canonical
 stringtable_index_t
 regex_cache_insert_regex_canonical_ptree(regex_cache_t *driver, ptree regex) {
-  if (ptree_is_failure(regex) ||
-      !regex_is_canonical(regex)) {
+  if (ptree_is_failure(regex) || !regex_is_canonical(regex)) {
     return strfail();
   }
 
@@ -281,18 +278,21 @@ regex_cache_calculate_derivative_given_hashtable_values(
 static unsigned char *
 insert_missing_empty_table_entry(regex_cache_t *driver,
                                  stringtable_index_t index) {
-  if (hashtable_available(hashtable_mod, driver->regex_to_derivatives) < 8) {
-    if (!hashtable_rehash_double(hashtable_mod,
+  const hashtable_user_t user = {0};
+  if (hashtable_available(hashtable_mod, user, driver->regex_to_derivatives) <
+      8) {
+    if (!hashtable_rehash_double(hashtable_mod, user,
                                  &driver->regex_to_derivatives)) {
       return 0;
     }
   }
 
-  hashtable_insert(hashtable_mod, &driver->regex_to_derivatives,
+  hashtable_insert(hashtable_mod, user, &driver->regex_to_derivatives,
                    (unsigned char *)&index.value,
                    (unsigned char *)&empty_derivatives[0]);
 
-  return hashtable_lookup_value(hashtable_mod, driver->regex_to_derivatives,
+  return hashtable_lookup_value(hashtable_mod, user,
+                                driver->regex_to_derivatives,
                                 (unsigned char *)&index.value);
 }
 
@@ -306,9 +306,9 @@ stringtable_index_t regex_cache_calculate_derivative(regex_cache_t *driver,
     return strfail();
   }
 
-  unsigned char *values =
-      hashtable_lookup_value(hashtable_mod, driver->regex_to_derivatives,
-                             (unsigned char *)&index.value);
+  unsigned char *values = hashtable_lookup_value(
+      hashtable_mod, (hashtable_user_t){0}, driver->regex_to_derivatives,
+      (unsigned char *)&index.value);
 
   if (!values) {
     values = insert_missing_empty_table_entry(driver, index);
@@ -321,11 +321,9 @@ stringtable_index_t regex_cache_calculate_derivative(regex_cache_t *driver,
                                                                  ith, values);
 }
 
-static stringtable_index_t regex_cache_lookup_derivative_given_hashtable_values(regex_cache_t *driver,
-                                                                         stringtable_index_t index,
-                                                                         uint8_t ith,
-                                                                         unsigned char * values)
-{
+static stringtable_index_t regex_cache_lookup_derivative_given_hashtable_values(
+    regex_cache_t *driver, stringtable_index_t index, uint8_t ith,
+    unsigned char *values) {
   assert(values != 0);
   unsigned char *this_value = values + 8 * ith;
   {
@@ -340,9 +338,6 @@ static stringtable_index_t regex_cache_lookup_derivative_given_hashtable_values(
   return strfail();
 }
 
-
-
-
 stringtable_index_t regex_cache_lookup_derivative(regex_cache_t *driver,
                                                   stringtable_index_t index,
                                                   uint8_t ith)
@@ -352,15 +347,16 @@ stringtable_index_t regex_cache_lookup_derivative(regex_cache_t *driver,
     return strfail();
   }
 
-  unsigned char *values =
-      hashtable_lookup_value(hashtable_mod, driver->regex_to_derivatives,
-                             (unsigned char *)&index.value);
+  unsigned char *values = hashtable_lookup_value(
+      hashtable_mod, (hashtable_user_t){0}, driver->regex_to_derivatives,
+      (unsigned char *)&index.value);
 
   if (!values) {
     return strfail();
   }
 
-  return regex_cache_lookup_derivative_given_hashtable_values(driver, index, ith, values);
+  return regex_cache_lookup_derivative_given_hashtable_values(driver, index,
+                                                              ith, values);
 }
 
 bool regex_cache_all_derivatives_computed(regex_cache_t *driver,
@@ -370,9 +366,9 @@ bool regex_cache_all_derivatives_computed(regex_cache_t *driver,
     return false;
   }
 
-  unsigned char *values =
-      hashtable_lookup_value(hashtable_mod, driver->regex_to_derivatives,
-                             (unsigned char *)&index.value);
+  unsigned char *values = hashtable_lookup_value(
+      hashtable_mod, (hashtable_user_t){0}, driver->regex_to_derivatives,
+      (unsigned char *)&index.value);
 
   if (!values) {
     return false;
@@ -402,9 +398,9 @@ bool regex_cache_calculate_all_derivatives(regex_cache_t *driver,
     return false;
   }
 
-  unsigned char *values =
-      hashtable_lookup_value(hashtable_mod, driver->regex_to_derivatives,
-                             (unsigned char *)&index.value);
+  unsigned char *values = hashtable_lookup_value(
+      hashtable_mod, (hashtable_user_t){0}, driver->regex_to_derivatives,
+      (unsigned char *)&index.value);
 
   if (!values) {
     values = insert_missing_empty_table_entry(driver, index);
@@ -424,87 +420,93 @@ bool regex_cache_calculate_all_derivatives(regex_cache_t *driver,
   return true;
 }
 
-int regex_cache_traverse(regex_cache_t * cache,
-                         stringtable_index_t root,
-                         int (*functor)(regex_cache_t *,
-                                        stringtable_index_t,
-                                        void*),
-                         void* data)
-{
+int regex_cache_traverse(regex_cache_t *cache, stringtable_index_t root,
+                         int (*functor)(regex_cache_t *, stringtable_index_t,
+                                        void *),
+                         void *data) {
   assert(stringtable_index_valid(root));
   stack_module stackmod = &stack_libc;
   intset_t set = intset_create(512);
-  if (!intset_valid(set)) { return -1; }
+  if (!intset_valid(set)) {
+    return -1;
+  }
 
   void *stack = stack_create(stackmod, 8);
-  if (!stack) { intset_destroy(set); return -1; }
+  if (!stack) {
+    intset_destroy(set);
+    return -1;
+  }
 
   int retval = 0;
 
   stack_push_assuming_capacity(stackmod, stack, root.value);
-  
-  for (uint64_t current_stack_size = 1; current_stack_size = stack_size(stackmod, stack), current_stack_size != 0;) {
-    stringtable_index_t active = {.value = stack_pop(stackmod, stack),};
+
+  for (uint64_t current_stack_size = 1;
+       current_stack_size = stack_size(stackmod, stack),
+                current_stack_size != 0;) {
+    stringtable_index_t active = {
+        .value = stack_pop(stackmod, stack),
+    };
     current_stack_size--; // keep the local variable accurate
     assert(active.value != UINT64_MAX);
-    if (intset_contains(set, active.value))
-      {
-        continue;
-      }
+    if (intset_contains(set, active.value)) {
+      continue;
+    }
 
     // Call it on the root
     int f = functor(cache, active, data);
     if (f != 0) {
-      retval = f; goto done;
+      retval = f;
+      goto done;
     }
     intset_insert(&set, active.value);
 
     // Check the derivatives are available
-    if (!regex_cache_calculate_all_derivatives(cache,
-                                               active))
-      {
-        retval = -1; goto done;
-      }
+    if (!regex_cache_calculate_all_derivatives(cache, active)) {
+      retval = -1;
+      goto done;
+    }
 
     // Check allocations are sufficient
     if (intset_available(set) < 256) {
       if (!intset_rehash_double(&set)) {
-        retval = -1; goto done;
+        retval = -1;
+        goto done;
       }
     }
-    
+
     {
       void *s2 = stack_reserve(stackmod, stack, current_stack_size + 256);
       if (!s2) {
         stack_destroy(stackmod, stack);
-        retval = -1; goto done;
+        retval = -1;
+        goto done;
       }
       stack = s2;
     }
 
     // Push all derivatives onto the stack in reverse order
     {
-      assert (stringtable_contains(&cache->strtab, active));
-      unsigned char *values =
-        hashtable_lookup_value(hashtable_mod, cache->regex_to_derivatives,
-                               (unsigned char *)&active.value);
+      assert(stringtable_contains(&cache->strtab, active));
+      unsigned char *values = hashtable_lookup_value(
+          hashtable_mod, (hashtable_user_t){0}, cache->regex_to_derivatives,
+          (unsigned char *)&active.value);
       assert(values); // from calculate_all above
 
-      for (unsigned i = 256; i--> 0; )
-        {        
-          stringtable_index_t ith_deriv =
-            regex_cache_lookup_derivative_given_hashtable_values(cache, active, (uint8_t)i, values);
-          assert(stringtable_index_valid(ith_deriv));
-          if (!intset_contains(set, ith_deriv.value)) {
-            stack_push_assuming_capacity(stackmod, stack, ith_deriv.value);
-          }
+      for (unsigned i = 256; i-- > 0;) {
+        stringtable_index_t ith_deriv =
+            regex_cache_lookup_derivative_given_hashtable_values(
+                cache, active, (uint8_t)i, values);
+        assert(stringtable_index_valid(ith_deriv));
+        if (!intset_contains(set, ith_deriv.value)) {
+          stack_push_assuming_capacity(stackmod, stack, ith_deriv.value);
         }
+      }
     }
   }
-  
 
- done:;
-    
+done:;
+
   stack_destroy(stackmod, stack);
   intset_destroy(set);
   return retval;
