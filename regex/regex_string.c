@@ -294,21 +294,14 @@ stringtable_index_t regex_insert_into_stringtable(stringtable_t *strtab,
     };
   }
 
-  unsigned char zeros[1] = {0};
-  if (!arena_append_bytes(strtab->arena_mod, &strtab->arena, &zeros[0], 1)) {
-    return (stringtable_index_t){
-        .value = UINT64_MAX,
-    };
-  }
-  uint64_t offset_after = arena_next_offset(strtab->arena_mod, strtab->arena);
-
-  return stringtable_record(strtab, offset_after - offset_before);
+  uint64_t offset_after = arena_next_offset(strtab->arena_mod, strtab->arena);    
+  return stringtable_record_with_trailing_nul(strtab, offset_after - offset_before);
 }
 
 ptree regex_from_stringtable(stringtable_t *tab, stringtable_index_t index,
                              ptree_context ptree_ctx) {
   const char *const bytes = stringtable_lookup(tab, index);
-  size_t N = __builtin_strlen(bytes);
+  size_t N = stringtable_lookup_size(tab, index);
   return regex_from_char_sequence(ptree_ctx, bytes, N);
 }
 

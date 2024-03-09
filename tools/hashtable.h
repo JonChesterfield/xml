@@ -213,7 +213,7 @@ static inline bool hashtable_valid_verbose(hashtable_module mod,
                                            hashtable_user_t user, hashtable_t h,
                                            bool verbose) {
   // valid() is called a lot, this has a dramatic effect on runtime performance
-  const bool superficial = false;
+  const bool superficial = true;
 
   if (!mod->valid(user, h)) {
     return false;

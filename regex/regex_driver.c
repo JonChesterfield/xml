@@ -9,10 +9,13 @@
 #include "../tools/stack.libc.h"
 
 bool regex_driver_insert(regex_cache_t *driver, const char *bytes, size_t N) {
+  const bool verbose = false;
+  
   printf("Driver insert\n");
 
   stringtable_index_t first = regex_cache_insert_regex_bytes(driver, bytes, N);
   if (!stringtable_index_valid(first)) {
+    printf("Failed to insert initial bytes, immediately giving up\n");
     return false;
   }
 
@@ -23,9 +26,9 @@ bool regex_driver_insert(regex_cache_t *driver, const char *bytes, size_t N) {
   stack_push_assuming_capacity(&stack_libc, stack, first.value);
 
   printf("Driver insert main loop\n");
-  // uint64_t counter = 0;
+  uint64_t counter = 0;
   while (stack_size(&stack_libc, stack) != 0) {
-    // printf("Driver insert iteration %lu\n", counter++);
+    if (verbose) printf("Driver insert iteration %lu\n", counter++);
 
     stringtable_index_t active = {
         .value = stack_pop(&stack_libc, stack),
@@ -37,6 +40,19 @@ bool regex_driver_insert(regex_cache_t *driver, const char *bytes, size_t N) {
 
     // Some were unknown, calculate them all
     if (!regex_cache_calculate_all_derivatives(driver, active)) {
+      if (verbose) {
+        printf("failed to calculate some derivative of %s:\n", stringtable_lookup(&driver->strtab, active));
+
+      for (unsigned i = 0; i < 256; i++)
+        {
+          stringtable_index_t idx = regex_cache_calculate_derivative(driver, active, (uint8_t)i);
+          if (stringtable_index_valid(idx)) {
+            printf("  wrt %u: %s\n", i, stringtable_lookup(&driver->strtab, idx));
+          } else {
+            printf("  wrt %u: %s\n", i, "failure");
+          }
+        }
+      }
       return false;
     }
 
@@ -44,6 +60,7 @@ bool regex_driver_insert(regex_cache_t *driver, const char *bytes, size_t N) {
       void *r = stack_reserve(&stack_libc, stack,
                               stack_size(&stack_libc, stack) + 256);
       if (!r) {
+        printf("out of stack\n");
         return false;
       }
       stack = r;
@@ -54,6 +71,7 @@ bool regex_driver_insert(regex_cache_t *driver, const char *bytes, size_t N) {
           regex_cache_lookup_derivative(driver, active, (uint8_t)i);
       if (ith.value == UINT64_MAX) {
         // Failed to calculate ith derivative
+        printf("failed to lookup %u'th derivative\n", i);
         return false;
       }
 
@@ -63,6 +81,7 @@ bool regex_driver_insert(regex_cache_t *driver, const char *bytes, size_t N) {
 
   stack_libc_destroy(stack);
 
+  printf("Claiming success\n");
   return true;
 }
 
@@ -91,7 +110,7 @@ static int regex_to_c_traverse_function(regex_cache_t *cache,
   FILE *out = data->file;
 
   const char *regex = stringtable_lookup(&cache->strtab, active);
-  size_t regexN = __builtin_strlen(regex);
+  size_t regexN = stringtable_lookup_size(&cache->strtab, active);
 
   if (!regex) {
     return 1;
@@ -161,7 +180,7 @@ static int regex_to_c_traverse_function(regex_cache_t *cache,
 
     if (last_iter || (next_deriv.value != current_deriv.value)) {
       const char *target = stringtable_lookup(&cache->strtab, current_deriv);
-      size_t targetN = __builtin_strlen(target);
+      size_t targetN = stringtable_lookup_size(&cache->strtab, current_deriv);
 
       {
         char *encoded = malloc_rewrite(target, targetN);

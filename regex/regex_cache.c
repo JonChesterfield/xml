@@ -230,6 +230,7 @@ regex_cache_calculate_derivative_given_hashtable_values(
   // Invalidated by insert_regex at the end of this function so recompute here
   const char *const regex = stringtable_lookup(&driver->strtab, index);
   if (!regex) {
+    // printf("can't calculate derivative of unknown string %lu\n", index.value);
     return strfail();
   }
 
@@ -246,10 +247,11 @@ regex_cache_calculate_derivative_given_hashtable_values(
 
   ptree_context ptree_ctx = regex_ptree_create_context();
 
-  size_t N = __builtin_strlen(regex);
+  size_t N = stringtable_lookup_size(&driver->strtab, index);
   ptree tree = regex_from_char_sequence(ptree_ctx, regex, N);
 
   if (ptree_is_failure(tree)) {
+    // printf("failed to make a regex from %s, size %lu\n", regex, N);
     return strfail();
   }
   if (!regex_is_canonical(tree)) {

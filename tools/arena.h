@@ -151,6 +151,11 @@ static inline bool arena_pad_to_alignment(arena_module mod, arena_t *a,
 static inline bool arena_append_bytes(arena_module mod, arena_t *a,
                                       const unsigned char *bytes, size_t N);
 
+// Try to append a single byte
+static inline bool arena_append_byte(arena_module mod, arena_t *a,
+                                      unsigned char byte);
+
+
 // Allocate bytes space, returns offset from base address. Assert / UB if
 // insufficient capacity.
 static inline uint64_t arena_allocate_into_existing_capacity(arena_module mod,
@@ -405,6 +410,15 @@ static inline bool arena_append_bytes(arena_module mod, arena_t *a,
   __builtin_memcpy(cursor, bytes, N);
   return true;
 }
+
+static inline bool arena_append_byte(arena_module mod, arena_t *a,
+                                      unsigned char byte)
+{
+  unsigned char array[1] = {byte};
+  return arena_append_bytes(mod, a, &array[0], 1);
+}
+
+
 
 // Allocate bytes space, returns offset from base address. Assert / UB if
 // insufficient capacity.
