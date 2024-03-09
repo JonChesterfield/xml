@@ -135,10 +135,8 @@ static size_t regex_impl_ptree_token_width(ptree arg) {
 }
 static ptree regex_impl_ptree_from_token(ptree_context ctx, uint64_t id,
                                          const char *value, size_t width) {
-  ptree_malloc_ptree_context s =
-      ptree_context_to_ptree_malloc_ptree_context(ctx);
   return ptree_malloc_ptree_to_ptree(
-      make_ptree_malloc_ptree_from_token(s, id, value, width));
+      make_ptree_malloc_ptree_from_token(ctx, id, value, width));
 }
 static size_t regex_impl_ptree_expression_elements(ptree arg) {
   ptree_malloc_ptree p = ptree_to_ptree_malloc_ptree(arg);
@@ -153,15 +151,13 @@ static ptree regex_impl_ptree_expression_element(ptree arg, size_t index) {
 static inline ptree regex_impl_ptree_expression_create_uninitialised(ptree_context ctx,
                                                                      uint64_t id,
                                                                      uint64_t N) {
-  ptree_malloc_ptree_context s =
-      ptree_context_to_ptree_malloc_ptree_context(ctx);
   ptree_malloc_ptree r = ptree_malloc_ptree_allocate(id, N);
   if (r) {
     r->is_token = false;
     for (size_t i = 0; i < N; i++) {
       r->elements[i] = ptree_failure();
     }
-    s->root = r;
+    ctx->state = r;
   }
   return ptree_malloc_ptree_to_ptree(r);
 }
@@ -178,9 +174,7 @@ static inline ptree regex_impl_ptree_expression_construct(ptree_context ctx,
                                                           uint64_t id,
                                                           uint64_t N,
                                                           ptree *elts) {
-  ptree_malloc_ptree_context s =
-      ptree_context_to_ptree_malloc_ptree_context(ctx);
-  ptree_malloc_ptree r = make_ptree_malloc_ptree_from_N_ptree(s, id, N, elts);
+  ptree_malloc_ptree r = make_ptree_malloc_ptree_from_N_ptree(ctx, id, N, elts);
   return ptree_malloc_ptree_to_ptree(r);
 }
 

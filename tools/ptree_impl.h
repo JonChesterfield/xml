@@ -23,7 +23,7 @@ static inline void ptree_require_func(bool expr, const char *name, int line) {
   }
 }
 
-static inline ptree_context ptree_create_context(const ptree_module *mod) {
+static inline ptree_context ptree_create_context(const ptree_module *mod) { 
   return mod->create_context();
 }
 static inline bool ptree_valid_context(const ptree_module *mod, ptree_context ctx)

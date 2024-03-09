@@ -19,9 +19,11 @@
 // Static information is in ptree_module. Dynamic information is in
 // ptree_context, notably memory allocation. Per-node information in ptree.
 
-typedef struct {
+struct ptree_context_ty {
   void *state; // 0 if construction failed
-} ptree_context;
+}; 
+
+typedef struct ptree_context_ty *ptree_context;
 
 // Not in use at present but probably should be
 typedef struct {

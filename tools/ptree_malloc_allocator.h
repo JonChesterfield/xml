@@ -29,29 +29,8 @@ static ptree ptree_malloc_ptree_to_ptree(ptree_malloc_ptree x) {
   return res;
 }
 
-// Contains the most recently allocated ptree.
-struct ptree_malloc_ptree_context_ty {
-  ptree_malloc_ptree root;
-};
-
-typedef struct ptree_malloc_ptree_context_ty *ptree_malloc_ptree_context;
-
 _Static_assert(sizeof(ptree_context) == 8, "");
-_Static_assert(sizeof(ptree_malloc_ptree_context) == 8, "");
 
-static ptree_malloc_ptree_context
-ptree_context_to_ptree_malloc_ptree_context(ptree_context ctx) {
-  ptree_malloc_ptree_context res;
-  __builtin_memcpy(&res, &ctx, 8);
-  return res;
-}
-
-static ptree_context
-ptree_malloc_ptree_context_to_ptree_context(ptree_malloc_ptree_context ctx) {
-  ptree_context res;
-  __builtin_memcpy(&res, &ctx, 8);
-  return res;
-}
 
 static ptree_malloc_ptree ptree_malloc_ptree_allocate(uint64_t id, size_t N) {
   size_t size =
@@ -81,7 +60,7 @@ static void ptree_malloc_ptree_deallocate(ptree_malloc_ptree p) {
 }
 
 static ptree_malloc_ptree
-make_ptree_malloc_ptree_from_token(ptree_malloc_ptree_context ctx, uint64_t id,
+make_ptree_malloc_ptree_from_token(ptree_context ctx, uint64_t id,
                                    const char *token_value,
                                    size_t token_width) {
   ptree_malloc_ptree r = ptree_malloc_ptree_allocate(id, 0);
@@ -89,13 +68,13 @@ make_ptree_malloc_ptree_from_token(ptree_malloc_ptree_context ctx, uint64_t id,
     r->is_token = true;
     r->token_value = token_value;
     r->token_width = token_width;
-    ctx->root = r;
+    ctx->state = r;
   }
   return r;
 }
 
 static ptree_malloc_ptree
-make_ptree_malloc_ptree_from_N_ptree(ptree_malloc_ptree_context ctx,
+make_ptree_malloc_ptree_from_N_ptree(ptree_context ctx,
                                      uint64_t id, size_t N, ptree *elts) {
   ptree_malloc_ptree r = ptree_malloc_ptree_allocate(id, N);
   if (r) {
@@ -103,31 +82,28 @@ make_ptree_malloc_ptree_from_N_ptree(ptree_malloc_ptree_context ctx,
     for (size_t i = 0; i < N; i++) {
       r->elements[i] = elts[i];
     }
-    ctx->root = r;
+    ctx->state = r;
   }
   return r;
 }
 
 static ptree_context ptree_malloc_ptree_create_context(void) {
-  ptree_malloc_ptree_context res =
-      malloc(sizeof(struct ptree_malloc_ptree_context_ty));
+  struct ptree_context_ty *res =
+      malloc(sizeof(struct ptree_context_ty));
   if (res) {
-    res->root = 0;
+    res->state = 0;
   }
-  return ptree_malloc_ptree_context_to_ptree_context(res);
+  return res;
 }
 
 static bool ptree_malloc_ptree_valid_context(ptree_context ctx) {
-  (void)ctx;
-  return true;
+  return ctx;
 }
 
 static void ptree_malloc_ptree_destroy_context(ptree_context ctx) {
-  ptree_malloc_ptree_context s =
-      ptree_context_to_ptree_malloc_ptree_context(ctx);
-  if (s) {
-    ptree_malloc_ptree_deallocate(s->root);
-    free(s);
+  if (ctx) {
+    ptree_malloc_ptree_deallocate(ctx->state);
+    free(ctx);
   }
 }
 
