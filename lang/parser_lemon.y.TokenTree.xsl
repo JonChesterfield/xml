@@ -56,6 +56,7 @@ typedef struct <xsl:value-of select="$LangName"/>_parser_lemon_state <xsl:value-
 #include "<xsl:value-of select='$LangName'/>.ptree.h"
 #include "<xsl:value-of select='$LangName'/>.lexer.h"
 #include "<xsl:value-of select='$LangName'/>.declarations.h"
+#include "<xsl:value-of select='$LangName'/>.productions.h"
 
  __attribute__((unused)) static int <xsl:value-of select='$LangName'/>_LemonFallback(int);
 
@@ -297,6 +298,18 @@ int <xsl:value-of select='$LangName'/>_parser_lemon_type_header(void)
   <LB hexvalue="7b0a" /> 
   <xsl:apply-templates select="Grouping|Token" mode="ListProductionDescribe"/>
   
+  <NL hexvalue="0a" />
+  <ResComment value ="#if 1" />
+  <NL hexvalue="0a" />
+
+  <ResTmp value = '  R = {$LangName}_list_production_{@label}({$LangName}_ptree_context' />
+  <xsl:apply-templates select="Grouping|Token" mode="ForwardingFormals"/>
+  <ResTmp value = ');' />
+  <NL hexvalue="0a" />
+
+  <ResComment value ="#else" />
+  <NL hexvalue="0a" />
+
   <ES value = "  enum {{" />
   <NL hexvalue="0a" />
   <T value="    argument_arity = {count(Grouping[@position])}," />
@@ -313,12 +326,13 @@ int <xsl:value-of select='$LangName'/>_parser_lemon_type_header(void)
   <NL hexvalue="0a" />
 
   <xsl:apply-templates select="Grouping|Token" mode="ListProductionAssign"/>
+
+  <NL hexvalue="0a" />
+
+  <ResComment value ="#endif" />
+  <NL hexvalue="0a" />
   <OutExpr value = '  if (external_context) {{*external_context = R;}}' />
   <NL hexvalue="0a" />
-  <!--
-      <ResExpr value = '  return R;' />
-      <NL hexvalue="0a" />
-  -->
 
   <xsl:apply-templates select="Grouping|Token" mode="ListProductionSelect"/>
   <RB hexvalue="7d0a" />
@@ -418,8 +432,28 @@ int <xsl:value-of select='$LangName'/>_parser_lemon_type_header(void)
   <xsl:call-template name="production-definition" />
   <LB hexvalue="7b0a" />
 
+  <ResComment value ="#if 1" />
+  <NL hexvalue="0a" />
+  <ResTmp value = '  R = {$LangName}_assign_production_{@label}({$LangName}_ptree_context' />
+  <xsl:apply-templates select="Grouping|Token" mode="ForwardingFormals"/>
+  <ResTmp value = ');' />
+  <NL hexvalue="0a" />
+  <ResComment value ="#else" />
+  <NL hexvalue="0a" />
+  <!-- Especially tempting to handle inline while the assignment code is being debugged -->
   <xsl:apply-templates select="Grouping|Token" mode="AssignProductionAssign"/>
+  <NL hexvalue="0a" />
+  <ResComment value ="#endif" />
+  <NL hexvalue="0a" />
+  <OutExpr value = '  if (external_context) {{*external_context = R;}}' />
+  <NL hexvalue="0a" />
+
   <LR hexvalue="7d0a" />  
+</xsl:template>
+
+<xsl:template match="Grouping|Token" mode="ForwardingFormals">
+  <COMMA value=", " />
+  <GroupingProduction value="x{position()}" />
 </xsl:template>
 
 </xsl:transform>
