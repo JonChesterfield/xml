@@ -4969,6 +4969,11 @@ void ReportTable(
 /* Generate a header file for the parser */
 void ReportHeader(struct lemon *lemp)
 {
+  if (1)
+    {
+      printf("Lemon hacked to not write a header file\n");
+      return;
+    }
   FILE *out, *in;
   const char *prefix;
   char line[LINESIZE];

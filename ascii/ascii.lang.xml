@@ -332,15 +332,15 @@
     -->
 
 
-    <Grouping name="RE" type="ptree" />
-    <Grouping name="union" type="ptree" />
+    <Grouping name="result_RE" type="ptree" />
+    <Grouping name="union_RE" type="ptree" />
 
-    <Grouping name="simple-RE" type="ptree" />
+    <Grouping name="simple_RE" type="ptree" />
     <Grouping name="concatenation" type="ptree" />
-    <Grouping name="basic-RE" type="ptree" />
+    <Grouping name="basic_RE" type="ptree" />
     <Grouping name="star" type="ptree" />
     <Grouping name="plus" type="ptree" />
-    <Grouping name="elementary-RE" type="ptree" />
+    <Grouping name="elementary_RE" type="ptree" />
 
     <Grouping name="group" type="ptree" />
     
@@ -350,13 +350,13 @@
     <!-- Leaving $ / end of string out for now -->
     <!-- <Grouping name="eos" type="ptree" /> -->
 
-    <Grouping name="char" type="ptree" />
+    <Grouping name="char_RE" type="ptree" />
 
     <Grouping name="set" type="ptree" />
-    <Grouping name="positive-set" type="ptree" />
-    <Grouping name="negative-set" type="ptree" />
+    <Grouping name="positive_set" type="ptree" />
+    <Grouping name="negative_set" type="ptree" />
 
-    <Grouping name="set-items" type="ptree" />
+    <Grouping name="set_items" type="ptree" />
 
     <Grouping name="range" type="ptree" />
 
@@ -372,49 +372,15 @@
   </Precedences>
 
   <Productions>
+
     <AssignProduction label="result" grouping="program" >
-      <Grouping type="regex" position="1" />
+      <Grouping type="result_RE" position="1" />
     </AssignProduction>
 
-    <ListProduction label="make_empty_string" grouping="empty_string" >
-      <Token name="EMPTYSTRING" />
-    </ListProduction>
-    <AssignProduction label="from_empty_string" grouping="regex" >
-      <Grouping type="empty_string" position="1" />
+    <AssignProduction label="from_byte_6b" grouping="result_RE" >
+      <Token name="BYTE6b" />
     </AssignProduction>
 
-    <ListProduction label="make_concat" grouping="concat" >
-      <Token name="LPAREN" />
-      <Token name="CONCAT" />
-      <Grouping type="regex" position="1" />
-      <Grouping type="regex" position="2" />
-      <Token name="RPAREN" />
-    </ListProduction>
-    <AssignProduction label="from_concat" grouping="regex" >
-      <Grouping type="concat" position="1" />
-    </AssignProduction>
-
-    <ListProduction label="make_kleene" grouping="kleene" >
-      <Token name="LPAREN" />
-      <Token name="KLEENE" />
-      <Grouping type="regex" position="1" />
-      <Token name="RPAREN" />
-    </ListProduction>
-    <AssignProduction label="from_kleene" grouping="regex" >
-      <Grouping type="kleene" position="1" />
-    </AssignProduction>
-
-    <ListProduction label="make_or" grouping="or" >
-      <Token name="LPAREN" />
-      <Token name="OR" />
-      <Grouping type="regex" position="1" />
-      <Grouping type="regex" position="2" />
-      <Token name="RPAREN" />
-    </ListProduction>
-
-    <AssignProduction label="from_or" grouping="regex" >
-      <Grouping type="or" position="1" />
-    </AssignProduction>
 
 
 

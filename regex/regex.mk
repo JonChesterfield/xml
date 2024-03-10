@@ -38,46 +38,13 @@ REGEX_TOOLS_OBJECTS := $(addprefix $(TOOLS_DIR_OBJ)/,lexer.re2c.o lexer.posix.o 
 # Leave off -m so it doesn't introduce an include of a header from the wrong directory
 # Write into temporary dir so it doesn't clobber the header
 
-# Using a tmp dir under source mostly so the .out file is more readily available
-regex_lemon_tmp := regex/lemon
-
-$(regex_lemon_tmp):    $(regex_tmp)
-	@mkdir -p $(regex_lemon_tmp)
-clean::
-	@rm -rf $(regex_lemon_tmp)
-
-$(regex_lemon_tmp)/regex.parser_lemon.c:	regex/regex.parser_lemon.y | $(lemon) $(regex_lemon_tmp)
-	$(lemon) -l -Ttools/lempar.data regex/regex.parser_lemon.y -d$(regex_lemon_tmp)
-#	ugly, but does hack around the unused variable warnings
-	@sed -i 's~\(#define regex_LemonCTX_FETCH ptree_context regex_ptree_context=yypParser->regex_ptree_context;\)~\0 (void)regex_ptree_context;~g' "$@"
-
-regex/regex.parser_lemon.c:	$(regex_lemon_tmp)/regex.parser_lemon.c
-	@cp "$<" "$@"
-
 
 regex/regex.ptree.h:	regex/regex.ptree.h.in tools/ptree_macro_wrapper.h
 	$(CC) -E -C -P -xc $< -ffreestanding -o $@
 	clang-format -i $@
 
 clean::
-	@rm -f regex/regex.parser_lemon.c
-	@rm -f regex/regex.parser_lemon.out
 	@rm -f regex/regex.ptree.h
-
-
-
-# multiple output files are messy in make
-regex/regex.parser_bison.c regex/regex.parser_bison.h:	regex/regex.parser_bison.y
-	bison --no-lines --header=regex/regex.parser_bison.h regex/regex.parser_bison.y --output=regex/regex.parser_bison.c
-
-regex/regex.parser_bison.h: regex/regex.parser_bison.c
-
-clean::
-	@rm -f regex/regex.lexer.h
-	@rm -f regex/regex.lexer.c
-	@rm -f regex/regex.parser_bison.c
-	@rm -f regex/regex.parser_bison.h
-	@rm -f regex/regex.parser_bison.output
 
 $(REGEX_PROGRAM_OBJECTS): regex/regex.parser_lemon.t
 $(REGEX_OBJECTS) $(REGEX_PROGRAM_OBJECTS): $(regex_tmp)/%.o: regex/%.c $(REGEX_HEADERS) | $(regex_tmp) 

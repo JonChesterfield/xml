@@ -95,6 +95,23 @@ include $(SELF_DIR)common/common.mk
 	@touch "$@"
 	xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
 
+# Not very pretty but doesn't matter much if bison is run twice
+# better is probably to build the header directly from the xml
+%.parser_bison.c:	%.parser_bison.y
+	bison --no-lines --header=$*.parser_bison.h $^ --output=$@
+
+%.parser_bison.h:	%.parser_bison.c
+%.parser_bison.h:	%.parser_bison.y
+	bison --no-lines --header=$*.parser_bison.h $^ --output=$@
+
+
+# Lemon writes a header file by default, the local version is hacked to not do that
+%.parser_lemon.c:	%.parser_lemon.y | $(lemon)
+	$(lemon) -l -Ttools/lempar.data $^ -d$(dir $^)
+
+%.parser_lemon.h:	scripts/lemon_header.lua
+	lua $^ "$(basename $(basename $(notdir $@)))" > $@
+
 #
 # make functions
 #
@@ -127,6 +144,13 @@ $(foreach xform,$(lang_transforms),$(eval $(call LANGTRANSFORMS,$(xform))))
 #$(foreach xform,$(lang_transforms),$(info $(call LANGTRANSFORMS,$(xform))))
 
 
+# Add construction of these to lang::
+generated_language_suffixes := parser_bison.c parser_bison.h
+generated_language_suffixes := $(generated_language_suffixes) parser_lemon.c parser_lemon.h
+generated_language_suffixes := $(generated_language_suffixes) lexer_re2c_iterator.data
+
+clean_generated_language_suffixes := parser_lemon.out
+
 
 # Copy the xml file into lang_tmp and the result back out
 define LANGTEMPLATE
@@ -158,13 +182,18 @@ $(dir $1)$(basename $(basename $(notdir $1))).%.re2c: $(lang_tmp)/$(dir $1)$(bas
 
 $(basename $(basename $(notdir $1)))::	$(addprefix $(dir $1)$(basename $(basename $(notdir $1)))., $(lang_transforms:.TokenTree.xsl=))
 
+$(basename $(basename $(notdir $1)))::	$(addprefix $(basename $(basename $1)).,$(generated_language_suffixes))
+
 clean::
 	@rm -f $(addprefix $(dir $1)$(basename $(basename $(notdir $1)))., $(lang_transforms:.TokenTree.xsl=))
+
+clean::
+	@rm -f $(addprefix $(basename $(basename $1)).,$(generated_language_suffixes) $(clean_generated_language_suffixes))
 
 endef
 
 $(foreach lang,$(languages),$(eval $(call LANGTEMPLATE,$(lang))))
-#$(foreach lang,$(languages),$(info $(call LANGTEMPLATE,$(lang))))
+# $(foreach lang,$(languages),$(info $(call LANGTEMPLATE,$(lang))))
 
 
 # Run re2c on some text format
