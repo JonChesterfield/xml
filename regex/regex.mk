@@ -24,6 +24,14 @@ REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_string.c regex_driver.
 REGEX_SOURCE := $(REGEX_SOURCE) regex.parser_bison.c regex.parser_lemon.c
 REGEX_SOURCE := $(REGEX_SOURCE) regex.production_assign.c regex.production_list.c
 
+
+ASCII_HEADERS := ascii.lexer.h ascii.productions.h ascii.parser_bison.h ascii.parser_lemon.h ascii.lexer_re2c_iterator.data
+
+REGEX_HEADERS := $(REGEX_HEADERS) $(addprefix regex/,$(ASCII_HEADERS))
+
+REGEX_SOURCE := $(REGEX_SOURCE) ascii.lexer.c ascii.parser_bison.c ascii.parser_lemon.c
+REGEX_SOURCE := $(REGEX_SOURCE) ascii.production_assign.c ascii.production_list.c
+
 REGEX_PROGRAM_SOURCE := regex.tests.c regex_stdin_to_xml.c
 
 REGEX_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_SOURCE:.c=.o))
@@ -77,6 +85,7 @@ clean::
 	@rm -f regex/regex.parser_bison.t
 
 .PHONY: regex
+
 regex::	$(REGEX_OBJECTS) regex/regex.parser_lemon.t regex/regex.parser_bison.t bin/regex.tests bin/regex_stdin_to_xml 
 
 bin/regex.tests:	$(regex_tmp)/regex.tests.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
