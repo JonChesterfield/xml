@@ -13,55 +13,7 @@
 <!--
     Might use a token with a name and no regex/literal to indicate that the
     corresponding integer is reserved but no token will use it
-    <Token name="BYTE00" />
-    <Token name="BYTE01" />
-    <Token name="BYTE02" />
-    <Token name="BYTE03" />
-    <Token name="BYTE04" />
-    <Token name="BYTE05" />
-    <Token name="BYTE06" />
-    <Token name="BYTE07" />
-    <Token name="BYTE08" />
-    <Token name="BYTE09" />
-    <Token name="BYTE0a" />
-    <Token name="BYTE0b" />
-    <Token name="BYTE0c" />
-    <Token name="BYTE0d" />
-    <Token name="BYTE0e" />
-    <Token name="BYTE0f" />
-    <Token name="BYTE10" />
-    <Token name="BYTE11" />
-    <Token name="BYTE12" />
-    <Token name="BYTE13" />
-    <Token name="BYTE14" />
-    <Token name="BYTE15" />
-    <Token name="BYTE16" />
-    <Token name="BYTE17" />
-    <Token name="BYTE18" />
-    <Token name="BYTE19" />
-    <Token name="BYTE1a" />
-    <Token name="BYTE1b" />
-    <Token name="BYTE1c" />
-    <Token name="BYTE1d" />
-    <Token name="BYTE1e" />
-    <Token name="BYTE1f" />
-    <Token name="BYTE20" />
-    <Token name="BYTE21" />
-    <Token name="BYTE22" />
-    <Token name="BYTE23" />
-    <Token name="BYTE24" />
-    <Token name="BYTE25" />
-    <Token name="BYTE26" />
-    <Token name="BYTE27" />
-    <Token name="BYTE28" />
-    <Token name="BYTE29" />
-    <Token name="BYTE2a" />
-    <Token name="BYTE2b" />
-    <Token name="BYTE2c" />
-    <Token name="BYTE2d" />
-    <Token name="BYTE2e" />
-    <Token name="BYTE2f" />
-    -->
+-->
 
     <!-- Decimal numbers -->
 
@@ -106,141 +58,8 @@
     <Token name="BYTE7e" literal="~" />
     -->
 
-<!--
-    <Token name="BYTE7f" />
-    <Token name="BYTE80" />
-    <Token name="BYTE81" />
-    <Token name="BYTE82" />
-    <Token name="BYTE83" />
-    <Token name="BYTE84" />
-    <Token name="BYTE85" />
-    <Token name="BYTE86" />
-    <Token name="BYTE87" />
-    <Token name="BYTE88" />
-    <Token name="BYTE89" />
-    <Token name="BYTE8a" />
-    <Token name="BYTE8b" />
-    <Token name="BYTE8c" />
-    <Token name="BYTE8d" />
-    <Token name="BYTE8e" />
-    <Token name="BYTE8f" />
-    <Token name="BYTE90" />
-    <Token name="BYTE91" />
-    <Token name="BYTE92" />
-    <Token name="BYTE93" />
-    <Token name="BYTE94" />
-    <Token name="BYTE95" />
-    <Token name="BYTE96" />
-    <Token name="BYTE97" />
-    <Token name="BYTE98" />
-    <Token name="BYTE99" />
-    <Token name="BYTE9a" />
-    <Token name="BYTE9b" />
-    <Token name="BYTE9c" />
-    <Token name="BYTE9d" />
-    <Token name="BYTE9e" />
-    <Token name="BYTE9f" />
-    <Token name="BYTEa0" />
-    <Token name="BYTEa1" />
-    <Token name="BYTEa2" />
-    <Token name="BYTEa3" />
-    <Token name="BYTEa4" />
-    <Token name="BYTEa5" />
-    <Token name="BYTEa6" />
-    <Token name="BYTEa7" />
-    <Token name="BYTEa8" />
-    <Token name="BYTEa9" />
-    <Token name="BYTEaa" />
-    <Token name="BYTEab" />
-    <Token name="BYTEac" />
-    <Token name="BYTEad" />
-    <Token name="BYTEae" />
-    <Token name="BYTEaf" />
-    <Token name="BYTEb0" />
-    <Token name="BYTEb1" />
-    <Token name="BYTEb2" />
-    <Token name="BYTEb3" />
-    <Token name="BYTEb4" />
-    <Token name="BYTEb5" />
-    <Token name="BYTEb6" />
-    <Token name="BYTEb7" />
-    <Token name="BYTEb8" />
-    <Token name="BYTEb9" />
-    <Token name="BYTEba" />
-    <Token name="BYTEbb" />
-    <Token name="BYTEbc" />
-    <Token name="BYTEbd" />
-    <Token name="BYTEbe" />
-    <Token name="BYTEbf" />
-    <Token name="BYTEc0" />
-    <Token name="BYTEc1" />
-    <Token name="BYTEc2" />
-    <Token name="BYTEc3" />
-    <Token name="BYTEc4" />
-    <Token name="BYTEc5" />
-    <Token name="BYTEc6" />
-    <Token name="BYTEc7" />
-    <Token name="BYTEc8" />
-    <Token name="BYTEc9" />
-    <Token name="BYTEca" />
-    <Token name="BYTEcb" />
-    <Token name="BYTEcc" />
-    <Token name="BYTEcd" />
-    <Token name="BYTEce" />
-    <Token name="BYTEcf" />
-    <Token name="BYTEd0" />
-    <Token name="BYTEd1" />
-    <Token name="BYTEd2" />
-    <Token name="BYTEd3" />
-    <Token name="BYTEd4" />
-    <Token name="BYTEd5" />
-    <Token name="BYTEd6" />
-    <Token name="BYTEd7" />
-    <Token name="BYTEd8" />
-    <Token name="BYTEd9" />
-    <Token name="BYTEda" />
-    <Token name="BYTEdb" />
-    <Token name="BYTEdc" />
-    <Token name="BYTEdd" />
-    <Token name="BYTEde" />
-    <Token name="BYTEdf" />
-    <Token name="BYTEe0" />
-    <Token name="BYTEe1" />
-    <Token name="BYTEe2" />
-    <Token name="BYTEe3" />
-    <Token name="BYTEe4" />
-    <Token name="BYTEe5" />
-    <Token name="BYTEe6" />
-    <Token name="BYTEe7" />
-    <Token name="BYTEe8" />
-    <Token name="BYTEe9" />
-    <Token name="BYTEea" />
-    <Token name="BYTEeb" />
-    <Token name="BYTEec" />
-    <Token name="BYTEed" />
-    <Token name="BYTEee" />
-    <Token name="BYTEef" />
-    <Token name="BYTEf0" />
-    <Token name="BYTEf1" />
-    <Token name="BYTEf2" />
-    <Token name="BYTEf3" />
-    <Token name="BYTEf4" />
-    <Token name="BYTEf5" />
-    <Token name="BYTEf6" />
-    <Token name="BYTEf7" />
-    <Token name="BYTEf8" />
-    <Token name="BYTEf9" />
-    <Token name="BYTEfa" />
-    <Token name="BYTEfb" />
-    <Token name="BYTEfc" />
-    <Token name="BYTEfd" />
-    <Token name="BYTEfe" />
-    <Token name="BYTEff" />
--->
-
     <Token name="LPAREN" literal="(" />
     <Token name="RPAREN" literal=")" />
-
 
     <Token name="LSQUARE" literal="[" />
     <Token name="RSQUARE" literal="]" />
@@ -249,10 +68,9 @@
     <Token name="LSQUARECARET" literal="[^" />
 
     <Token name="PERIOD" literal="." />
-    <Token name="HYPHEN" literal="_" />
+    <Token name="HYPHEN" literal="-" />
 
     <Token name="PIPE" literal="|" />
-
     <Token name="STAR" literal="*" />
     <Token name="PLUS" literal="+" />
 
@@ -286,7 +104,9 @@
     <Grouping name="group" type="ptree" />
     
     <!-- probably excluding newline -->
+<!--
     <Grouping name="any" type="ptree" />
+-->
 
     <!-- Leaving $ / end of string out for now -->
     <!-- <Grouping name="eos" type="ptree" /> -->
@@ -298,6 +118,7 @@
     <Grouping name="negative_set" type="ptree" />
 
     <Grouping name="set_items" type="ptree" />
+    <Grouping name="set_item" type="ptree" />
 
     <Grouping name="range" type="ptree" />
 
@@ -371,16 +192,71 @@
     </CustomProduction>
 
     <!-- elementary-RE -->
+    <AssignProduction label="elementary_from_group" grouping="elementary_RE" >
+      <Grouping type="group" position="1" />  
+    </AssignProduction>
+
     <AssignProduction label="elementary_from_char" grouping="elementary_RE" >
       <Grouping type="char_RE" position="1" />  
     </AssignProduction>
 
+    <AssignProduction label="elementary_from_set" grouping="elementary_RE" >
+      <Grouping type="set" position="1" />  
+    </AssignProduction>
+
     <!-- group -->
-    <AssignProduction label="group_ctor" grouping="result_RE" >
+    <AssignProduction label="group_ctor" grouping="group" >
       <Token name="LPAREN" />
       <Grouping type="result_RE" position="1" />
       <Token name="RPAREN" />
     </AssignProduction>
+
+    <!-- set -->
+    <AssignProduction label="set_from_positive_set" grouping="set" >
+      <Grouping type="positive_set" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="set_from_negative_set" grouping="set" >
+      <Grouping type="negative_set" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="positive_set_ctor" grouping="positive_set" >
+      <Token name="LSQUARE"/>
+      <Grouping type="set_items" position="1" />
+      <Token name="RSQUARE"/>
+    </AssignProduction>
+
+    <AssignProduction label="negative_set_ctor" grouping="negative_set" >
+      <Token name="LSQUARECARET"/>
+      <Grouping type="set_items" position="1" />
+      <Token name="RSQUARE"/>
+    </AssignProduction>
+
+    <!-- set-items -->
+    <AssignProduction label="set_item_single" grouping="set_items" >
+      <Grouping type="set_item" position="1" />
+    </AssignProduction>
+
+    <CustomProduction label="set_item_multiple" grouping="set_items" >
+      <Grouping type="set_item" />
+      <Grouping type="set_items" />
+    </CustomProduction>
+
+    <!-- set-item -->
+    <AssignProduction label="set_item_from_range" grouping="set_item" >
+      <Grouping type="range" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="set_item_from_char" grouping="set_item" >
+      <Grouping type="char_RE" position="1" />
+    </AssignProduction>
+
+    <!-- range -->
+    <CustomProduction label="range_ctor" grouping="range" >
+      <Grouping type="char_RE" />
+      <Token name="HYPHEN" />
+      <Grouping type="char_RE" />
+    </CustomProduction>
 
     <!-- char -->
     <CustomProduction label="from_decimal" grouping="char_RE" >
@@ -395,16 +271,5 @@
       <Token name="Uppercase"/>
     </CustomProduction>
 
-    <!-- set -->
-<!--
-    <AssignProduction label="set_from_positive_set" grouping="set" >
-      <Grouping type="positive_set" position="1" />
-    </AssignProduction>
-    <AssignProduction label="set_from_negative_set" grouping="set" >
-      <Grouping type="negative_set" position="1" />
-    </AssignProduction>
--->
-
   </Productions>
 </Language>
-

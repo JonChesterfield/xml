@@ -40,6 +40,8 @@ static inline bool regex_is_not(ptree val) {
   return id == regex_grouping_not;
 }
 
+static inline bool regex_is_single_byte(ptree val);
+
 static inline ptree regex_make_empty_set(ptree_context ctx) {
   return regex_ptree_expression0(ctx, regex_grouping_empty_set);
 }
@@ -71,7 +73,6 @@ static inline ptree regex_make_and(ptree_context ctx, ptree lhs, ptree rhs) {
   return regex_ptree_expression2(ctx, regex_grouping_and, lhs, rhs);
 }
 
-
 static inline bool regex_grouping_id_is_single_byte(uint64_t id)
 {
   return (regex_grouping_byte_00 <= id) && (id <= regex_grouping_byte_ff);
@@ -87,6 +88,11 @@ static inline ptree regex_grouping_single_from_byte(ptree_context ctx, uint8_t b
 {
   uint64_t id = byte + regex_grouping_byte_00;
   return regex_ptree_expression0(ctx, id);
+}
+
+static inline bool regex_is_single_byte(ptree val) {
+  uint64_t id = regex_ptree_identifier(val);
+  return regex_grouping_id_is_single_byte(id);
 }
 
 #include "regex.byte_constructors.data"

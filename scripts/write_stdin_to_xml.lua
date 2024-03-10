@@ -21,7 +21,7 @@ local template = [=[#include "../tools/io_buffer.h"
 #include "LANGNAME.parser_bison.h"
 
 // Hack it for now, going to need to bring values into alignment
-enum {bison_offset = BISON_BYTE00 - regex_token_BYTE00, };
+enum {bison_offset = BISON_BYTE - regex_token_BYTE, };
 
 #include "../tools/stack.libc.h"
 #include "../tools/lexer.h"

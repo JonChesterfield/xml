@@ -99,9 +99,6 @@ bin/regex_stdin_to_xml:	$(regex_tmp)/regex_stdin_to_xml.o $(REGEX_OBJECTS) $(REG
 clean::
 	@rm -f bin/regex.tests bin/regex_stdin_to_xml
 
-regex/regex.lang.xml:	regex/regex.lang.xml.lua
-	@lua $^ > $@
-
 regex/regex.declarations.h:	regex/regex.declarations.h.lua
 	@lua $^ > $@
 
@@ -115,7 +112,6 @@ regex/regex_stdin_to_xml.c:	scripts/write_stdin_to_xml.lua
 	@lua $^ "regex" > $@
 
 clean::
-	@rm -f regex/regex.lang.xml
 	@rm -f regex/regex.declarations.h
 	@rm -f regex/regex.byte_constructors.data
 	@rm -f regex/regex.ptree.byte_print_array.data

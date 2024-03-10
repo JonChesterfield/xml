@@ -98,11 +98,11 @@ include $(SELF_DIR)common/common.mk
 # Not very pretty but doesn't matter much if bison is run twice
 # better is probably to build the header directly from the xml
 %.parser_bison.c:	%.parser_bison.y
-	bison --no-lines --header=$*.parser_bison.h $^ --output=$@
+	bison --no-lines --header=$*.parser_bison.h $^ --output=$@ -Dparse.trace
 
 %.parser_bison.h:	%.parser_bison.c
 %.parser_bison.h:	%.parser_bison.y
-	bison --no-lines --header=$*.parser_bison.h $^ --output=$@
+	bison --no-lines --header=$*.parser_bison.h $^ --output=$@ -Dparse.trace
 
 
 # Lemon writes a header file by default, the local version is hacked to not do that

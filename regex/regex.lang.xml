@@ -1,4 +1,3 @@
-local str = [[
 <?xml version="1.0" encoding="UTF-8"?>
 <Language>
   <LanguageName>regex</LanguageName>
@@ -9,15 +8,8 @@ local str = [[
     <Engine value="re2c" />
   </Lexer>
 
-  <Tokens>]]
-
-for i = 0, 255 do
-   str = string.format([[%s
-    <Token name="BYTE%02x" literal="%02x" />]], str, i, i)
-end
-
-str = str .. [[
-
+  <Tokens>
+    <Token name="BYTE" regex="[0-9a-f][0-9a-f]" />
 
     <Token name="LPAREN" literal="(" />
     <Token name="RPAREN" literal=")" />
@@ -48,16 +40,10 @@ str = str .. [[
 
     <Token name="WHITESPACE" regex="[ \f\n\r\t\v]+" />
   </Tokens>
-]]
-
-str = str .. [[
 
   <TokenDiscard>
     <Token name="WHITESPACE" />
   </TokenDiscard>
-]]
-
-str = str .. [[
 
   <Groupings>
     <Grouping name="regex" type="ptree" />
@@ -72,14 +58,6 @@ str = str .. [[
     <Grouping name="and" type="ptree" />
     <Grouping name="not" type="ptree" />
     <Grouping name="range" type="ptree" />
-]]
-
-for i = 0, 255 do
-   str = string.format([[%s
-    <Grouping name="byte_%02x" type="ptree" />]], str, i)
-end
-
-str = str .. [[
 
   </Groupings>
 
@@ -91,13 +69,14 @@ str = str .. [[
 -->
   </Precedences>
 
-  <Productions>]]
-
-str = str .. [[
-
+  <Productions>
     <AssignProduction label="result" grouping="program" >
       <Grouping type="regex" position="1" />
     </AssignProduction>
+
+    <CustomProduction label="make_byte" grouping="some_byte" >
+      <Token name="BYTE" />
+    </CustomProduction>
 
     <ListProduction label="make_empty_set" grouping="empty_set" >
       <Token name="EMPTYSET" />
@@ -256,24 +235,6 @@ str = str .. [[
     </AssignProduction>
 
 
-]]
-
-
-for i = 0, 255 do
-str = str .. string.format([[
-    <ListProduction label="make_byte_%02x" grouping="byte_%02x" >
-      <Token name="BYTE%02x" />
-    </ListProduction>
-    <AssignProduction label="from_byte_%02x" grouping="some_byte" >
-      <Grouping type="byte_%02x" position="1" />
-    </AssignProduction>
-
-]], i, i, i, i, i)
-end
-
-str = str .. [[
   </Productions>
 </Language>
-]]
 
-print(str)

@@ -90,6 +90,35 @@ MODULE(ascii_regex_consistent) {
     CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
   }
 
+  TEST("ranges") {
+    static struct pair cases[] = {
+        {"[A]", "41"},
+        {"[A-A]", "41"},
+        
+        {"[AB]", "(|4142)"},
+        {"[A-B]", "(|4142)"},
+
+        {"[ABC]", "(|41(|4243))"},
+        {"[A-C]", "(|41(|4243))"},
+
+        {"[ABCD]", "(|41(|42(|4344)))"},
+        {"[A-D]", "(|41(|42(|4344)))"},
+        
+        {"[b-e]", "(|62(|63(|6465)))"},
+        
+        {"[A-Db-e]",
+         "(|"
+         "(|41(|42(|4344)))"
+         "(|62(|63(|6465)))"
+         ")"},        
+    };
+    enum {
+      cases_size = sizeof(cases) / sizeof(cases[0]),
+    };
+    CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
+  }
+
+  
   TEST("ad hoc") {
     static struct pair cases[] = {
         {
