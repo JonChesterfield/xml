@@ -32,6 +32,14 @@ bool regex_ptree_atomic_and_equal(ptree x, ptree y) {
 
 bool regex_ptree_definitionally_equal(ptree x, ptree y) {
   stringtable_t strtab = stringtable_create();
+  bool xfail = ptree_is_failure(x);
+  bool yfail = ptree_is_failure(y);
+  if (xfail && yfail) {
+    return true;
+  }
+  if (xfail || yfail) {
+    return false;
+  }
   stringtable_index_t xs = regex_insert_into_stringtable(&strtab, x);
   stringtable_index_t ys = regex_insert_into_stringtable(&strtab, y);
   bool r = regex_canonical_definitionally_equal(&strtab, xs, ys);

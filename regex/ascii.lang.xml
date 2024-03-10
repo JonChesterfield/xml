@@ -373,16 +373,9 @@
 
   <Productions>
 
-    <AssignProduction label="result" grouping="program" >
-      <Grouping type="result_RE" position="1" />
-    </AssignProduction>
-
-    <AssignProduction label="from_byte_6b" grouping="result_RE" >
-      <Token name="BYTE6b" />
-    </AssignProduction>
-
-
-
+    <CustomProduction label="result" grouping="program" >
+      <Token name="BYTE6b" position="1" />
+    </CustomProduction>
 
 
 

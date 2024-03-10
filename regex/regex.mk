@@ -19,10 +19,10 @@ REGEX_HEADERS := $(REGEX_HEADERS) regex/regex.parser_bison.h regex/regex.parser_
 REGEX_HEADERS := $(REGEX_HEADERS) regex/regex.lexer.h regex/regex.productions.h
 REGEX_HEADERS := $(REGEX_HEADERS) regex/regex.lexer_re2c_iterator.data
 
-REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c regex_interpreter.c 
+REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c regex_interpreter.c ascii_regex_consistent.c
 
 REGEX_SOURCE := $(REGEX_SOURCE) regex.parser_bison.c regex.parser_lemon.c
-REGEX_SOURCE := $(REGEX_SOURCE) regex.production_assign.c regex.production_list.c
+REGEX_SOURCE := $(REGEX_SOURCE) regex.production_assign.c regex.production_custom.c regex.production_list.c
 
 
 ASCII_HEADERS := ascii.lexer.h ascii.productions.h ascii.parser_bison.h ascii.parser_lemon.h ascii.lexer_re2c_iterator.data
@@ -30,7 +30,7 @@ ASCII_HEADERS := ascii.lexer.h ascii.productions.h ascii.parser_bison.h ascii.pa
 REGEX_HEADERS := $(REGEX_HEADERS) $(addprefix regex/,$(ASCII_HEADERS))
 
 REGEX_SOURCE := $(REGEX_SOURCE) ascii.lexer.c ascii.parser_bison.c ascii.parser_lemon.c
-REGEX_SOURCE := $(REGEX_SOURCE) ascii.production_assign.c ascii.production_list.c
+REGEX_SOURCE := $(REGEX_SOURCE) ascii.production_assign.c ascii.production_custom.c ascii.production_list.c
 
 REGEX_PROGRAM_SOURCE := regex.tests.c regex_stdin_to_xml.c
 

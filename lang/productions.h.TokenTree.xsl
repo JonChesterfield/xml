@@ -36,7 +36,7 @@
     <NL hexvalue = "0a" />
   </Header>
 
-  <xsl:apply-templates select="ListProduction|AssignProduction"/>
+  <xsl:apply-templates select="AssignProduction|CustomProduction|ListProduction"/>
 
   <NL hexvalue="0a0a" />
   <Footer>
@@ -44,21 +44,31 @@
   </Footer>
 </xsl:template>
 
-<xsl:template match="ListProduction">
-  <NL hexvalue="0a" />
-  <Label value="// ListProduction {@label} -&gt; {$LangName}_grouping_{@grouping}" />
-  <NL hexvalue="0a" />
-  <ResultType value = "ptree {$LangName}_list_production_{@label}(ptree_context ctx" />
-  <xsl:apply-templates select="Grouping|Token" mode="ProductionFormals"/>
-  <CL value=");" />
-  <NL hexvalue="0a" />
-</xsl:template>
-
 <xsl:template match="AssignProduction">
   <NL hexvalue="0a" />
   <Label value="// AssignProduction {@label} -&gt; {$LangName}_grouping_{@grouping}" />
   <NL hexvalue="0a" />
   <ResultType value = "ptree {$LangName}_assign_production_{@label}(ptree_context ctx" />
+  <xsl:apply-templates select="Grouping|Token" mode="ProductionFormals"/>
+  <CL value=");" />
+  <NL hexvalue="0a" />
+</xsl:template>
+
+<xsl:template match="CustomProduction">
+  <NL hexvalue="0a" />
+  <Label value="// CustomProduction {@label} -&gt; {$LangName}_grouping_{@grouping}" />
+  <NL hexvalue="0a" />
+  <ResultType value = "ptree {$LangName}_custom_production_{@label}(ptree_context ctx" />
+  <xsl:apply-templates select="Grouping|Token" mode="ProductionFormals"/>
+  <CL value=");" />
+  <NL hexvalue="0a" />
+</xsl:template>
+
+<xsl:template match="ListProduction">
+  <NL hexvalue="0a" />
+  <Label value="// ListProduction {@label} -&gt; {$LangName}_grouping_{@grouping}" />
+  <NL hexvalue="0a" />
+  <ResultType value = "ptree {$LangName}_list_production_{@label}(ptree_context ctx" />
   <xsl:apply-templates select="Grouping|Token" mode="ProductionFormals"/>
   <CL value=");" />
   <NL hexvalue="0a" />

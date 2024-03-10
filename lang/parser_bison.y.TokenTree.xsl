@@ -49,18 +49,6 @@ static void <xsl:value-of select='$LangName'/>_Lemon(void*, int, token, ptree*);
       </xsl:attribute>
     </Include>
 
-<InterfaceType>
-      <xsl:attribute name="value">
-
-__attribute__((unused))
-static ptree parser_<xsl:value-of select="$LangName"/>_ptree_from_token(ptree_context ctx, enum <xsl:value-of select="$LangName"/>_token id, token tok)
-{
-  return <xsl:value-of select="$LangName"/>_ptree_from_token(ctx, id, tok.value, tok.width);
-}
-
-      </xsl:attribute>
-</InterfaceType>
-
     <IncludeClose value="&#xA;}} // %code top" />
     
     <CodeOpen value="&#xA;%code&#xA;{{&#xA;" />
@@ -234,7 +222,7 @@ int <xsl:value-of select='$LangName'/>_parser_bison_type_header(void)
 <xsl:template match="Productions">
   <Header value="// Productions" />
   <NL hexvalue = "0a" />
-  <xsl:apply-templates select="ListProduction|AssignProduction"/>
+  <xsl:apply-templates select="AssignProduction|CustomProduction|ListProduction"/>
 </xsl:template>
 
 <xsl:template match="Token">
@@ -276,6 +264,14 @@ int <xsl:value-of select='$LangName'/>_parser_bison_type_header(void)
   <NL hexvalue="0a" />
 </xsl:template>
 
+<xsl:template match="Grouping" mode="ListProductionGroupings">
+  <GroupingProduction value="{@type} /*(${position()})*/" />
+</xsl:template>
+
+<xsl:template match="Token" mode="ListProductionGroupings">
+  <TokenProduction value="{@name} /*(${position()})*/" />
+</xsl:template>
+
 <xsl:template match="ListProduction">
   <NL hexvalue="0a" />
   <Label value="// ListProduction {@label} -&gt; {$LangName}_grouping_{@grouping}" />
@@ -286,51 +282,13 @@ int <xsl:value-of select='$LangName'/>_parser_bison_type_header(void)
   <xsl:apply-templates select="Grouping|Token" mode="ListProductionDescribe"/>
   
   <NL hexvalue="0a" />
-  <ResComment value ="#if 0" />
-  <NL hexvalue="0a" />
-
-  <ResTmp value = '  R = {$LangName}_list_production_{@label}({$LangName}_ptree_context' />
+  <ResTmp value = '  $$ = {$LangName}_list_production_{@label}({$LangName}_ptree_context' />
   <xsl:apply-templates select="Grouping|Token" mode="ForwardingFormals"/>
   <ResTmp value = ');' />
   <NL hexvalue="0a" />
-
-  <ResComment value ="#else" />
-  <NL hexvalue="0a" />
-
-  <ES value = "  enum {{" />
-  <NL hexvalue="0a" />
-  <T value="    argument_arity = {count(Grouping[@position])}," />
-  <NL hexvalue="0a" />
-  <T value="    token_arity = {count(Token[@position])}," />
-  <NL hexvalue="0a" />
-  <T value="    total_arity = {count(Grouping[@position]) + count(Token[@position])}," />
-  <NL hexvalue="0a" />
-  <EE value = "  }};" />
-  <NL hexvalue="0a" />
-
-
-  <ResTmp value = '  $$ = {$LangName}_ptree_expression_create_uninitialised({$LangName}_ptree_context, {$LangName}_grouping_{@grouping}, total_arity);' />
-  <NL hexvalue="0a" />
-
-  <xsl:apply-templates select="Grouping|Token" mode="ListProductionAssign"/>
-
-  <NL hexvalue="0a" />
-
-  <ResComment value ="#endif" />
-  <NL hexvalue="0a" />
   <OutExpr value = '  if (external_context) {{*external_context = $$;}}' />
   <NL hexvalue="0a" />
-
-  <xsl:apply-templates select="Grouping|Token" mode="ListProductionSelect"/>
   <RB hexvalue="7d0a" />
-</xsl:template>
-
-<xsl:template match="Grouping" mode="ListProductionGroupings">
-  <GroupingProduction value="{@type} /*(${position()})*/" />
-</xsl:template>
-
-<xsl:template match="Token" mode="ListProductionGroupings">
-  <TokenProduction value="{@name} /*(${position()})*/" />
 </xsl:template>
 
 <xsl:template match="Grouping" mode="ListProductionDescribe">
@@ -359,57 +317,6 @@ int <xsl:value-of select='$LangName'/>_parser_bison_type_header(void)
   <NL hexvalue="0a" />
 </xsl:template>
 
-<xsl:template match="Grouping" mode="ListProductionAssign">
-  <xsl:choose>
-    <xsl:when test="@position">
-      <P value="  {$LangName}_ptree_expression_initialise_element($$, {@position}-1, ${position()});" />
-    </xsl:when>
-    <xsl:otherwise>
-      <P value="  (void)${position()};" />
-    </xsl:otherwise>
-  </xsl:choose>
-  <NL hexvalue="0a" />
-</xsl:template>
-
-<xsl:template match="Token" mode="ListProductionAssign">
-  <xsl:choose>
-    <xsl:when test="@position">
-      
-      <T value = "  ptree tmp{position()} = parser_{$LangName}_ptree_from_token({$LangName}_ptree_context, {$LangName}_token_{@name}, x{position()});" />
-      <NL hexvalue="0a" />
-      <P value="  {$LangName}_ptree_expression_initialise_element($$, {@position}-1, tmp{position()});" />
-    </xsl:when>
-    <xsl:otherwise>
-      <P value="  (void)${position()};" />
-    </xsl:otherwise>
-  </xsl:choose>
-  <NL hexvalue="0a" />
-</xsl:template>
-
-<xsl:template match="Grouping" mode="AssignProductionAssign">
-  <xsl:choose>
-    <xsl:when test="@position">
-      <P value="  $$ = ${position()};" />
-    </xsl:when>
-    <xsl:otherwise>
-      <P value="  (void)${position()};" />
-    </xsl:otherwise>
-  </xsl:choose>
-  <NL hexvalue="0a" />
-</xsl:template>
-
-<xsl:template match="Token" mode="AssignProductionAssign">
-  <xsl:choose>
-    <xsl:when test="@position">
-      <P value="  $$ = parser_{$LangName}_ptree_from_token({$LangName}_ptree_context, {$LangName}_token_{@name}, x{position()});" />
-    </xsl:when>
-    <xsl:otherwise>
-      <P value="  (void)${position()};" />
-    </xsl:otherwise>
-  </xsl:choose>
-  <NL hexvalue="0a" />
-</xsl:template>
-
 <xsl:template match="AssignProduction">
   <NL hexvalue="0a" />
   <Label value="// AssignProduction {@label} -&gt; {$LangName}_grouping_{@grouping}" />
@@ -417,18 +324,28 @@ int <xsl:value-of select='$LangName'/>_parser_bison_type_header(void)
   <xsl:call-template name="production-definition" />
   <LB hexvalue="7b0a" />
 
-  <ResComment value ="#if 0" />
   <NL hexvalue="0a" />
-  <ResTmp value = '  R = {$LangName}_assign_production_{@label}({$LangName}_ptree_context' />
+  <ResTmp value = '  $$ = {$LangName}_assign_production_{@label}({$LangName}_ptree_context' />
   <xsl:apply-templates select="Grouping|Token" mode="ForwardingFormals"/>
   <ResTmp value = ');' />
   <NL hexvalue="0a" />
-  <ResComment value ="#else" />
+  <OutExpr value = '  if (external_context) {{*external_context = $$;}}' />
   <NL hexvalue="0a" />
-  <!-- Especially tempting to handle inline while the assignment code is being debugged -->
-  <xsl:apply-templates select="Grouping|Token" mode="AssignProductionAssign"/>
+
+  <LR hexvalue="7d0a" />  
+</xsl:template>
+
+<xsl:template match="CustomProduction">
   <NL hexvalue="0a" />
-  <ResComment value ="#endif" />
+  <Label value="// CustomProduction {@label} -&gt; {$LangName}_grouping_{@grouping}" />
+  <NL hexvalue="0a" />
+  <xsl:call-template name="production-definition" />
+  <LB hexvalue="7b0a" />
+
+  <NL hexvalue="0a" />
+  <ResTmp value = '  $$ = {$LangName}_custom_production_{@label}({$LangName}_ptree_context' />
+  <xsl:apply-templates select="Grouping|Token" mode="ForwardingFormals"/>
+  <ResTmp value = ');' />
   <NL hexvalue="0a" />
   <OutExpr value = '  if (external_context) {{*external_context = $$;}}' />
   <NL hexvalue="0a" />

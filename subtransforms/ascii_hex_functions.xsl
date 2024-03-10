@@ -192,7 +192,7 @@
              <xsl:value-of select="concat('\\',$char)"/>
            </xsl:otherwise>
          </xsl:choose>
-         <xsl:call-template name="quotemeta">
+         <xsl:call-template name="doublequotemeta">
             <xsl:with-param name="str" select="substring($str, 2)"/>
          </xsl:call-template>       
      </xsl:if>     

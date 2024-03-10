@@ -157,11 +157,11 @@ define LANGTEMPLATE
 $(info "Language template for $1, create $(lang_tmp)/$1")
 
 $(lang_tmp)/$(dir $1): $(lang_tmp)
-	mkdir -p "$$@"
+	@mkdir -p "$$@"
 
 # copy the lang xml file into tmp
 $(lang_tmp)/$1:	$1 | $(xmllint) $(xsltproc) $(lang_tmp)/$(dir $1)
-	cp "$$<" "$$@"
+	@cp "$$<" "$$@"
 
 # copy from temp directory into the source tree
 # enumerating the suffixes helps avoid the patterns colliding with others

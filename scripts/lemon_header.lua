@@ -19,6 +19,8 @@ void LANGNAME_parser_lemon_parse(LANGNAME_parser_lemon_state *a, int id,token t)
 void LANGNAME_parser_lemon_finalize(LANGNAME_parser_lemon_state *a);
 void LANGNAME_parser_lemon_initialize(LANGNAME_parser_lemon_state *a, ptree_context LANGNAME_ptree_context);
 
+ptree LANGNAME_parser_lemon_parse_cstr(ptree_context context, const char * data);
+
 #if __STDC_HOSTED__
 int LANGNAME_parser_lemon_type_header(void);
 #endif

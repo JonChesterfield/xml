@@ -23,6 +23,8 @@
     <NL hexvalue="0a" />
     <Include value ='#include "{$LangName}.declarations.h"' />
     <NL hexvalue="0a" />
+    <Include value ='#include "{$LangName}.ptree.h"' />
+    <NL hexvalue="0a" />
   </Header>
   <xsl:apply-templates select="ListProduction"/>
 </xsl:template>

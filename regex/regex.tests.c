@@ -360,4 +360,5 @@ MAIN_MODULE() {
   DEPENDS(regex_split);
   DEPENDS(regex_string);
   DEPENDS(driver);
+  DEPENDS(ascii_regex_consistent);
 }

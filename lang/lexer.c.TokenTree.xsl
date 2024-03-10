@@ -32,7 +32,7 @@
 
 <xsl:template match="Tokens">
   <Header>
-    <Include value='#include "{$LangName}.declarations.h"' />
+    <Include value='#include "{$LangName}.lexer.h"' />
     <NL hexvalue="0a" />
     <NL hexvalue="0a" />
     <Include value='#include "../tools/lexer.posix.h"' />
