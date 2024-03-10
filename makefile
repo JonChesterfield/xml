@@ -102,7 +102,7 @@ include $(SELF_DIR)common/common.mk
 rwildcard = $(foreach d,$(wildcard $(1)*),$(call rwildcard,$(d)/,$(2)) $(filter $(subst *,%,$(2)),$(d)))
 
 # sequence of dir/name.lang.xml. Names need to be unique, don't need to match dir.
-languages := regex/regex.lang.xml arith/arith.lang.xml langtest/test.lang.xml
+languages := regex/regex.lang.xml arith/arith.lang.xml ascii/ascii.lang.xml langtest/test.lang.xml
 
 lang_tmp := .lang.O
 $(lang_tmp):
