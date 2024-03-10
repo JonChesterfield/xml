@@ -95,14 +95,86 @@ include $(SELF_DIR)common/common.mk
 	@touch "$@"
 	xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
 
-
 #
 # make functions
 #
 
 rwildcard = $(foreach d,$(wildcard $(1)*),$(call rwildcard,$(d)/,$(2)) $(filter $(subst *,%,$(2)),$(d)))
 
+languages := regex/regex.lang.xml arith/arith.lang.xml
 
+lang_tmp := .lang.O
+$(lang_tmp):
+	@mkdir -p $@
+clean::
+	@rm -rf $(lang_tmp)
+
+
+# Construct a TokenTree.xml from each lang/*.xsl generator
+lang_transforms := lexer.h.TokenTree.xsl lexer.c.TokenTree.xsl
+lang_transforms := $(lang_transforms) parser_lemon.y.TokenTree.xsl parser_bison.y.TokenTree.xsl
+lang_transforms := $(lang_transforms) productions.h.TokenTree.xsl
+lang_transforms := $(lang_transforms) production_assign.c.TokenTree.xsl production_list.c.TokenTree.xsl
+lang_transforms := $(lang_transforms) lexer_re2c_iterator.data.re2c.TokenTree.xsl
+
+
+define LANGTRANSFORMS
+$(lang_tmp)/%.$(basename $1).xml:	lang/$1 $(lang_tmp)/%.lang.xml
+	xsltproc $(XSLTPROCOPTS) --output $$@ $$^
+endef
+$(foreach xform,$(lang_transforms),$(eval $(call LANGTRANSFORMS,$(xform))))
+#$(foreach xform,$(lang_transforms),$(info $(call LANGTRANSFORMS,$(xform))))
+
+
+# sequence of dir/name.lang.xml. Names need to be unique, don't need to match dir.
+languages := regex/regex.lang.xml arith/arith.lang.xml
+
+# Copy the xml file into lang_tmp and the result back out
+define LANGTEMPLATE
+$(info "Language template for $1, create $(lang_tmp)/$1")
+
+$(lang_tmp)/$(dir $1): $(lang_tmp)
+	mkdir -p "$$@"
+
+# copy the lang xml file into tmp
+$(lang_tmp)/$1:	$1 | $(xmllint) $(xsltproc) $(lang_tmp)/$(dir $1)
+	cp "$$<" "$$@"
+
+# copy from temp directory into the source tree
+# enumerating the suffixes helps avoid the patterns colliding with others
+$(dir $1)$(basename $(basename $(notdir $1))).%.c: $(lang_tmp)/$(dir $1)$(basename $(basename $(notdir $1))).%.c
+	@cp "$$<" "$$@"
+
+$(dir $1)$(basename $(basename $(notdir $1))).%.h: $(lang_tmp)/$(dir $1)$(basename $(basename $(notdir $1))).%.h
+	@cp "$$<" "$$@"
+
+$(dir $1)$(basename $(basename $(notdir $1))).%.y: $(lang_tmp)/$(dir $1)$(basename $(basename $(notdir $1))).%.y
+	@cp "$$<" "$$@"
+
+$(dir $1)$(basename $(basename $(notdir $1))).%.data: $(lang_tmp)/$(dir $1)$(basename $(basename $(notdir $1))).%.data
+	@cp "$$<" "$$@"
+
+$(dir $1)$(basename $(basename $(notdir $1))).%.re2c: $(lang_tmp)/$(dir $1)$(basename $(basename $(notdir $1))).%.re2c
+	@cp "$$<" "$$@"
+
+$(basename $(basename $(notdir $1)))::	$(addprefix $(dir $1)$(basename $(basename $(notdir $1)))., $(lang_transforms:.TokenTree.xsl=))
+
+clean::
+	@rm -f $(addprefix $(dir $1)$(basename $(basename $(notdir $1)))., $(lang_transforms:.TokenTree.xsl=))
+
+endef
+
+$(foreach lang,$(languages),$(eval $(call LANGTEMPLATE,$(lang))))
+# $(foreach lang,$(languages),$(info $(call LANGTEMPLATE,$(lang))))
+
+
+# Run re2c on some text format
+$(lang_tmp)/%:	$(lang_tmp)/%.re2c
+	re2c $^ --output $@ $(RE2COPTS)
+
+# Drop the final .hex
+$(lang_tmp)/%:	$(lang_tmp)/%.hex | $(hex_to_binary)
+	./$(hex_to_binary) < "$<" > "$@"
 
 
 

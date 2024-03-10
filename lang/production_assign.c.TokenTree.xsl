@@ -19,7 +19,7 @@
 
 <xsl:template match="Productions">
   <Header>
-    <Include value ='#include "{$LangName}.production.h"' />
+    <Include value ='#include "{$LangName}.productions.h"' />
     <NL hexvalue="0a" />
     <Include value ='#include "{$LangName}.declarations.h"' />
     <NL hexvalue="0a" />

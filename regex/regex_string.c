@@ -6,8 +6,8 @@
 #include "regex.h"
 #include "regex.lexer.h"
 
-#include "regex_parser.lemon.h"
-#include "regex_parser.lemon.t"
+#include "regex.parser_lemon.h"
+#include "regex.parser_lemon.t"
 
 #include "../tools/lexer.h"
 

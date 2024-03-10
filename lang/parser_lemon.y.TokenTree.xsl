@@ -84,9 +84,9 @@ static ptree parser_<xsl:value-of select="$LangName"/>_ptree_from_token(ptree_co
     <Code>
       <xsl:attribute name="value">
 
-#include "<xsl:value-of select='$LangName'/>_parser.lemon.h"
+#include "<xsl:value-of select='$LangName'/>.parser_lemon.h"
 
-// Implementation of "<xsl:value-of select='$LangName'/>_parser.lemon.t"
+// Implementation of "<xsl:value-of select='$LangName'/>.parser_lemon.t"
 enum {
   <xsl:value-of select="$LangName"/>_parser_lemon_type_align = _Alignof(struct yyParser),
   <xsl:value-of select="$LangName"/>_parser_lemon_type_size = sizeof(struct yyParser),

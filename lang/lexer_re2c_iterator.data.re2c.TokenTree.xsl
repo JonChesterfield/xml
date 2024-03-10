@@ -13,7 +13,7 @@
   </TokenTree>
 </xsl:template>
 
-<xsl:include href="./subtransforms/ascii_hex_functions.xsl" />
+<xsl:include href="../subtransforms/ascii_hex_functions.xsl" />
 
 <xsl:variable name="LangName">
   <xsl:value-of select="/Language/LanguageName"></xsl:value-of>

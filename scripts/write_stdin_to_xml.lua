@@ -15,8 +15,8 @@ local template = [=[#include "../tools/io_buffer.h"
 
 #include "LANGNAME.lexer.h"
 
-#include "LANGNAME_parser.lemon.h"
-#include "LANGNAME_parser.lemon.t"
+#include "LANGNAME.parser_lemon.h"
+#include "LANGNAME.parser_lemon.t"
 
 #include "../tools/stack.libc.h"
 #include "../tools/lexer.h"

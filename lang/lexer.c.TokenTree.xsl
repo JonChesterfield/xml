@@ -13,7 +13,7 @@
   </TokenTree>
 </xsl:template>
 
-<xsl:include href="./subtransforms/ascii_hex_functions.xsl" />
+<xsl:include href="../subtransforms/ascii_hex_functions.xsl" />
 
 <xsl:variable name="LangName">
   <xsl:value-of select="/Language/LanguageName"></xsl:value-of>
@@ -299,7 +299,7 @@ bool <xsl:value-of select='$LangName' />_lexer_<xsl:value-of select='$variant' /
     <xsl:choose>
       <xsl:when test="$variant = 're2c'" >
         <xsl:attribute name="value">
-#include "<xsl:value-of select='$LangName' />_lexer_re2c_iterator_step.data"
+#include "<xsl:value-of select='$LangName' />.lexer_re2c_iterator.data"
         </xsl:attribute>        
       </xsl:when>
       <xsl:otherwise>
