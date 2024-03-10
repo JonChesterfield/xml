@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Language>
+  <!-- 
+       Language unused other than sanity checking codegeneration
+       Directory and language given different names for that reason
+       make test at the top level will generate various things for it
+  -->
+
+  <LanguageName>test</LanguageName>
+  <Lexer>
+    <Engine value="re2c" />
+  </Lexer>
+
+  <Tokens>
+    <Token name="PLUS" literal="+" />
+    <Token name="MINUS" literal="-" />
+    <Token name="TIMES" literal="*" />
+    <Token name="DIVIDE" literal="/" />
+    <Token name="MODULO" literal="%" />
+    <Token name="LPAREN" literal="(" />
+    <Token name="RPAREN" literal=")" />
+    <!-- One should match over integer, and over things like 12 -->
+    <!-- <Token name="One" literal="1" /> -->
+
+    <Token name="INTEGER" regex="[-]?[0-9]+[0-9]*" />
+
+    <!-- Haven't persuaded re2c to recognise [[:space:]] yet -->
+    <Token name="WHITESPACE" regex="[ \f\n\r\t\v]+" />
+  </Tokens>
+
+  <Groupings>
+    <Grouping name="expr" type="ptree" />
+  </Groupings>
+
+  <Precedences>
+    <Left>
+      <Token name="PLUS" />
+      <Token name="MINUS" />
+    </Left>
+    <Left>
+      <Token name="TIMES" />
+      <Token name="DIVIDE" />
+      <Token name="MODULO" />
+    </Left>
+    <Nonassoc>
+      <Token name="WHITESPACE" />
+    </Nonassoc>
+  </Precedences>
+
+  <!-- Undecided whether to go with 0 or 1 indexing on position -->
+  <!-- leaning towards 1 based for more obvious correspondance with bison -->
+  <Productions>
+    <ListProduction label="BinOpPlus" type="expr" >
+      <Grouping type="expr" position="1" />
+      <Token name="PLUS" />
+      <Grouping type="expr" position="2" />
+    </ListProduction>
+
+    <ListProduction label="BinOpMinus" type="expr" >
+      <Grouping type="expr" position="1" />
+      <Token name="MINUS" />
+      <Grouping type="expr" position="2" />
+    </ListProduction>
+
+    <ListProduction label="BinOpTimes" type="expr" >
+      <Grouping type="expr" position="1" />
+      <Token name="TIMES" />
+      <Grouping type="expr" position="2" />
+    </ListProduction>
+
+    <ListProduction label="BinOpDivide" type="expr" >
+      <Grouping type="expr" position="1" />
+      <Token name="DIVIDE" />
+      <Grouping type="expr" position="2" />
+    </ListProduction>
+
+    <ListProduction label="BinOpModulo" type="expr" >
+      <Grouping type="expr" position="1" />
+      <Token name="MODULO" />
+      <Grouping type="expr" position="2" />
+    </ListProduction>
+
+    <ListProduction label="Parenthesised" type="expr" >
+      <Token name="LPAREN" />
+      <Grouping type="expr" position="1" />
+      <Token name="RPAREN" />
+    </ListProduction>
+
+    <AssignProduction label="FromInteger" type="expr" >
+      <Token name="INTEGER" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="DiscardWSLeft" type="expr" >
+      <Token name="WHITESPACE" />
+      <Grouping type="expr" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="DiscardWSRight" type="expr" >
+      <Grouping type="expr" position="1" />
+      <Token name="WHITESPACE" />
+    </AssignProduction>
+
+    
+  </Productions>
+</Language>

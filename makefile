@@ -101,7 +101,8 @@ include $(SELF_DIR)common/common.mk
 
 rwildcard = $(foreach d,$(wildcard $(1)*),$(call rwildcard,$(d)/,$(2)) $(filter $(subst *,%,$(2)),$(d)))
 
-languages := regex/regex.lang.xml arith/arith.lang.xml
+# sequence of dir/name.lang.xml. Names need to be unique, don't need to match dir.
+languages := regex/regex.lang.xml arith/arith.lang.xml langtest/test.lang.xml
 
 lang_tmp := .lang.O
 $(lang_tmp):
@@ -126,8 +127,6 @@ $(foreach xform,$(lang_transforms),$(eval $(call LANGTRANSFORMS,$(xform))))
 #$(foreach xform,$(lang_transforms),$(info $(call LANGTRANSFORMS,$(xform))))
 
 
-# sequence of dir/name.lang.xml. Names need to be unique, don't need to match dir.
-languages := regex/regex.lang.xml arith/arith.lang.xml
 
 # Copy the xml file into lang_tmp and the result back out
 define LANGTEMPLATE
@@ -165,7 +164,7 @@ clean::
 endef
 
 $(foreach lang,$(languages),$(eval $(call LANGTEMPLATE,$(lang))))
-# $(foreach lang,$(languages),$(info $(call LANGTEMPLATE,$(lang))))
+#$(foreach lang,$(languages),$(info $(call LANGTEMPLATE,$(lang))))
 
 
 # Run re2c on some text format
