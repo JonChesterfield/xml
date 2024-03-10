@@ -129,11 +129,12 @@ static int regex_to_char_sequence_elt(ptree tree, uint64_t depth, void *p) {
   (void)p;
   (void)data;
 
-  printf("sequence elt\n");
-
-  regex_ptree_as_xml(&stack_libc, stdout, tree);
-  fprintf(stdout, "\n");
-
+  if (0)
+    {
+      printf("sequence elt\n");
+      regex_ptree_as_xml(&stack_libc, stdout, tree);
+      fprintf(stdout, "\n");
+    }
   return 0;
 }
 

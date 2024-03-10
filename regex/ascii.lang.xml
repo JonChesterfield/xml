@@ -64,16 +64,10 @@
     -->
 
     <!-- Decimal numbers -->
-    <Token name="BYTE30" literal="0" />
-    <Token name="BYTE31" literal="1" />
-    <Token name="BYTE32" literal="2" />
-    <Token name="BYTE33" literal="3" />
-    <Token name="BYTE34" literal="4" />
-    <Token name="BYTE35" literal="5" />
-    <Token name="BYTE36" literal="6" />
-    <Token name="BYTE37" literal="7" />
-    <Token name="BYTE38" literal="8" />
-    <Token name="BYTE39" literal="9" />
+
+    <Token name="Decimal" regex="[0-9]" />
+    <Token name="Lowercase" regex="[a-z]" />
+    <Token name="Uppercase" regex="[A-Z]" />
 
     <!-- probably going to be literals
     <Token name="BYTE3a" literal=":" />
@@ -93,33 +87,6 @@
     -->
 
     <!-- uppercase -->
-    <Token name="BYTE41" literal="A" />
-    <Token name="BYTE42" literal="B" />
-    <Token name="BYTE43" literal="C" />
-    <Token name="BYTE44" literal="D" />
-    <Token name="BYTE45" literal="E" />
-    <Token name="BYTE46" literal="F" />
-    <Token name="BYTE47" literal="G" />
-    <Token name="BYTE48" literal="H" />
-    <Token name="BYTE49" literal="I" />
-    <Token name="BYTE4a" literal="J" />
-    <Token name="BYTE4b" literal="K" />
-    <Token name="BYTE4c" literal="L" />
-    <Token name="BYTE4d" literal="M" />
-    <Token name="BYTE4e" literal="N" />
-    <Token name="BYTE4f" literal="O" />
-    <Token name="BYTE50" literal="P" />
-    <Token name="BYTE51" literal="Q" />
-    <Token name="BYTE52" literal="R" />
-    <Token name="BYTE53" literal="S" />
-    <Token name="BYTE54" literal="T" />
-    <Token name="BYTE55" literal="U" />
-    <Token name="BYTE56" literal="V" />
-    <Token name="BYTE57" literal="W" />
-    <Token name="BYTE58" literal="X" />
-    <Token name="BYTE59" literal="Y" />
-    <Token name="BYTE5a" literal="Z" />
-
 
     <!-- todo
     <Token name="BYTE5b" literal="[" />
@@ -131,32 +98,6 @@
     -->
 
     <!-- lowercase -->
-    <Token name="BYTE61" literal="a" />
-    <Token name="BYTE62" literal="b" />
-    <Token name="BYTE63" literal="c" />
-    <Token name="BYTE64" literal="d" />
-    <Token name="BYTE65" literal="e" />
-    <Token name="BYTE66" literal="f" />
-    <Token name="BYTE67" literal="g" />
-    <Token name="BYTE68" literal="h" />
-    <Token name="BYTE69" literal="i" />
-    <Token name="BYTE6a" literal="j" />
-    <Token name="BYTE6b" literal="k" />
-    <Token name="BYTE6c" literal="l" />
-    <Token name="BYTE6d" literal="m" />
-    <Token name="BYTE6e" literal="n" />
-    <Token name="BYTE6f" literal="o" />
-    <Token name="BYTE70" literal="p" />
-    <Token name="BYTE71" literal="q" />
-    <Token name="BYTE72" literal="r" />
-    <Token name="BYTE73" literal="s" />
-    <Token name="BYTE74" literal="t" />
-    <Token name="BYTE75" literal="u" />
-    <Token name="BYTE76" literal="v" />
-    <Token name="BYTE77" literal="w" />
-    <Token name="BYTE78" literal="x" />
-    <Token name="BYTE79" literal="y" />
-    <Token name="BYTE7a" literal="z" />
 
     <!-- syntax?
     <Token name="BYTE7b" literal="{{" />
@@ -373,8 +314,79 @@
 
   <Productions>
 
-    <CustomProduction label="result" grouping="program" >
-      <Token name="BYTE6b" position="1" />
+    <AssignProduction label="result" grouping="program" >
+      <Grouping type="result_RE" position="1" />
+    </AssignProduction>
+
+
+    <!-- result-RE -->
+    <AssignProduction label="result_from_union" grouping="result_RE" >
+      <Grouping type="union_RE" position="1" />
+    </AssignProduction>
+    <AssignProduction label="result_from_simple" grouping="result_RE" >
+      <Grouping type="simple_RE" position="1" />
+    </AssignProduction>
+
+    <!-- union -->
+    <CustomProduction label="union_ctor" grouping="union_RE" >
+      <Grouping type="result_RE" />
+      <Token name="PIPE" />
+      <Grouping type="simple_RE" />
+    </CustomProduction>
+
+    <!-- simple-RE -->
+    <AssignProduction label="simple_from_concat" grouping="simple_RE" >
+      <Grouping type="concatenation" position="1" />
+    </AssignProduction>
+    <AssignProduction label="simple_from_basic" grouping="simple_RE" >
+      <Grouping type="basic_RE" position="1" />
+    </AssignProduction>
+
+    <!-- concatenation -->
+    <CustomProduction label="concat_ctor" grouping="concatenation" >
+      <Grouping type="simple_RE" />
+      <Grouping type="basic_RE" />
+    </CustomProduction>
+
+    <!-- basic-RE -->
+    <AssignProduction label="basic_from_star" grouping="basic_RE" >
+      <Grouping type="star" position="1" />  
+    </AssignProduction>
+    <AssignProduction label="basic_from_plus" grouping="basic_RE" >
+      <Grouping type="plus" position="1" />  
+    </AssignProduction>
+    <AssignProduction label="basic_from_elementary" grouping="basic_RE" >
+      <Grouping type="elementary_RE" position="1" />  
+    </AssignProduction>
+
+    <!-- star -->
+    <CustomProduction label="star_ctor" grouping="star" >
+      <Grouping type="elementary_RE" />
+      <Token name="STAR" />
+    </CustomProduction>
+
+    <!-- plus -->
+    <CustomProduction label="plus_ctor" grouping="plus" >
+      <Grouping type="elementary_RE" />
+      <Token name="PLUS" />
+    </CustomProduction>
+
+    <!-- elementary-RE -->
+    <AssignProduction label="elementary_from_char" grouping="elementary_RE" >
+      <Grouping type="char_RE" position="1" />  
+    </AssignProduction>
+
+    <!-- char -->
+    <CustomProduction label="from_decimal" grouping="char_RE" >
+      <Token name="Decimal"/>
+    </CustomProduction>
+
+    <CustomProduction label="from_lowercase" grouping="char_RE" >
+      <Token name="Lowercase"/>
+    </CustomProduction>
+
+    <CustomProduction label="from_uppercase" grouping="char_RE" >
+      <Token name="Uppercase"/>
     </CustomProduction>
 
 
