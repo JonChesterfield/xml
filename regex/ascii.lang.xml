@@ -318,7 +318,6 @@
       <Grouping type="result_RE" position="1" />
     </AssignProduction>
 
-
     <!-- result-RE -->
     <AssignProduction label="result_from_union" grouping="result_RE" >
       <Grouping type="union_RE" position="1" />
@@ -376,6 +375,13 @@
       <Grouping type="char_RE" position="1" />  
     </AssignProduction>
 
+    <!-- group -->
+    <AssignProduction label="group_ctor" grouping="result_RE" >
+      <Token name="LPAREN" />
+      <Grouping type="result_RE" position="1" />
+      <Token name="RPAREN" />
+    </AssignProduction>
+
     <!-- char -->
     <CustomProduction label="from_decimal" grouping="char_RE" >
       <Token name="Decimal"/>
@@ -389,7 +395,15 @@
       <Token name="Uppercase"/>
     </CustomProduction>
 
-
+    <!-- set -->
+<!--
+    <AssignProduction label="set_from_positive_set" grouping="set" >
+      <Grouping type="positive_set" position="1" />
+    </AssignProduction>
+    <AssignProduction label="set_from_negative_set" grouping="set" >
+      <Grouping type="negative_set" position="1" />
+    </AssignProduction>
+-->
 
   </Productions>
 </Language>

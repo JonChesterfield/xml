@@ -196,7 +196,6 @@ static ptree regex_impl_ptree_expression_append(ptree_context ctx,
     for (uint64_t i = 0; i < before; i++) {
       base->elements[i] = ptree_malloc_ptree_to_ptree(0);
     }
-    ptree_malloc_ptree_deallocate(base);
   }
   return res;
 }

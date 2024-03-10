@@ -112,6 +112,18 @@ MODULE(ascii_regex_consistent) {
           "E+",
           "(:45(*45))",
         },
+        {
+          "(F)",
+          "46",
+        },
+        {
+          "(G*)",
+          "(*47)",
+        },
+        {
+          "((G*))",
+          "(*47)",
+        },
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),

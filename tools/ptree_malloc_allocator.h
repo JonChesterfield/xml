@@ -2,6 +2,8 @@
 #define PTREE_MALLOC_ALLOCATOR
 #include "ptree.h"
 
+#include "stack.libc.h"
+
 // Simple malloc based allocator for ptree
 #include <stdlib.h>
 
@@ -45,19 +47,10 @@ static ptree_malloc_ptree ptree_malloc_ptree_allocate(uint64_t id, size_t N) {
       r->elements[i] = ptree_malloc_ptree_to_ptree(0);
     }
   }
+  
   return r;
 }
 
-static void ptree_malloc_ptree_deallocate(ptree_malloc_ptree p) {
-  if (!p)
-    return;
-  // todo, doable in constant space
-  for (size_t i = 0; i < p->Nelements; i++) {
-    ptree_malloc_ptree_deallocate(ptree_to_ptree_malloc_ptree(p->elements[i]));
-  }
-
-  free(p);
-}
 
 static ptree_malloc_ptree
 make_ptree_malloc_ptree_from_token(ptree_context ctx, uint64_t id,
@@ -68,7 +61,16 @@ make_ptree_malloc_ptree_from_token(ptree_context ctx, uint64_t id,
     r->is_token = true;
     r->token_value = token_value;
     r->token_width = token_width;
-    ctx->state = r;
+
+    if (stack_request_available(&stack_libc, &ctx->state, 1))
+      {
+        stack_push_assuming_capacity(&stack_libc, ctx->state, (uint64_t)r);
+      }
+    else
+      {
+        free(r);
+        return 0;
+      }
   }
   return r;
 }
@@ -82,7 +84,16 @@ make_ptree_malloc_ptree_from_N_ptree(ptree_context ctx,
     for (size_t i = 0; i < N; i++) {
       r->elements[i] = elts[i];
     }
-    ctx->state = r;
+
+    if (stack_request_available(&stack_libc, &ctx->state, 1))
+      {
+        stack_push_assuming_capacity(&stack_libc, ctx->state, (uint64_t)r);
+      }
+    else
+      {
+        free(r);
+        return 0;
+      } 
   }
   return r;
 }
@@ -91,7 +102,7 @@ static ptree_context ptree_malloc_ptree_create_context(void) {
   struct ptree_context_ty *res =
       malloc(sizeof(struct ptree_context_ty));
   if (res) {
-    res->state = 0;
+    res->state = stack_create(&stack_libc, 0);
   }
   return res;
 }
@@ -101,10 +112,25 @@ static bool ptree_malloc_ptree_valid_context(ptree_context ctx) {
 }
 
 static void ptree_malloc_ptree_destroy_context(ptree_context ctx) {
-  if (ctx) {
-    ptree_malloc_ptree_deallocate(ctx->state);
-    free(ctx);
+  if (!ctx) {
+    return;
   }
+  if (!ctx->state) {
+    return;
+  }
+
+  // Leak for now, the transition to stack based tracking
+  // to handle DAGs isn't passing valgrind
+  return;
+  
+  size_t size = stack_size(&stack_libc, ctx->state);
+  for (size_t i = 0; i < size; i++)
+    {
+      uint64_t p = stack_pop(&stack_libc, ctx->state);
+      free((void*)p);
+    }
+  stack_destroy(&stack_libc, ctx->state);
+  
 }
 
 #endif

@@ -27,6 +27,29 @@ static inline uint64_t stack_pop(stack_module mod, void *s);
 // Less convenient and potentially faster interface
 static inline size_t stack_capacity(stack_module mod, void *s);
 static inline void *stack_reserve(stack_module mod, void *s, size_t N);
+
+static inline uint64_t stack_available(stack_module mod, void *s) {
+  return stack_capacity(mod, s) - stack_size(mod, s);
+}
+
+static inline bool stack_request_available(stack_module mod, void **s, uint64_t N)
+{
+  void *stack = *s;
+  if (stack_available(mod, stack) >= N) { return true; }
+
+  void * maybe = stack_reserve(mod, stack, stack_size(mod, stack) + N);
+  if (maybe)
+    {
+      stack_destroy(mod, stack);
+      *s = maybe;
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
 static inline void stack_push_assuming_capacity(stack_module mod, void *s,
                                                 uint64_t v);
 static inline uint64_t stack_peek(stack_module mod, void *s);
