@@ -18,6 +18,11 @@ local template = [=[#include "../tools/io_buffer.h"
 #include "LANGNAME.parser_lemon.h"
 #include "LANGNAME.parser_lemon.t"
 
+#include "LANGNAME.parser_bison.h"
+
+// Hack it for now, going to need to bring values into alignment
+enum {bison_offset = BISON_BYTE00 - regex_token_BYTE00, };
+
 #include "../tools/stack.libc.h"
 #include "../tools/lexer.h"
 
@@ -57,6 +62,9 @@ int main() {
   LANGNAME_parser_lemon_state parser;
   LANGNAME_parser_lemon_initialize(&parser, ctx);
 
+  LANGNAME_bison_pstate * bison_parser = LANGNAME_bison_pstate_new();
+  ptree bison_arg = ptree_failure();
+
   for (lexer_iterator_t lexer_iterator =
            lexer_iterator_t_create(in->data, in->N);
        !lexer_iterator_t_empty(lexer_iterator);) {
@@ -78,7 +86,29 @@ int main() {
       return 3;
     }
 
+
     LANGNAME_parser_lemon_parse(&parser, (int)lexer_token.id, lemon_token);
+
+    union UPPERNAME_BISON_STYPE tmp = {
+      .token = lemon_token,
+    };
+    int bison_rc = LANGNAME_bison_push_parse(bison_parser, bison_offset + lexer_token.id, &tmp, &bison_arg, ctx);
+
+    // possible this expects to be called as do {} while (rc == YYPUSH_MORE)
+    switch(bison_rc)
+    {
+      case 0: break;
+      case YYPUSH_MORE: break;
+      case 1: {
+        printf("bison syntax error on token %zu\n", lexer_token.id);
+        lexer_token_dump(lexer_token);
+        break;
+      }
+      default: {
+        printf("bison rc %u on token %zu\n", bison_rc, lexer_token.id);
+        break;
+      }
+    }
   }
 
   ptree res = LANGNAME_parser_lemon_tree(&parser);
@@ -92,14 +122,27 @@ int main() {
 
   LANGNAME_ptree_as_xml(&stack_libc, stdout, res);
 
+  {
+    if (ptree_is_failure(bison_arg))
+      {
+        printf("Bison failed\n");
+      }
+    else
+      {
+        LANGNAME_ptree_as_xml(&stack_libc, stdout, bison_arg);
+      }
+  }
+  
+
   LANGNAME_parser_lemon_finalize(&parser);
+  LANGNAME_bison_pstate_delete(bison_parser);
   LANGNAME_lexer_destroy(lexer);
   free(in);
 
   return 0;
 }]=]
 
-local res = template:gsub('LANGNAME', args[1])
+local res = template:gsub('LANGNAME', args[1]):gsub('UPPERNAME', args[1]:upper())
 
 print(res)
 os.exit(0)

@@ -318,6 +318,9 @@ int <xsl:value-of select='$LangName'/>_parser_bison_type_header(void)
 
   <ResComment value ="#endif" />
   <NL hexvalue="0a" />
+  <OutExpr value = '  if (external_context) {{*external_context = $$;}}' />
+  <NL hexvalue="0a" />
+
   <xsl:apply-templates select="Grouping|Token" mode="ListProductionSelect"/>
   <RB hexvalue="7d0a" />
 </xsl:template>
@@ -426,7 +429,9 @@ int <xsl:value-of select='$LangName'/>_parser_bison_type_header(void)
   <xsl:apply-templates select="Grouping|Token" mode="AssignProductionAssign"/>
   <NL hexvalue="0a" />
   <ResComment value ="#endif" />
- <NL hexvalue="0a" />
+  <NL hexvalue="0a" />
+  <OutExpr value = '  if (external_context) {{*external_context = $$;}}' />
+  <NL hexvalue="0a" />
 
   <LR hexvalue="7d0a" />  
 </xsl:template>
