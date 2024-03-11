@@ -490,7 +490,7 @@ $(cmark):	$(CMARK_OBJ) | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $^ -o $@
 
 # Runs unit tests for hashtable
-HASHTABLE_SRC := $(addprefix $(TOOLS_DIR)/,hashtable.c intset.c intmap.c stringtable.c)
+HASHTABLE_SRC := $(addprefix $(TOOLS_DIR)/,hashtable.c intset.c intmap.c stringtable.c intstack.c)
 HASHTABLE_OBJ := $(HASHTABLE_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 $(TOOLS_DIR_BIN)/hashtable:	$(HASHTABLE_OBJ) | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $^ -o $@

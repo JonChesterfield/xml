@@ -9,14 +9,14 @@ typedef struct {
   uint64_t state[4];
 } intset_t;
 
-intset_t intset_create(uint64_t size); // power 2 or zero
+intset_t intset_create(uint64_t capacity); // power 2 or zero
 void intset_destroy(intset_t);
 bool intset_valid(intset_t);
 
 bool intset_equal(intset_t, intset_t);
 intset_t intset_clone(intset_t);
 
-intset_t intset_rehash(intset_t, uint64_t size);
+intset_t intset_rehash(intset_t, uint64_t capacity);
 
 uint64_t intset_size(intset_t);
 uint64_t intset_capacity(intset_t);
