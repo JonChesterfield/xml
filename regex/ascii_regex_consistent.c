@@ -108,33 +108,50 @@ MODULE(ascii_regex_consistent) {
 
   TEST("ranges") {
     static struct pair cases[] = {
-      {"[A]", "41"},
-      {"[A-A]", "41"},
+        {"[A]", "41"},
+        {"[A-A]", "41"},
 
-      {"[AB]", "(|4142)"},
-      {"[A-B]", "(|4142)"},
+        {"[AB]", "(|4142)"},
+        {"[A-B]", "(|4142)"},
 
-      {"[ABC]", "(|41(|4243))"},
-      {"[A-C]", "(|41(|4243))"},
+        {"[ABC]", "(|41(|4243))"},
+        {"[A-C]", "(|41(|4243))"},
 
-      {"[ABCD]", "(|41(|42(|4344)))"},
-      {"[A-D]", "(|41(|42(|4344)))"},
+        {"[ABCD]", "(|41(|42(|4344)))"},
+        {"[A-D]", "(|41(|42(|4344)))"},
 
-      {"[b-e]", "(|62(|63(|6465)))"},
+        {"[b-e]", "(|62(|63(|6465)))"},
 
-      {"[A-Db-e]", "(|"
-                   "(|41(|42(|4344)))"
-                   "(|62(|63(|6465)))"
-                   ")"},
+        {"[A-Db-e]", "(|"
+                     "(|41(|42(|4344)))"
+                     "(|62(|63(|6465)))"
+                     ")"},
 
-      // Negated charsets are a not of the charset
-      {
-          "[^A-C]",
-          "(~(|41(|4243)))",
-      },
+        // Negated charsets are a not of the charset
+        {
+            "[^A-C]",
+            "(~(|41(|4243)))",
+        },
+    };
+    enum {
+      cases_size = sizeof(cases) / sizeof(cases[0]),
+    };
+    CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
+  }
 
-// Hyphen is tricky
 #if 0
+  TEST("hyphen")
+    {
+    static struct pair cases[] = {
+// Hyphen is tricky
+// https://stackoverflow.com/questions/9589074/regex-should-hyphens-be-escaped
+
+#if 0
+> Outside of a character class (that's what the "square brackets" are called) the hyphen
+> has no special meaning, and within a character class, you can place a hyphen as the first
+> or last character in the range (e.g. [-a-z] or [0-9-]), OR escape it (e.g. [a-z\-0-9])
+> in order to add "hyphen" to your class.
+#endif   
         {
           "-",
           "2d",
@@ -143,13 +160,13 @@ MODULE(ascii_regex_consistent) {
           "[-]",
           "2d",
         },
-#endif
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),
     };
     CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
   }
+#endif
 
   TEST("ad hoc") {
     static struct pair cases[] = {
