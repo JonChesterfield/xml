@@ -13,7 +13,7 @@ clean::
 # A top level dispatch to run through all parsers and check they made the same
 # conclusion has somewhat diminishing returns as N increases.
 
-REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.h   regex/regex_string.h
+REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.h   regex/regex_string.h regex/ascii.declarations.h
 
 REGEX_HEADERS := $(REGEX_HEADERS) regex/regex.parser_bison.h regex/regex.parser_lemon.h
 REGEX_HEADERS := $(REGEX_HEADERS) regex/regex.lexer.h regex/regex.productions.h
@@ -100,6 +100,9 @@ clean::
 	@rm -f bin/regex.tests bin/regex_stdin_to_xml
 
 regex/regex.declarations.h:	regex/regex.declarations.h.lua
+	@lua $^ > $@
+
+regex/ascii.declarations.h:	regex/ascii.declarations.h.lua
 	@lua $^ > $@
 
 regex/regex.byte_constructors.data:	regex/regex.byte_constructors.data.lua

@@ -31,7 +31,7 @@ bool equivalent(struct pair *cases, size_t N) {
     }
 
     if (failed || differ) {
-      printf("%s vs %s\n", cases[i].ascii,cases[i].regex);
+      printf("%s vs %s\n", cases[i].ascii, cases[i].regex);
       printf("ascii:\n");
       regex_ptree_as_xml(&stack_libc, stdout, ascii);
       printf("\n");
@@ -86,31 +86,19 @@ MODULE(ascii_regex_consistent) {
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),
-    };    
+    };
     CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
   }
 
-  TEST("ranges") {
+  TEST("escaped non-printing / whitespace") {
+    // Double \\ is one for C, one for the regex
     static struct pair cases[] = {
-        {"[A]", "41"},
-        {"[A-A]", "41"},
-        
-        {"[AB]", "(|4142)"},
-        {"[A-B]", "(|4142)"},
+        {"\\a", "07"}, // bell
+        {"\\e", "1b"}, // escape
+        {" ", "20"},   // space
 
-        {"[ABC]", "(|41(|4243))"},
-        {"[A-C]", "(|41(|4243))"},
-
-        {"[ABCD]", "(|41(|42(|4344)))"},
-        {"[A-D]", "(|41(|42(|4344)))"},
-        
-        {"[b-e]", "(|62(|63(|6465)))"},
-        
-        {"[A-Db-e]",
-         "(|"
-         "(|41(|42(|4344)))"
-         "(|62(|63(|6465)))"
-         ")"},        
+        {"\\t", "09"}, {"\\n", "0a"}, {"\\v", "0b"},
+        {"\\f", "0c"}, {"\\r", "0d"},
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),
@@ -118,41 +106,113 @@ MODULE(ascii_regex_consistent) {
     CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
   }
 
-  
+  TEST("ranges") {
+    static struct pair cases[] = {
+      {"[A]", "41"},
+      {"[A-A]", "41"},
+
+      {"[AB]", "(|4142)"},
+      {"[A-B]", "(|4142)"},
+
+      {"[ABC]", "(|41(|4243))"},
+      {"[A-C]", "(|41(|4243))"},
+
+      {"[ABCD]", "(|41(|42(|4344)))"},
+      {"[A-D]", "(|41(|42(|4344)))"},
+
+      {"[b-e]", "(|62(|63(|6465)))"},
+
+      {"[A-Db-e]", "(|"
+                   "(|41(|42(|4344)))"
+                   "(|62(|63(|6465)))"
+                   ")"},
+
+      // Negated charsets are a not of the charset
+      {
+          "[^A-C]",
+          "(~(|41(|4243)))",
+      },
+
+// Hyphen is tricky
+#if 0
+        {
+          "-",
+          "2d",
+        },
+        {
+          "[-]",
+          "2d",
+        },
+#endif
+    };
+    enum {
+      cases_size = sizeof(cases) / sizeof(cases[0]),
+    };
+    CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
+  }
+
   TEST("ad hoc") {
     static struct pair cases[] = {
-        {
-            "A",
-            "41",
-        },
-        {
-            "A|B",
-            "(|4142)",
-        },
-        {
-            "AB",
-            "(:4142)",
-        },
-        {
+      {
+          "A",
+          "41",
+      },
+      {
+          "A|B",
+          "(|4142)",
+      },
+      {
+          "AB",
+          "(:4142)",
+      },
+      {
           "D*",
           "(*44)",
-        },
-        {
+      },
+      {
           "E+",
           "(:45(*45))",
-        },
-        {
+      },
+      {
           "(F)",
           "46",
-        },
-        {
+      },
+      {
           "(G*)",
           "(*47)",
-        },
-        {
+      },
+      {
           "((G*))",
           "(*47)",
+      },
+#if 0
+        {
+          "G?",
+          "(|G_)",
         },
+#endif
+    };
+    enum {
+      cases_size = sizeof(cases) / sizeof(cases[0]),
+    };
+    CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
+  }
+
+  TEST("arith lang regex") {
+    // The regex used by arith.lang.xml at time of writing this test
+    static struct pair cases[] = {
+#if 0
+        {
+          "[-]?[0-9]+[0-9]*",
+          "42",
+        },
+#endif
+      {
+          // has a + suffix, splitting into two cases here
+          "[ \\f\\n\\r\\t\\v]",
+          "(|20(|0c(|0a(|0d(|090b)))))",
+      },
+      {"[ \\f]+", "(:(|200c)(*(|200c)))"},
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),

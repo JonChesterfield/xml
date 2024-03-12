@@ -21,6 +21,19 @@
     <Token name="Lowercase" regex="[a-z]" />
     <Token name="Uppercase" regex="[A-Z]" />
 
+
+    <Token name="Escaped_a" literal="\\a" />
+    <Token name="Escaped_e" literal="\\e" />
+
+    <Token name="Escaped_t" literal="\\t" />
+    <Token name="Escaped_n" literal="\\n" />
+    <Token name="Escaped_v" literal="\\v" />
+    <Token name="Escaped_f" literal="\\f" />
+    <Token name="Escaped_r" literal="\\r" />
+
+    <Token name="Space" literal=" " />
+
+
     <!-- probably going to be literals
     <Token name="BYTE3a" literal=":" />
     <Token name="BYTE3b" literal=";" />
@@ -122,6 +135,16 @@
 
     <Grouping name="range" type="ptree" />
 
+    <Grouping name="byte_07" type="ptree" />
+
+    <Grouping name="byte_09" type="ptree" />
+    <Grouping name="byte_0a" type="ptree" />
+    <Grouping name="byte_0b" type="ptree" />
+    <Grouping name="byte_0c" type="ptree" />
+    <Grouping name="byte_0d" type="ptree" />
+
+    <Grouping name="byte_1b" type="ptree" />
+    <Grouping name="byte_20" type="ptree" />
 
   </Groupings>
 
@@ -216,9 +239,9 @@
       <Grouping type="positive_set" position="1" />
     </AssignProduction>
 
-    <AssignProduction label="set_from_negative_set" grouping="set" >
+    <CustomProduction label="set_from_negative_set" grouping="set" >
       <Grouping type="negative_set" position="1" />
-    </AssignProduction>
+    </CustomProduction>
 
     <AssignProduction label="positive_set_ctor" grouping="positive_set" >
       <Token name="LSQUARE"/>
@@ -270,6 +293,65 @@
     <CustomProduction label="from_uppercase" grouping="char_RE" >
       <Token name="Uppercase"/>
     </CustomProduction>
+
+    <ListProduction label="list_space" grouping="byte_20" >
+        <Token name="Space" />
+    </ListProduction>
+
+    <ListProduction label="list_escaped_a" grouping="byte_07" >
+        <Token name="Escaped_a" />
+    </ListProduction>
+
+    <ListProduction label="list_escaped_t" grouping="byte_09" >
+        <Token name="Escaped_t" />
+    </ListProduction>
+    <ListProduction label="list_escaped_n" grouping="byte_0a" >
+        <Token name="Escaped_n" />
+    </ListProduction>
+    <ListProduction label="list_escaped_v" grouping="byte_0b" >
+        <Token name="Escaped_v" />
+    </ListProduction>
+    <ListProduction label="list_escaped_f" grouping="byte_0c" >
+        <Token name="Escaped_f" />
+    </ListProduction>
+    <ListProduction label="list_escaped_r" grouping="byte_0d" >
+        <Token name="Escaped_r" />
+    </ListProduction>
+
+    <ListProduction label="list_escaped_e" grouping="byte_1b" >
+        <Token name="Escaped_e" />
+    </ListProduction>
+
+
+    <!-- May want all 256 bytes mappd to char here, migth get away with only the special cases -->
+    <AssignProduction label="byte_07" grouping="char_RE" >
+      <Grouping type="byte_07" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="byte_09" grouping="char_RE" >
+      <Grouping type="byte_09" position="1" />
+    </AssignProduction>
+    <AssignProduction label="byte_0a" grouping="char_RE" >
+      <Grouping type="byte_0a" position="1" />
+    </AssignProduction>
+    <AssignProduction label="byte_0b" grouping="char_RE" >
+      <Grouping type="byte_0b" position="1" />
+    </AssignProduction>
+    <AssignProduction label="byte_0c" grouping="char_RE" >
+      <Grouping type="byte_0c" position="1" />
+    </AssignProduction>
+    <AssignProduction label="byte_0d" grouping="char_RE" >
+      <Grouping type="byte_0d" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="byte_1b" grouping="char_RE" >
+      <Grouping type="byte_1b" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="byte_20" grouping="char_RE" >
+      <Grouping type="byte_20" position="1" />
+    </AssignProduction>
+
 
   </Productions>
 </Language>

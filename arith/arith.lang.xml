@@ -22,7 +22,7 @@
     <Token name="INTEGER" regex="[-]?[0-9]+[0-9]*" />
 
     <!-- Haven't persuaded re2c to recognise [[:space:]] yet -->
-    <Token name="WHITESPACE" regex="[ \f\n\r\t\v]+" />
+    <Token name="WHITESPACE" regex="[ \\f\\n\\r\\t\\v]+" />
   </Tokens>
 
   <Groupings>

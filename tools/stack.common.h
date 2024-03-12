@@ -18,7 +18,7 @@ static size_t stack_impl_capacity(void *s) {
   return stack[cap_offset];
 }
 
-static uint64_t * stack_impl_ith(void *s, uint64_t v) {
+static inline uint64_t * stack_impl_ith(void *s, uint64_t v) {
   uint64_t *stack = (uint64_t *)s;
   size_t sz = stack_impl_size(s);
   return &stack[2 + sz - v - 1];

@@ -26,6 +26,11 @@ ptree ascii_custom_production_plus_ctor(ptree_context ctx ,ptree /*elementary_RE
   return regex_make_concat(ctx, x1, regex_make_kleene(ctx, x1));
 }
 
+ptree ascii_custom_production_set_from_negative_set(ptree_context ctx ,ptree /*negative_set*/ x1)
+{
+  return regex_make_not(ctx, x1);
+}
+
 ptree ascii_custom_production_set_item_multiple(ptree_context ctx ,ptree /*set_item*/ x1 ,ptree /*set_items*/ x2)
 {
   return regex_make_or(ctx, x1, x2);

@@ -13,6 +13,7 @@
 // The regex.h interface doesn't seem to allow anchoring a regex to the start
 // of the buffer which means it'll search the entire buffer looking for things
 // like whitespace.
+// TODO: Force a leading ^ to workaround that
 // It also doesn't allow compiling multiple regex into a single DFA to suppport
 // simultaneous match testing.
 // Those combined should mean "slow" relative to re2 or similar but hopefully
