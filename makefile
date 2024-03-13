@@ -39,7 +39,7 @@ CC := clang
 CXX := clang++
 
 C_OR_CXX_FLAGS := -Wall -Wextra -g -gdwarf-4
-CFLAGS := -std=c11 $(C_OR_CXX_FLAGS) #-O2
+CFLAGS := -std=c11 $(C_OR_CXX_FLAGS) -O1
 CXXFLAGS := -std=c++14 -Wno-c99-designator $(C_OR_CXX_FLAGS)
 
 # Considering a single source single file approach to tools

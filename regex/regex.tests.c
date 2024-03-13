@@ -351,6 +351,23 @@ static MODULE(driver)
     }
 }
 
+static MODULE(ascii_wip)
+{
+  TEST("try")
+    {
+      const char * ascii = "[Hh]ello";
+      unsigned char target[] = "hello world";
+      size_t target_len = sizeof(target);
+
+      uint64_t res = ascii_interpreter_string_matches(ascii, target, target_len);
+      CHECK(!ascii_interpreter_match_failure(res));
+      CHECK(!ascii_interpreter_machine_failure(res));
+      CHECK(!ascii_interpreter_regex_unrecognised(res));
+      printf("res %lu\n", res);
+      CHECK(res == 5);
+    }
+}
+
 MAIN_MODULE() {
   DEPENDS(ptree);
   DEPENDS(intset);
@@ -361,4 +378,5 @@ MAIN_MODULE() {
   DEPENDS(regex_string);
   DEPENDS(driver);
   DEPENDS(ascii_regex_consistent);
+  DEPENDS(ascii_wip);
 }

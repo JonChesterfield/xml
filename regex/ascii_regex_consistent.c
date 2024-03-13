@@ -8,6 +8,9 @@
 
 #include "../tools/stack.libc.h"
 
+// Probably want an ascii.h defining things like the conversion to prefix string
+#include "ascii_interpreter.h"
+
 struct pair {
   const char *ascii;
   const char *regex;
@@ -31,7 +34,26 @@ bool equivalent(struct pair *cases, size_t N) {
     }
 
     if (failed || differ) {
-      printf("%s vs %s\n", cases[i].ascii, cases[i].regex);
+      printf("%s ?= %s\n", cases[i].ascii, cases[i].regex);
+      if (0) {
+        // Weird. The malloc'ed pointer prints correctly before it is returned,
+        // and valgrind thinks the program is clean, but looking at the string
+        // here segfaults. Leave that for now.
+        char *as_prefix = ascii_regex_as_prefix_regex_c_string(cases[i].ascii);
+        if (as_prefix) {
+          printf("wot %s\n", cases[i].ascii);
+          fflush(stdout);
+          printf("prefix %u\n", as_prefix[0]);
+          fflush(stdout);
+          printf("%s => %s ?= %s\n", cases[i].ascii, as_prefix, cases[i].regex);
+
+        } else {
+          printf("%s => failed-to-parse ?= %s \n", cases[i].ascii, as_prefix,
+                 cases[i].regex);
+        }
+        free(as_prefix);
+      }
+
       printf("ascii:\n");
       regex_ptree_as_xml(&stack_libc, stdout, ascii);
       printf("\n");

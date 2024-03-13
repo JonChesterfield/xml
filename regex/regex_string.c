@@ -86,7 +86,7 @@ static int regex_to_char_sequence_pre(ptree tree, uint64_t depth, void *p) {
 
     switch (id) {
     case regex_grouping_concat: {
-      arena_push_char(data->mod, data->arena, '.');
+      arena_push_char(data->mod, data->arena, ':');
       return 0;
     }
 

@@ -1,0 +1,11 @@
+#ifndef INTERPRETER_DATA_INCLUDED
+#define INTERPRETER_DATA_INCLUDED
+
+#include <stdint.h>
+enum {
+  match_failure = UINT64_MAX,
+  machine_failure = match_failure - 1,
+  regex_unrecognised = match_failure - 2,
+};
+
+#endif 
