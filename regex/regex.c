@@ -158,7 +158,7 @@ static bool regex_is_not_of_empty_set(ptree val) {
          regex_is_empty_set(regex_ptree_expression_element(val, 0));
 }
 
-ptree regex_canonicalise(ptree_context ctx, ptree val) {
+static ptree regex_canonicalise_impl(ptree_context ctx, ptree val) {
   if (!regex_ptree_is_expression(val))
     {
       return val;
@@ -179,8 +179,8 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
     ptree r = regex_ptree_expression_element(val, 0);
     ptree s = regex_ptree_expression_element(val, 1);
 
-    r = regex_canonicalise(ctx, r);
-    s = regex_canonicalise(ctx, s);
+    r = regex_canonicalise_impl(ctx, r);
+    s = regex_canonicalise_impl(ctx, s);
 
     if (id == regex_grouping_and) {
       if (regex_is_empty_set(r) || regex_is_empty_set(s)) {
@@ -242,7 +242,7 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
 
   if (id == regex_grouping_kleene) {
     ptree r = regex_ptree_expression_element(val, 0);
-    r = regex_canonicalise(ctx, r);
+    r = regex_canonicalise_impl(ctx, r);
 
     // (r*)* -> r*
     if (regex_is_kleene(r)) {
@@ -265,7 +265,7 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
   if (id == regex_grouping_not) {
     // ~(~r) -> r
     ptree r = regex_ptree_expression_element(val, 0);
-    r = regex_canonicalise(ctx, r);
+    r = regex_canonicalise_impl(ctx, r);
     if (regex_is_not(r)) {
       return r;
     }
@@ -312,6 +312,34 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
   }
 
   return val;
+}
+
+ptree regex_canonicalise(ptree_context ctx, ptree val) {
+  // This was intended to compute a fixpoint but evidently doesn't
+  // Hack around that for now
+  const unsigned N = 10;
+  
+  for (unsigned i = 0; i < N; i++)
+    {
+      ptree canon = regex_canonicalise_impl(ctx, val);
+
+      enum ptree_compare_res cmp = regex_ptree_compare(&stack_libc, val, canon);
+
+      if (cmp == ptree_compare_out_of_memory) {
+        return ptree_failure();
+      }
+      
+      if (cmp == ptree_compare_equal)
+        {
+          return canon;
+        }
+
+  
+      val = canon;
+    }
+
+  printf("Canonicalise failed to reach a fixpoint after %u iter\n", N);
+  exit(1);
 }
 
 ptree regex_copy_into_context( ptree val, ptree_context ctx)

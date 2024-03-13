@@ -35,12 +35,14 @@ uint64_t ascii_interpreter_string_matches(const char* regex,
   if (!regstr) { return regex_unrecognised; }
   size_t regstrN = strlen(regstr);
 
+  #if 0
   printf("got a prefix %s\n", regstr);
   for (size_t i = 0; i < target_len; i++)
     {
       printf("%02x", target[i]);
     }
   printf("\n");
+  #endif
   uint64_t res = regex_interpreter_string_matches((unsigned char*) regstr, regstrN, target, target_len);
   free(regstr);
 

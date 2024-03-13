@@ -9,6 +9,8 @@
 #include "regex_string.h"
 #include "regex_driver.h"
 
+#include "ascii_interpreter.h" // todo move out of regex.tests
+
 #include <string.h>
 
 static MODULE(regex_nullable) {
@@ -363,7 +365,6 @@ static MODULE(ascii_wip)
       CHECK(!ascii_interpreter_match_failure(res));
       CHECK(!ascii_interpreter_machine_failure(res));
       CHECK(!ascii_interpreter_regex_unrecognised(res));
-      printf("res %lu\n", res);
       CHECK(res == 5);
     }
 }

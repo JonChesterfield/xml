@@ -4,6 +4,7 @@
 #include "regex_string.h"
 
 #include <assert.h>
+#include "../tools/stack.libc.h"
 
 #include "interpreter.data"
 
@@ -49,9 +50,34 @@ uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *cache,
   stringtable_index_t current =
       regex_cache_insert_regex_bytes(cache, (const char *)regex, regex_len);
   if (!stringtable_index_valid(current)) {
-    // todo, could also be stringtable out of memory, api doesn't distinguish
+    #if 0
+    // Appears canonicalise fails to compute a fixpoint
+    printf("not recognised: %lu\n", current.value);
+
+    ptree_context ctx = regex_ptree_create_context();
+    ptree p = regex_from_char_sequence(ctx, regex, regex_len);
+    if (ptree_is_failure(p)) {
+      printf("didn't look like a regex\n");
+    } else {
+      regex_ptree_as_xml(&stack_libc, stdout, p);
+    }
+
+    ptree c = regex_canonicalise(ctx, p);
+    printf("canon:\n");
+    regex_ptree_as_xml(&stack_libc, stdout, c);
+
+    if (!ptree_is_failure(c)) {
+      if (!regex_is_canonical(c)) {
+        printf("non-canonical canonical\n");
+      }
+      current = regex_cache_insert_regex_canonical_ptree(cache, c);
+      printf("not recognised2 ?: %lu\n", current.value);
+    }
+    
+    #endif
     return regex_unrecognised;
   }
+
 
   // context handling here would be much improved by a clear-and-reuse model
   for (unsigned iter = 0; iter < target_len; iter++) {
@@ -59,6 +85,7 @@ uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *cache,
     assert(regex_ptree_valid_context(ctx));
     {
       ptree p = regex_from_stringtable(&cache->strtab, current, ctx);
+
       if (regex_nullable_p(ctx, p)) {
         regex_ptree_destroy_context(ctx);
         return iter;
