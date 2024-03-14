@@ -48,7 +48,7 @@ bool equivalent(struct pair *cases, size_t N) {
           printf("%s => %s ?= %s\n", cases[i].ascii, as_prefix, cases[i].regex);
 
         } else {
-          printf("%s => failed-to-parse ?= %s \n", cases[i].ascii, as_prefix,
+          printf("%s => failed-to-parse ?= %s \n", cases[i].ascii,
                  cases[i].regex);
         }
         free(as_prefix);

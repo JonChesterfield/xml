@@ -13,7 +13,7 @@ clean::
 # A top level dispatch to run through all parsers and check they made the same
 # conclusion has somewhat diminishing returns as N increases.
 
-REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.byte_constructors.data regex/regex.ptree.byte_print_array.data regex/regex.lexer.h   regex/regex_string.h regex/ascii.declarations.h
+REGEX_HEADERS := regex/regex.h regex/regex.ptree.h regex/regex.declarations.h tools/ptree.h tools/ptree_impl.h regex/regex.ptree.byte_print_array.data regex/regex.lexer.h   regex/regex_string.h regex/ascii.declarations.h
 
 REGEX_HEADERS := $(REGEX_HEADERS) regex/regex.parser_bison.h regex/regex.parser_lemon.h
 REGEX_HEADERS := $(REGEX_HEADERS) regex/regex.lexer.h regex/regex.productions.h
@@ -41,7 +41,7 @@ REGEX_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_SOURCE:.c=.o))
 REGEX_PROGRAM_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_PROGRAM_SOURCE:.c=.o))
 
 
-REGEX_TOOLS_OBJECTS := $(addprefix $(TOOLS_DIR_OBJ)/,lexer.re2c.o lexer.posix.o lexer.re2.o stringtable.o intset.o intmap.o)
+REGEX_TOOLS_OBJECTS := $(addprefix $(TOOLS_DIR_OBJ)/,lexer.re2c.o lexer.posix.o lexer.re2.o stringtable.o intset.o intstack.o intmap.o)
 
 
 # Lemon either overwrites the .h file, or if passed -m includes its guess at where
@@ -108,9 +108,6 @@ regex/regex.declarations.h:	regex/regex.declarations.h.lua
 regex/ascii.declarations.h:	regex/ascii.declarations.h.lua
 	@lua $^ > $@
 
-regex/regex.byte_constructors.data:	regex/regex.byte_constructors.data.lua
-	@lua $^ > $@
-
 regex/regex.ptree.byte_print_array.data:	regex/regex.ptree.byte_print_array.data.lua
 	@lua $^ > $@
 
@@ -119,7 +116,6 @@ regex/regex_stdin_to_xml.c:	scripts/write_stdin_to_xml.lua
 
 clean::
 	@rm -f regex/regex.declarations.h
-	@rm -f regex/regex.byte_constructors.data
 	@rm -f regex/regex.ptree.byte_print_array.data
 	@rm -f regex/regex_stdin_to_xml.c
 

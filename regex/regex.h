@@ -87,15 +87,18 @@ static inline uint8_t regex_grouping_extract_single_byte(uint64_t id)
 static inline ptree regex_grouping_single_from_byte(ptree_context ctx, uint8_t byte)
 {
   uint64_t id = byte + regex_grouping_byte_00;
-  return regex_ptree_expression0(ctx, id);
+  ptree res = regex_ptree_expression0(ctx, id);
+  if (ptree_is_failure(res))
+    {
+      printf("Failed to make expression for byte %u\n", byte);
+    }
+  return res;
 }
 
 static inline bool regex_is_single_byte(ptree val) {
   uint64_t id = regex_ptree_identifier(val);
   return regex_grouping_id_is_single_byte(id);
 }
-
-#include "regex.byte_constructors.data"
 
 ptree regex_nullable(ptree_context ctx, ptree val);
 ptree regex_derivative(ptree_context ctx, ptree val, uint8_t byte);

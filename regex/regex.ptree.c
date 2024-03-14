@@ -6,6 +6,8 @@
 
 #include "regex.lexer.h"
 
+#include <assert.h>
+
 static ptree_context regex_impl_ptree_create_context(void) {
   return ptree_malloc_ptree_create_context();
 }
@@ -151,13 +153,12 @@ static ptree regex_impl_ptree_expression_element(ptree arg, size_t index) {
 static inline ptree regex_impl_ptree_expression_create_uninitialised(ptree_context ctx,
                                                                      uint64_t id,
                                                                      uint64_t N) {
-  ptree_malloc_ptree r = ptree_malloc_ptree_allocate(id, N);
+  ptree_malloc_ptree r = ptree_malloc_ptree_allocate(ctx, id, N);
   if (r) {
     r->is_token = false;
     for (size_t i = 0; i < N; i++) {
-      r->elements[i] = ptree_failure();
+      assert(ptree_is_failure(r->elements[i]));
     }
-    ctx->state = r;
   }
   return ptree_malloc_ptree_to_ptree(r);
 }
@@ -170,13 +171,7 @@ static inline void regex_impl_ptree_expression_initialise_element(ptree base,
   p->elements[index] = elt;
 }
 
-static inline ptree regex_impl_ptree_expression_construct(ptree_context ctx,
-                                                          uint64_t id,
-                                                          uint64_t N,
-                                                          ptree *elts) {
-  ptree_malloc_ptree r = make_ptree_malloc_ptree_from_N_ptree(ctx, id, N, elts);
-  return ptree_malloc_ptree_to_ptree(r);
-}
+static const ptree_module regex_module;
 
 static ptree regex_impl_ptree_expression_append(ptree_context ctx,
                                                 ptree basearg,
@@ -190,14 +185,8 @@ static ptree regex_impl_ptree_expression_append(ptree_context ctx,
   }
   arr[before] = elementarg;
 
-  ptree res =
-      regex_impl_ptree_expression_construct(ctx, base->id, before + 1, arr);
-  if (ptree_to_ptree_malloc_ptree(res)) {
-    for (uint64_t i = 0; i < before; i++) {
-      base->elements[i] = ptree_malloc_ptree_to_ptree(0);
-    }
-  }
-  return res;
+  return
+    ptree_expression_construct(&regex_module, ctx, base->id, before + 1, arr);
 }
 
 static const ptree_module regex_module =

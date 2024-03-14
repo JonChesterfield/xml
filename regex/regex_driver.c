@@ -137,6 +137,7 @@ static int regex_to_c_traverse_function(regex_cache_t *cache,
         fprintf(out,
                 "    return regex_state_reject(start, cursor, end, data);\n");
         fprintf(out, "}\n");
+        regex_ptree_destroy_context(ctx);
         return 0;        
       }
 
@@ -146,8 +147,11 @@ static int regex_to_c_traverse_function(regex_cache_t *cache,
         fprintf(out,
                 "    return regex_state_accept(start, cursor, end, data);\n");
         fprintf(out, "}\n");
+        regex_ptree_destroy_context(ctx);
         return 0;                
       }
+
+    regex_ptree_destroy_context(ctx);           
   }
   
   intset_clear(&data->set);
@@ -203,7 +207,8 @@ static int regex_to_c_traverse_function(regex_cache_t *cache,
                 "    case %u ... %u: return regex_state_%s(start, cursor, "
                 "end, data);\n",
                 current_deriv_start, i, target);
-        
+
+        regex_ptree_destroy_context(ctx);
         free(encoded);
       }
 

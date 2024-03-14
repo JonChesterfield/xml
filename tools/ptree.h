@@ -20,7 +20,7 @@
 // ptree_context, notably memory allocation. Per-node information in ptree.
 
 struct ptree_context_ty {
-  void *state; // 0 if construction failed
+  uint64_t state;
 }; 
 
 typedef struct ptree_context_ty *ptree_context;
@@ -91,6 +91,8 @@ static inline size_t ptree_expression_elements(const ptree_module *mod,
 static inline ptree ptree_expression_element(const ptree_module *mod, ptree p,
                                              size_t index);
 
+// Append is only efficient if it can mutate/move from base/element
+// but this interface doesn't really express that invariant
 static inline ptree ptree_expression_append(const ptree_module *mod,
                                             ptree_context ctx, ptree base,
                                             ptree element);

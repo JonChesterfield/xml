@@ -391,7 +391,10 @@ int regex_main(void) {
   ptree_context ctx = regex_ptree_create_context();
   assert(regex_ptree_valid_context(ctx));
   ptree expr =
-      regex_make_and(ctx, regex_make_byte_00(ctx), regex_make_byte_02(ctx));
+    regex_make_and(ctx,
+                   regex_grouping_single_from_byte(ctx, 0),
+                   regex_grouping_single_from_byte(ctx, 2));
+
 
   regex_ptree_as_xml(&stack_libc, stdout, expr);
   fprintf(stdout, "\n");

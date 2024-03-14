@@ -183,7 +183,7 @@ static inline ptree ptree_expression_construct(const ptree_module *mod,
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
   for (size_t i = 0; i < N; i++) {
-    ptree_require(!ptree_is_failure(elts[i]));
+    ptree_require("ptree_construct" && !ptree_is_failure(elts[i]));
   }
   ptree res = ptree_expression_create_uninitialised(mod, ctx, id, N);
   ptree_require(ptree_impl_expression_failure_or_has_N_elements(mod, res, N));
@@ -214,6 +214,8 @@ static inline ptree ptree_expression_create_uninitialised(const ptree_module *mo
       {
         ptree_require(ptree_is_failure(mod->expression_element(res, i)));
       }
+  } else {
+    printf("mod->create uninit failed\n"); 
   }
   
   return res;

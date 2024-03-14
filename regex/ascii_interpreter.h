@@ -20,6 +20,6 @@ uint64_t ascii_interpreter_string_matches(const char *regex,
 
 
 // 0 on failure, null terminated malloc'ed memory on success
-char * ascii_regex_as_prefix_regex_cstring(const char *regex);
+char * ascii_regex_as_prefix_regex_c_string(const char *regex);
 
 #endif
