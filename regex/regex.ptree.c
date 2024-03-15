@@ -39,8 +39,7 @@ static bool regex_impl_ptree_identifier_valid_expression(uint64_t id) {
   case regex_grouping_kleene:
   case regex_grouping_or:
   case regex_grouping_and:
-  case regex_grouping_not:
-  case regex_grouping_range: {
+  case regex_grouping_not: {
     return true;
   }
   default:

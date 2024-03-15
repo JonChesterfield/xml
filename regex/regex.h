@@ -54,12 +54,6 @@ static inline ptree regex_make_kleene(ptree_context ctx, ptree val) {
 static inline ptree regex_make_not(ptree_context ctx, ptree val) {
   return regex_ptree_expression1(ctx, regex_grouping_not, val);
 }
-static inline ptree regex_make_range(ptree_context ctx, ptree lhs, ptree rhs) {
-  // todo, force these to be bytes somewhere
-  // uint64_t lhs_id = regex_ptree_identifier(lhs);
-  // uint64_t rhs_id = regex_ptree_identifier(rhs);
-  return regex_ptree_expression2(ctx, regex_grouping_range, lhs, rhs);
-}
 
 static inline ptree regex_make_concat(ptree_context ctx, ptree lhs, ptree rhs) {
   return regex_ptree_expression2(ctx, regex_grouping_concat, lhs, rhs);

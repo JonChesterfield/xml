@@ -17,8 +17,7 @@ enum regex_grouping {
   regex_grouping_kleene = regex_token_count + 3,
   regex_grouping_or = regex_token_count + 4,
   regex_grouping_and = regex_token_count + 5,
-  regex_grouping_not = regex_token_count + 6,
-  regex_grouping_range = regex_token_count + 7,]]
+  regex_grouping_not = regex_token_count + 6,]]
 
 local bytecount = 8
 for i = 0, 255 do
