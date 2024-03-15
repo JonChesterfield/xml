@@ -101,6 +101,48 @@ MODULE(regex_match) {
             R("\x02\x02\x33"),
             2,
         },
+
+        {
+          R("(:6163)"),
+          R("acd"),
+          2,
+        },
+        
+        // ~% is the obvious render of any
+        // (|a(~a)) is a less obvious representation
+        // Derivative of ~% is itself
+        // Inevitably deriviative of (|a(~a)) is ~%
+        // This is currently consuming until end of input
+        // when it was intended to consume a single character
+        // i.e. the greedy/lazy distinction is not right
+        
+        {
+          R("(:61(~%))"),
+          R("abc"),
+          2,
+        },
+
+
+        {
+          R("(:61(|00(~00)))"),
+          R("abc"),
+          2,         
+        },
+        
+        {
+          R("(:(~%)62)"),
+          R("abc"),
+          2,
+        },
+
+        
+        {
+          R("(:61(:(~%)63))"),
+          R("abcd"),
+          3,
+        },
+
+        
     };
     enum { size = sizeof(cases) / sizeof(cases[0]) };
 

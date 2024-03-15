@@ -71,6 +71,7 @@ uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *cache,
 
       if (regex_nullable_p(ctx, p)) {
         // return iter here is eager
+        printf("Iter %u, %s. Nullable\n", iter, r);
         current_nullable = true;
       }
 
@@ -84,7 +85,6 @@ uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *cache,
         printf("Iter %u, %s. Failure\n", iter, r);
         return match_failure;
       }
-
       
       if (empty_string) {
         printf("Iter %u, %s. Empty string\n", iter, r);
