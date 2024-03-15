@@ -369,6 +369,7 @@ MAIN_MODULE() {
   DEPENDS(regex_nullable);
   DEPENDS(regex_split);
   DEPENDS(regex_string);
+  DEPENDS(regex_match);
   DEPENDS(driver);
   DEPENDS(ascii_regex_consistent);
   DEPENDS(ascii_wip);

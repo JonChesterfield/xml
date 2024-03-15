@@ -34,6 +34,7 @@ REGEX_HEADERS := $(REGEX_HEADERS) $(addprefix regex/,$(ASCII_HEADERS))
 
 REGEX_SOURCE := $(REGEX_SOURCE) ascii.lexer.c ascii.parser_bison.c ascii.parser_lemon.c
 REGEX_SOURCE := $(REGEX_SOURCE) ascii.production_assign.c ascii.production_custom.c ascii.production_list.c
+REGEX_SOURCE := $(REGEX_SOURCE) regex_match_tests.c
 
 REGEX_PROGRAM_SOURCE := regex.tests.c regex_stdin_to_xml.c
 

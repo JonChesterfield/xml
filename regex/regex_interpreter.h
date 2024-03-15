@@ -16,16 +16,16 @@ bool regex_interpreter_success(uint64_t);
 // regex on the fly. Hence interpreter.
 // Implicitly anchored at the start, Altnatively, seeks a match starting at 0.
 // If success() on the result, return value is length of match.
-uint64_t regex_interpreter_string_matches(unsigned char *regex,
+uint64_t regex_interpreter_string_matches(const unsigned char *regex,
                                           size_t regex_len,
-                                          unsigned char *target,
+                                          const unsigned char *target,
                                           size_t target_len);
 
 // As above but with a pre-existing cache of regex derivatives
 uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *context,
-                                                       unsigned char *regex,
+                                                       const unsigned char *regex,
                                                        size_t regex_len,
-                                                       unsigned char *target,
+                                                       const unsigned char *target,
                                                        size_t target_len);
 
 #endif

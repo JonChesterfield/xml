@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include "../tools/stack.libc.h"
+#include "../tools/stringtable.h"
 
 #include "interpreter.data"
 
@@ -38,9 +39,9 @@ bool regex_interpreter_success(uint64_t x)
 
 
 uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *cache,
-                                                       unsigned char *regex,
+                                                       const unsigned char *regex,
                                                        size_t regex_len,
-                                                       unsigned char *target,
+                                                       const unsigned char *target,
                                                        size_t target_len)
 {
   if (!cache || !regex_cache_valid(*cache)) {
@@ -79,20 +80,25 @@ uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *cache,
   }
 
 
+  
   // context handling here would be much improved by a clear-and-reuse model
   for (unsigned iter = 0; iter < target_len; iter++) {
     ptree_context ctx = regex_ptree_create_context();
     assert(regex_ptree_valid_context(ctx));
-    {
+    {      
       ptree p = regex_from_stringtable(&cache->strtab, current, ctx);
 
+      const char * r = stringtable_lookup(&cache->strtab, current);      
+      
       if (regex_nullable_p(ctx, p)) {
         regex_ptree_destroy_context(ctx);
+        printf("Iter %u, %s. Nullable\n", iter, r);
         return iter;
       }
 
       if (regex_is_empty_set(p)) {
         regex_ptree_destroy_context(ctx);
+        printf("Iter %u, %s. Failure\n", iter, r);
         return match_failure;
       }
     }
@@ -107,9 +113,9 @@ uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *cache,
   return match_failure;
 }
 
-uint64_t regex_interpreter_string_matches(unsigned char *regex,
+uint64_t regex_interpreter_string_matches(const unsigned char *regex,
                                           size_t regex_len,
-                                          unsigned char *target,
+                                          const unsigned char *target,
                                           size_t target_len) {
 
   regex_cache_t cache = regex_cache_create();
