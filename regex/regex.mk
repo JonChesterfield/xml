@@ -21,7 +21,7 @@ REGEX_HEADERS := $(REGEX_HEADERS) regex/regex.lexer_re2c_iterator.data
 
 REGEX_HEADERS := $(REGEX_HEADERS) regex/regex_interpreter.h regex/ascii_interpreter.h regex/interpreter.data
 
-REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c regex_interpreter.c ascii_regex_consistent.c
+REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c ascii_regex_consistent.c
 
 REGEX_SOURCE := $(REGEX_SOURCE) regex.parser_bison.c regex.parser_lemon.c
 REGEX_SOURCE := $(REGEX_SOURCE) regex.production_assign.c regex.production_custom.c regex.production_list.c

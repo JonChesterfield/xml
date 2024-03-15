@@ -36,6 +36,12 @@ vendored_libxml2:	deepclean
 
 #	trio.c is missing an include, patch that
 	sed -i 's_#include <float.h>_#include <float.h>\n#include <string.h>_g' $(TOOLS_DIR)/libxml2/trio.c
+#	the &va_list construct in trio.c provokes spurious warnings from clang
+	sed -i 's_(&(l))_((void*)\&(l))_' $(TOOLS_DIR)/libxml2/trio.c
+
+#	triostr.c uses strcasecmp which is in strings.h on linux, but doesn't include that
+	sed -i 's_#include <string.h>_#include <string.h>\n#include <strings.h>_g' $(TOOLS_DIR)/libxml2/triostr.c
+
 #	probably don't want to trust the config script
 	rm $(TOOLS_DIR)/libxml2/xml2-config*
 
