@@ -71,10 +71,6 @@ ptree regex_nullable(ptree_context ctx, ptree val) {
     {
       return regex_make_empty_set(ctx);
     }
-  uint64_t id = regex_ptree_identifier(val);
-  if (regex_grouping_id_is_single_byte(id)) {
-    return regex_make_empty_set(ctx);
-  }
 }
 
 ptree regex_derivative(ptree_context ctx, ptree val, uint8_t byte) {

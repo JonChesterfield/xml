@@ -2,6 +2,7 @@
 #define REGEX_CACHE_H_INCLUDED
 
 #include "../tools/hashtable.h"
+#include "../tools/intmap.h"
 #include "../tools/stringtable.h"
 
 #include "regex.ptree.h"
@@ -15,6 +16,7 @@
 // Stores canonical regex in char sequence form
 typedef struct {
   hashtable_t regex_to_derivatives;
+  intmap_t regex_to_properties;
   stringtable_t strtab;
 } regex_cache_t;
 
@@ -43,6 +45,50 @@ stringtable_index_t regex_cache_calculate_derivative(regex_cache_t *,
 stringtable_index_t regex_cache_lookup_derivative(regex_cache_t *,
                                                   stringtable_index_t,
                                                   uint8_t ith);
+
+enum regex_cache_lookup_properties {
+  regex_cache_lookup_failure = 0, // no information available
+  regex_cache_lookup_empty_string = 1,
+  regex_cache_lookup_empty_set = 1 << 1,
+  regex_cache_lookup_composite = 1 << 2, // not empty set or empty string
+  regex_cache_lookup_nullable = 1 << 3,
+
+  // Force enum to be 64 bits wide
+  regex_cache_lookup_minimum_id = 1 << 32u,
+  regex_cache_lookup_maximum_id = UINT32_MAX << 32u,
+};
+
+static inline bool regex_properties_is_failure(enum regex_cache_lookup_properties props)
+{
+  return props == 0;
+}
+  
+static inline bool regex_properties_is_empty_string(enum regex_cache_lookup_properties props)
+{
+  props &= UINT32_MAX;
+  return (props & regex_cache_lookup_empty_string) != 0;
+}
+
+static inline bool regex_properties_is_empty_set(enum regex_cache_lookup_properties props)
+{
+  props &= UINT32_MAX;
+  return (props & regex_cache_lookup_empty_set) != 0;
+}
+
+static inline bool regex_properties_is_nullable(enum regex_cache_lookup_properties props)
+{
+  props &= UINT32_MAX;
+  return (props & regex_cache_lookup_nullable) != 0;
+}
+
+static inline uint64_t regex_properties_retrieve_root_identifier(enum regex_cache_lookup_properties props)
+{
+  props = props >> 32u;
+  return props;
+}
+
+enum regex_cache_lookup_properties regex_cache_lookup_properties(regex_cache_t *,
+                                                                 stringtable_index_t);
 
 // As above, but check all of them
 bool regex_cache_all_derivatives_computed(regex_cache_t *, stringtable_index_t);

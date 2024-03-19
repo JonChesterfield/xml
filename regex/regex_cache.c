@@ -157,6 +157,7 @@ regex_cache_t regex_cache_create(void) {
   regex_cache_t d;
   d.regex_to_derivatives =
       hashtable_create(hashtable_mod, (hashtable_user_t){0}, 16);
+  d.regex_to_properties = intmap_create(16);
   d.strtab = stringtable_create();
   return d;
 }
@@ -164,12 +165,14 @@ regex_cache_t regex_cache_create(void) {
 void regex_cache_destroy(regex_cache_t d) {
   hashtable_destroy(hashtable_mod, (hashtable_user_t){0},
                     d.regex_to_derivatives);
+  intmap_destroy(d.regex_to_properties);
   stringtable_destroy(d.strtab);
 }
 
 bool regex_cache_valid(regex_cache_t d) {
   return hashtable_valid(hashtable_mod, (hashtable_user_t){0},
                          d.regex_to_derivatives) &&
+    intmap_valid(d.regex_to_properties) &&
          stringtable_valid(d.strtab);
 }
 
@@ -186,8 +189,63 @@ regex_cache_insert_regex_canonical_ptree(regex_cache_t *driver, ptree regex) {
     return strfail();
   }
 
-  return regex_insert_into_stringtable(&driver->strtab, regex);
+  if (intmap_available(driver->regex_to_properties) < 8) {
+    if (!intmap_rehash_double(&driver->regex_to_properties))
+      {
+        return strfail();
+      }    
+  }
+
+  // todo, enforce this statically somewhere? maybe have identifier be a smaller type
+  uint64_t id = regex_ptree_identifier(regex);
+  if (id > UINT32_MAX) {
+    return strfail();
+  }
+  
+  stringtable_index_t res = 
+   regex_insert_into_stringtable(&driver->strtab, regex);
+  
+  if (stringtable_index_valid(res)) {
+    uint64_t prop = 0;
+
+    
+    bool is_empty_string = regex_is_empty_string(regex);
+    bool is_empty_set = regex_is_empty_set(regex);
+    assert(!(is_empty_string && is_empty_set));
+
+    if (is_empty_string)
+      prop |= regex_cache_lookup_empty_string;   
+  
+    if (is_empty_set)
+      prop |= regex_cache_lookup_empty_set;
+
+    if (prop == 0) 
+      prop |= regex_cache_lookup_composite;    
+    
+    prop |= regex_nullable_p(regex) ? regex_cache_lookup_nullable : 0;
+
+    id = id << 32u;
+
+    prop |= id;
+    
+    intmap_insert(&driver->regex_to_properties,
+                  res.value,
+                  prop);
+  }
+  
+  return res;
 }
+
+enum regex_cache_lookup_properties regex_cache_lookup_properties(regex_cache_t * c,
+                                                                 stringtable_index_t index)
+{
+  uint64_t res = intmap_lookup(c->regex_to_properties, index.value);
+  if (res == UINT64_MAX) {
+    return regex_cache_lookup_failure;
+  }
+  return (enum regex_cache_lookup_properties)res;
+}
+
 
 stringtable_index_t regex_cache_insert_regex_ptree(regex_cache_t *c,
                                                    ptree_context ptree_ctx,
@@ -322,6 +380,8 @@ stringtable_index_t regex_cache_calculate_derivative(regex_cache_t *driver,
   return regex_cache_calculate_derivative_given_hashtable_values(driver, index,
                                                                  ith, values);
 }
+
+
 
 static stringtable_index_t regex_cache_lookup_derivative_given_hashtable_values(
     regex_cache_t *driver, stringtable_index_t index, uint8_t ith,

@@ -343,6 +343,9 @@ static MODULE(driver) {
     stringtable_index_t index = stringtable_insert(&D.strtab, regstr, N);
     CHECK(regex_driver_regex_to_c(&D, index));
 
+    enum regex_cache_lookup_properties props = regex_cache_lookup_properties(&D,index);
+    CHECK(!regex_properties_is_failure(props));
+    CHECK(regex_properties_retrieve_root_identifier(props) == regex_grouping_or);
     regex_cache_destroy(D);
   }
 }

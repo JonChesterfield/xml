@@ -69,22 +69,25 @@ uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *cache,
     unsigned char byte = target[iter];
     current = regex_cache_calculate_derivative(cache, current, byte);
 
+    enum regex_cache_lookup_properties props =
+      regex_cache_lookup_properties(cache, current);
+
+    bool nullable = regex_properties_is_nullable(props);
+    bool empty_set = regex_properties_is_empty_set(props);
+    // bool empty_string = regex_properties_is_empty_string(props);
     
     {      
-      ptree p = regex_from_stringtable(&cache->strtab, current, ctx);
+      const char * r = "";
 
-      const char * r = stringtable_lookup(&cache->strtab, current);      
+      if (nullable || empty_set) {
+        r = stringtable_lookup(&cache->strtab, current);
+      }
 
-      if (regex_nullable_p(p)) {
+      if (nullable) {
         // return here would be eager / shorted wins
         printf("Iter %u, %s. Nullable\n", iter, r);
         match_end = iter + 1; // returns one past the last char in the match
       }
-
-      bool empty_set = regex_is_empty_set(p);
-      bool empty_string = regex_is_empty_string(p);
-      if (empty_set) {assert(!empty_string);}
-      if (empty_string) {assert(!empty_set);}
       
       if (empty_set) {
         regex_ptree_destroy_context(ctx);
@@ -98,7 +101,8 @@ uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *cache,
     regex_ptree_destroy_context(ctx);
   }
 
-  return match_end;   
+  return match_end;
+   
 }
 
 uint64_t regex_interpreter_string_matches(const unsigned char *regex,

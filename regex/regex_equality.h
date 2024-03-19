@@ -11,9 +11,9 @@ bool regex_ptree_definitionally_equal(ptree, ptree);
 bool regex_ptree_similar(ptree, ptree);
 bool regex_ptree_equivalent(regex_cache_t *, ptree, ptree);
 
-bool regex_canonical_is_atomic(stringtable_t *, stringtable_index_t);
+bool regex_canonical_is_atomic(regex_cache_t *, stringtable_index_t);
 
-bool regex_canonical_atomic_and_equal(stringtable_t *, stringtable_index_t,
+bool regex_canonical_atomic_and_equal(regex_cache_t *, stringtable_index_t,
                                       stringtable_index_t);
 
 bool regex_canonical_definitionally_equal(stringtable_t *, stringtable_index_t,

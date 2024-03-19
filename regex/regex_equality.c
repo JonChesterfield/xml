@@ -63,25 +63,23 @@ bool regex_ptree_equivalent(regex_cache_t *cache, ptree x, ptree y) {
   return r;
 }
 
-bool regex_canonical_is_atomic(stringtable_t *tab, stringtable_index_t x) {
-  ptree_context ctx = regex_ptree_create_context();  
-  assert(regex_ptree_valid_context(ctx));
-  ptree p = regex_from_stringtable(tab, x, ctx);
-  bool res = regex_ptree_is_atomic(p);
-  regex_ptree_destroy_context(ctx);
-  return res;
+bool regex_canonical_is_atomic(regex_cache_t *cache, stringtable_index_t x) {
+  enum regex_cache_lookup_properties props =
+    regex_cache_lookup_properties(cache, x);
+  uint64_t xid = regex_properties_retrieve_root_identifier(props);
+  return regex_id_is_atomic(xid);
 }
 
-bool regex_canonical_atomic_and_equal(stringtable_t *tab, stringtable_index_t x,
+bool regex_canonical_atomic_and_equal(regex_cache_t *cache, stringtable_index_t x,
                                       stringtable_index_t y) {
-  // inefficient
-  ptree_context ctx = regex_ptree_create_context();
-  assert(regex_ptree_valid_context(ctx));
-  ptree px = regex_from_stringtable(tab, x, ctx);
-  ptree py = regex_from_stringtable(tab, y, ctx);
-  bool res = regex_ptree_atomic_and_equal(px, py);
-  regex_ptree_destroy_context(ctx);
-  return res;
+
+  enum regex_cache_lookup_properties xprops =
+    regex_cache_lookup_properties(cache, x);
+  enum regex_cache_lookup_properties yprops =
+    regex_cache_lookup_properties(cache, y);
+  uint64_t xid = regex_properties_retrieve_root_identifier(xprops);
+  uint64_t yid = regex_properties_retrieve_root_identifier(yprops);
+  return (xid == yid) && regex_id_is_atomic(xid);
 }
 
 bool regex_canonical_definitionally_equal(stringtable_t *tab,
@@ -135,25 +133,16 @@ static bool regex_canonical_equivalent_with_structures(regex_cache_t *cache,
 
     assert(left.value < right.value);
 
+    enum regex_cache_lookup_properties left_props =
+      regex_cache_lookup_properties(cache, left);
+    enum regex_cache_lookup_properties right_props =
+      regex_cache_lookup_properties(cache, right);
+
+    
     {
-      // Base case. Not the most sensible way to do this,
-      // better to write all the atomic values into the table and
-      // then check against that, which can only be done
-      // really well if the atomic values are contiguous in the table,
-      // i.e. if we create the table here or they all start with that
-      // or to do the string compare directly
-      ptree_context ctx = regex_ptree_create_context();
-      assert(regex_ptree_valid_context(ctx));
-      ptree px = regex_from_stringtable(&cache->strtab, left, ctx);
-      ptree py = regex_from_stringtable(&cache->strtab, right, ctx);
-
-      assert (!ptree_is_failure(px));
-      assert (!ptree_is_failure(py));
-
+      uint64_t xid = regex_properties_retrieve_root_identifier(left_props);
+      uint64_t yid = regex_properties_retrieve_root_identifier(right_props);
       
-      uint64_t xid = regex_ptree_identifier(px);
-      uint64_t yid = regex_ptree_identifier(py);
-
       if (regex_id_is_atomic(xid) && regex_id_is_atomic(yid)) {
         if (xid == yid) {
           continue;
@@ -163,20 +152,14 @@ static bool regex_canonical_equivalent_with_structures(regex_cache_t *cache,
         }
       }
 
-      ptree left_nullable = regex_nullable(ctx, px);
-      ptree right_nullable = regex_nullable(ctx, py);
-      assert(!ptree_is_failure(left_nullable));
-      assert(!ptree_is_failure(right_nullable));
-
-      bool left_nullable_is_empty_string = regex_is_empty_string(left_nullable);
-      bool right_nullable_is_empty_string = regex_is_empty_string(right_nullable);
+      bool left_nullable_is_empty_string = regex_properties_is_nullable(left_props);
+      bool right_nullable_is_empty_string = regex_properties_is_nullable(right_props);
 
       if (left_nullable_is_empty_string != right_nullable_is_empty_string)
         {
           return false;
         }
       
-      regex_ptree_destroy_context(ctx);
     }
 
     if (intmap_lookup(map, left.value) == right.value) {
