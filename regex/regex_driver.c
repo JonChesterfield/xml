@@ -141,7 +141,7 @@ static int regex_to_c_traverse_function(regex_cache_t *cache,
         return 0;        
       }
 
-    if (regex_nullable_p(ctx, px))
+    if (regex_nullable_p(px))
       {
         fprintf(out, "    // regex %s is nullable\n", regex);
         fprintf(out,
@@ -192,7 +192,7 @@ static int regex_to_c_traverse_function(regex_cache_t *cache,
 
         ptree_context ctx = regex_ptree_create_context();
         ptree px = regex_from_stringtable(&cache->strtab, current_deriv, ctx);
-        bool nullable = regex_nullable_p(ctx, px);
+        bool nullable = regex_nullable_p(px);
         bool empty = regex_is_empty_set(px);
 
         const char * target = encoded;        

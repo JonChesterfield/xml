@@ -15,7 +15,7 @@ static int func(regex_cache_t * cache,
   
   // todo, would like nullable/empty etc available without allocating
   ptree p = regex_from_stringtable(&cache->strtab, r, ctx);
-  if (regex_nullable_p(ctx, p)) {   
+  if (regex_nullable_p(p)) {   
     data->accepting++;
   } else  if (regex_is_empty_set(p)) {
     data->rejecting++;

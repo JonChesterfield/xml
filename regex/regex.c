@@ -10,112 +10,86 @@
 #include <stdio.h>
 #include <assert.h>
 
-bool regex_nullable_p(ptree_context ctx, ptree val) {
-  ptree r = regex_nullable(ctx, val);
-  return regex_is_empty_string(r);
+bool regex_nullable_p(ptree val) {
+ tailcall:;
+  
+  uint64_t id = regex_ptree_identifier(val);
+  switch ((enum regex_grouping)id) {
+  #include "regex_grouping_byte_cases.data"
+    return false;
+    
+  case regex_grouping_empty_string:
+    return true;
+    
+  case regex_grouping_empty_set:
+    return false;
+
+  case regex_grouping_kleene:
+    return true;
+
+  case regex_grouping_concat:
+  case regex_grouping_and: {
+    ptree r = regex_ptree_expression_element(val, 0);
+    bool nr = regex_nullable_p(r);
+
+    if (!nr) { return false; }
+    
+    val = regex_ptree_expression_element(val, 1);
+    goto tailcall;
+  }
+  case regex_grouping_or:
+    {
+    ptree r = regex_ptree_expression_element(val, 0);
+    bool nr = regex_nullable_p(r);
+
+    if (nr) {return true; }
+    
+    val = regex_ptree_expression_element(val, 1);
+    goto tailcall;
+  }
+
+  case regex_grouping_not: {
+    // Could remove this recursion with an extra parameter
+    ptree r = regex_ptree_expression_element(val, 0);
+    bool nr = regex_nullable_p(r);
+    return !nr;
+  }
+
+  }
+
+  __builtin_unreachable();
 }
 
 // Could be a boolean function instead of returning the regex
 ptree regex_nullable(ptree_context ctx, ptree val) {
-  // Needs to return empty string or empty set on any val
   // partially tested
+  if (regex_nullable_p(val))
+    {
+      return regex_make_empty_string(ctx);
+    }
+  else
+    {
+      return regex_make_empty_set(ctx);
+    }
   uint64_t id = regex_ptree_identifier(val);
   if (regex_grouping_id_is_single_byte(id)) {
     return regex_make_empty_set(ctx);
-  }
-
-  switch (id) {
-  case regex_grouping_empty_string:
-  case regex_grouping_empty_set:
-    return val;
-
-  case regex_grouping_kleene:
-    return regex_make_empty_string(ctx);
-
-  case regex_grouping_concat:
-  case regex_grouping_or:
-  case regex_grouping_and: {
-    ptree r = regex_ptree_expression_element(val, 0);
-    ptree s = regex_ptree_expression_element(val, 1);
-
-    ptree vr = regex_nullable(ctx, r);
-    ptree vs = regex_nullable(ctx, s);
-
-    bool vr_empty_set = regex_is_empty_set(vr);
-    bool vr_empty_string = regex_is_empty_string(vr);
-
-    bool vs_empty_set = regex_is_empty_set(vs);
-    bool vs_empty_string = regex_is_empty_string(vs);
-
-    if (vr_empty_string && vs_empty_string) {
-      // r & r == r, and r + r == r
-      return regex_make_empty_string(ctx);
-    }
-
-    switch (id) {
-    case regex_grouping_concat:
-    case regex_grouping_and: {
-      if (vr_empty_set || vs_empty_set) {
-        return regex_make_empty_set(ctx);
-      }
-
-      return ptree_failure();
-      return regex_make_and(ctx, vr, vs);
-    }
-    case regex_grouping_or: {
-      if (vr_empty_set) {
-        return vs;
-      }
-      if (vs_empty_set) {
-        return vr;
-      }
-
-      return ptree_failure();
-      return regex_make_or(ctx, vr, vs);
-    }
-    default:
-      return ptree_failure();
-    }
-  }
-
-  case regex_grouping_not: {
-    ptree r = regex_ptree_expression_element(val, 0);
-    ptree vr = regex_nullable(ctx, r);
-
-    if (regex_is_empty_set(vr)) {
-      return regex_make_empty_string(ctx);
-    }
-
-    if (regex_is_empty_string(vr)) {
-      return regex_make_empty_set(ctx);
-    }
-
-    // Needs to be unreachable
-    return ptree_failure();
-  }
-
-  default:
-    return ptree_failure();
   }
 }
 
 ptree regex_derivative(ptree_context ctx, ptree val, uint8_t byte) {
   uint64_t id = regex_ptree_identifier(val);
-  switch (id) {
-  case regex_grouping_empty_string:
-  case regex_grouping_empty_set:
-    return regex_make_empty_set(ctx);
-  default:
-    break;
-  }
 
-  if (regex_grouping_id_is_single_byte(id)) {
+  switch ((enum regex_grouping)id) {
+  #include "regex_grouping_byte_cases.data"
     return (byte == regex_grouping_extract_single_byte(id))
                ? regex_make_empty_string(ctx)
                : regex_make_empty_set(ctx);
-  }
+    
+  case regex_grouping_empty_string:
+  case regex_grouping_empty_set:
+    return regex_make_empty_set(ctx);
 
-  switch (id) {
   case regex_grouping_concat: {
     ptree r = regex_ptree_expression_element(val, 0);
     ptree s = regex_ptree_expression_element(val, 1);
@@ -123,6 +97,7 @@ ptree regex_derivative(ptree_context ctx, ptree val, uint8_t byte) {
     ptree ds = regex_derivative(ctx, s, byte);
 
     ptree lhs = regex_make_concat(ctx, dr, s);
+    // maybe fold nullable on the fly here
     ptree rhs = regex_make_concat(ctx, regex_nullable(ctx, r), ds);
     return regex_make_or(ctx, lhs, rhs);
   }
@@ -147,10 +122,10 @@ ptree regex_derivative(ptree_context ctx, ptree val, uint8_t byte) {
     ptree dr = regex_derivative(ctx, r, byte);
     return regex_make_not(ctx, dr);
   }
-
-  default:
-    return ptree_failure();
   }
+
+  __builtin_unreachable();
+  return ptree_failure();
 }
 
 static bool regex_is_not_of_empty_set(ptree val) {
@@ -235,7 +210,7 @@ static ptree regex_canonicalise_impl(ptree_context ctx, ptree val) {
         return s;
       }
     }
-
+  
     // Have canonicalised the arguments, keep that information
     val = regex_ptree_expression2(ctx, id, r, s);
   }
@@ -317,7 +292,11 @@ static ptree regex_canonicalise_impl(ptree_context ctx, ptree val) {
 ptree regex_canonicalise(ptree_context ctx, ptree val) {
   // This was intended to compute a fixpoint but evidently doesn't
   // Hack around that for now
+  // Example that fails is (cat (cat (cat (cat whatever)))),
+  // each pass through canonicalise reassociates it by a depth of one
   const unsigned N = 10;
+  const bool verbose = false;
+  ptree orig = val;
   
   for (unsigned i = 0; i < N; i++)
     {
@@ -331,6 +310,25 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
       
       if (cmp == ptree_compare_equal)
         {
+          if (verbose && (i > 2)) {
+            printf("canon took %u\n", i);
+            printf("original:\n");
+            regex_ptree_as_xml(&stack_libc, stdout, orig);
+
+            printf("canon once:\n");
+            ptree canon = regex_canonicalise_impl(ctx, orig);
+            regex_ptree_as_xml(&stack_libc, stdout, canon);
+
+            printf("canon twice:\n");
+            ptree canon2 = regex_canonicalise_impl(ctx, canon);
+            regex_ptree_as_xml(&stack_libc, stdout, canon2);
+
+            printf("canon thrice:\n");
+            ptree canon3 = regex_canonicalise_impl(ctx, canon2);
+            regex_ptree_as_xml(&stack_libc, stdout, canon3);
+          }
+
+          // maybe return val instead? ideally could free a little memory here
           return canon;
         }
 

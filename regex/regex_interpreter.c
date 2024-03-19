@@ -69,7 +69,7 @@ uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *cache,
 
       const char * r = stringtable_lookup(&cache->strtab, current);      
 
-      if (regex_nullable_p(ctx, p)) {
+      if (regex_nullable_p(p)) {
         // return iter here is eager
         printf("Iter %u, %s. Nullable\n", iter, r);
         current_nullable = true;
@@ -115,7 +115,7 @@ uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *cache,
 
   {
   ptree_context ctx = regex_ptree_create_context();
-  bool nullable = regex_nullable_p(ctx, regex_from_stringtable(&cache->strtab, current, ctx));
+  bool nullable = regex_nullable_p(regex_from_stringtable(&cache->strtab, current, ctx));
   regex_ptree_destroy_context(ctx);
   
   if (nullable) {

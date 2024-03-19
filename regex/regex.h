@@ -99,7 +99,7 @@ ptree regex_derivative(ptree_context ctx, ptree val, uint8_t byte);
 ptree regex_canonicalise(ptree_context ctx, ptree val);
 
 // true if nullable() returns empty string, false if it returns empty set
-bool regex_nullable_p(ptree_context ctx, ptree val);
+bool regex_nullable_p(ptree val);
 
 ptree regex_copy_into_context( ptree val, ptree_context ctx);
 
