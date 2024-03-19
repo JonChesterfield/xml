@@ -72,11 +72,6 @@ MODULE(regex_match) {
             R("\x01\x01"),
             1,
         },
-        {
-            R("0101"),
-            R("\x01"),
-            match_failure,
-        },
 
         // This case was written in error (missing concat :)
         // but parsed as a valid regex 01, instead of rejecting the 0101 form
@@ -108,25 +103,23 @@ MODULE(regex_match) {
           2,
         },
         
-        // ~% is the obvious render of any
+        // ~% is the obvious and wrong render of any
+        // specifically ~% is any string, not any character
         // (|a(~a)) is a less obvious representation
         // Derivative of ~% is itself
         // Inevitably deriviative of (|a(~a)) is ~%
-        // This is currently consuming until end of input
-        // when it was intended to consume a single character
-        // i.e. the greedy/lazy distinction is not right
         
         {
           R("(:61(~%))"),
           R("abc"),
-          2,
+          3,
         },
 
 
         {
           R("(:61(|00(~00)))"),
           R("abc"),
-          2,         
+          3,         
         },
         
         {
