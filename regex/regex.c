@@ -373,6 +373,7 @@ ptree regex_copy_into_context( ptree val, ptree_context ctx)
 
 bool regex_is_canonical(ptree val)
 {
+  // TODO: Implement directly, not via calling canonicalise and equality
   if (ptree_is_failure(val)) {return false; }
 
   ptree_context ctx = regex_ptree_create_context();

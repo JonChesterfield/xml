@@ -5,25 +5,36 @@
 #include "regex.ptree.h"
 #include "regex_cache.h"
 
+typedef enum {
+  regex_compare_out_of_memory,
+  regex_compare_failure, // could be OOM, could be ill formed input
+  regex_compare_equal,
+  regex_compare_not_equal,
+} regex_compare_t;
+
+// A bool when the method does not allocate memory, otherwise an enum
+
 bool regex_ptree_is_atomic(ptree);
 bool regex_ptree_atomic_and_equal(ptree, ptree);
-bool regex_ptree_definitionally_equal(ptree, ptree);
-bool regex_ptree_similar(ptree, ptree);
-bool regex_ptree_equivalent(regex_cache_t *, ptree, ptree);
+
+regex_compare_t regex_ptree_definitionally_equal(ptree, ptree);
+
+regex_compare_t regex_ptree_similar(ptree, ptree);
+regex_compare_t regex_ptree_equivalent(regex_cache_t *, ptree, ptree);
 
 bool regex_canonical_is_atomic(regex_cache_t *, stringtable_index_t);
 
 bool regex_canonical_atomic_and_equal(regex_cache_t *, stringtable_index_t,
                                       stringtable_index_t);
 
-bool regex_canonical_definitionally_equal(stringtable_t *, stringtable_index_t,
+bool regex_canonical_definitionally_equal(regex_cache_t *, stringtable_index_t,
                                           stringtable_index_t);
 
-bool regex_canonical_similar(stringtable_t *, stringtable_index_t,
+regex_compare_t regex_canonical_similar(regex_cache_t *, stringtable_index_t,
                              stringtable_index_t);
 
 // The two regex match exactly the same strings
-bool regex_canonical_equivalent(regex_cache_t *, stringtable_index_t,
+regex_compare_t regex_canonical_equivalent(regex_cache_t *, stringtable_index_t,
                                 stringtable_index_t);
 
 // The two regex match different strings

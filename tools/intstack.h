@@ -39,6 +39,14 @@ uint64_t intstack_peek(intstack_t);
 // requires size > 0
 void intstack_drop(intstack_t *);
 
+// requires size > 0
+static inline uint64_t intstack_pop(intstack_t* s)
+{
+  uint64_t r = intstack_peek(*s);
+  intstack_drop(s);
+  return r;
+}
+
 void intstack_dump(intstack_t);
 
 #endif

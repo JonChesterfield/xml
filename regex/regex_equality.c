@@ -1,5 +1,6 @@
 #include "regex_equality.h"
 #include "../tools/intmap.h"
+#include "../tools/intstack.h"
 #include "../tools/stack.libc.h"
 #include "regex_string.h"
 
@@ -31,74 +32,147 @@ bool regex_ptree_atomic_and_equal(ptree x, ptree y) {
   return (xid == yid) && regex_id_is_atomic(xid);
 }
 
-bool regex_ptree_definitionally_equal(ptree x, ptree y) {
-  stringtable_t strtab = stringtable_create();
-  bool xfail = ptree_is_failure(x);
-  bool yfail = ptree_is_failure(y);
-  if (xfail && yfail) {
-    return true;
+regex_compare_t regex_ptree_definitionally_equal(ptree x, ptree y) {
+
+  // Alternative is to write the ptrees into strings and test the
+  // strings for equality. Turning a ptree into a string is more
+  // expensive than iterating over it. Compare requires non-failure input.
+
+  if (ptree_is_failure(x) && ptree_is_failure(y)) {
+    return regex_compare_equal;
   }
-  if (xfail || yfail) {
-    return false;
+  if (ptree_is_failure(x) || ptree_is_failure(y)) {
+    return regex_compare_not_equal;
   }
-  stringtable_index_t xs = regex_insert_into_stringtable(&strtab, x);
-  stringtable_index_t ys = regex_insert_into_stringtable(&strtab, y);
-  bool r = regex_canonical_definitionally_equal(&strtab, xs, ys);
-  stringtable_destroy(strtab);
+
+  enum ptree_compare_res res = regex_ptree_compare(&stack_libc, x, y);
+  switch (res) {
+  case ptree_compare_lesser:
+  case ptree_compare_greater:
+    return regex_compare_not_equal;
+  case ptree_compare_equal:
+    return regex_compare_equal;
+  case ptree_compare_out_of_memory:
+    return regex_compare_out_of_memory;
+  }
+}
+
+regex_compare_t regex_ptree_similar(ptree x, ptree y) {
+  regex_compare_t defn = regex_ptree_definitionally_equal(x, y);
+  switch (defn) {
+  case regex_compare_equal:
+  case regex_compare_out_of_memory:
+  case regex_compare_failure:
+    return defn;
+  case regex_compare_not_equal:
+    break;
+  }
+
+  // Testing nullable is cheaper than canonicalising
+  // (and possibly cheaper than the equality test)
+  if (regex_nullable_p(x) != regex_nullable_p(y)) {
+    return regex_compare_not_equal;
+  }
+
+  // Both nullable or both non-nullable, do the expensive canonicalise.
+
+  ptree_context ctx = regex_ptree_create_context();
+  if (!regex_ptree_valid_context(ctx)) {
+    return regex_compare_out_of_memory;
+  }
+
+  ptree px = regex_copy_into_context(x, ctx);
+  ptree py = regex_copy_into_context(y, ctx);
+  if (ptree_is_failure(px) || ptree_is_failure(py)) {
+    regex_ptree_destroy_context(ctx);
+    return regex_compare_out_of_memory;
+  }
+
+  ptree cx = regex_canonicalise(ctx, px);
+  ptree cy = regex_canonicalise(ctx, py);
+  if (ptree_is_failure(cx) || ptree_is_failure(cy)) {
+    // Either broken internally or out of memory
+    regex_ptree_destroy_context(ctx);
+    return regex_compare_out_of_memory;
+  }
+
+  regex_compare_t r = regex_ptree_definitionally_equal(cx, cy);
+  regex_ptree_destroy_context(ctx);
   return r;
 }
 
-bool regex_ptree_similar(ptree x, ptree y) {
-  stringtable_t strtab = stringtable_create();
-  stringtable_index_t xs = regex_insert_into_stringtable(&strtab, x);
-  stringtable_index_t ys = regex_insert_into_stringtable(&strtab, y);
-  bool r = regex_canonical_similar(&strtab, xs, ys);
-  stringtable_destroy(strtab);
-  return r;
-}
-
-bool regex_ptree_equivalent(regex_cache_t *cache, ptree x, ptree y) {
+regex_compare_t regex_ptree_equivalent(regex_cache_t *cache, ptree x, ptree y) {
   stringtable_index_t xs = regex_insert_into_stringtable(&cache->strtab, x);
   stringtable_index_t ys = regex_insert_into_stringtable(&cache->strtab, y);
-  bool r = regex_canonical_equivalent(cache, xs, ys);
-  return r;
+  if (stringtable_index_valid(xs) && stringtable_index_valid(ys)) {
+    return regex_canonical_equivalent(cache, xs, ys);
+  } else {
+    return regex_compare_out_of_memory;
+  }
 }
 
 bool regex_canonical_is_atomic(regex_cache_t *cache, stringtable_index_t x) {
   enum regex_cache_lookup_properties props =
-    regex_cache_lookup_properties(cache, x);
+      regex_cache_lookup_properties(cache, x);
   uint64_t xid = regex_properties_retrieve_root_identifier(props);
   return regex_id_is_atomic(xid);
 }
 
-bool regex_canonical_atomic_and_equal(regex_cache_t *cache, stringtable_index_t x,
+bool regex_canonical_atomic_and_equal(regex_cache_t *cache,
+                                      stringtable_index_t x,
                                       stringtable_index_t y) {
 
   enum regex_cache_lookup_properties xprops =
-    regex_cache_lookup_properties(cache, x);
+      regex_cache_lookup_properties(cache, x);
   enum regex_cache_lookup_properties yprops =
-    regex_cache_lookup_properties(cache, y);
+      regex_cache_lookup_properties(cache, y);
   uint64_t xid = regex_properties_retrieve_root_identifier(xprops);
   uint64_t yid = regex_properties_retrieve_root_identifier(yprops);
   return (xid == yid) && regex_id_is_atomic(xid);
 }
 
-bool regex_canonical_definitionally_equal(stringtable_t *tab,
+bool regex_canonical_definitionally_equal(regex_cache_t *cache,
                                           stringtable_index_t x,
                                           stringtable_index_t y) {
-  (void)tab;
+  (void)cache;
   return stringtable_index_valid(x) && (x.value == y.value);
 }
 
-bool regex_canonical_similar(stringtable_t *tab, stringtable_index_t x,
-                             stringtable_index_t y) {
+regex_compare_t regex_canonical_similar(regex_cache_t *cache,
+                                        stringtable_index_t x,
+                                        stringtable_index_t y) {
+  if (regex_canonical_definitionally_equal(cache, x, y)) {
+    // Cheapest test first
+    return regex_compare_equal;
+  }
+
+  {
+    // If one is nullable and the other is not, they aren't going to be similar
+    enum regex_cache_lookup_properties left_props =
+        regex_cache_lookup_properties(cache, x);
+    enum regex_cache_lookup_properties right_props =
+        regex_cache_lookup_properties(cache, y);
+
+    if (regex_properties_is_nullable(left_props) !=
+        regex_properties_is_nullable(right_props)) {
+      return regex_compare_not_equal;
+    }
+  }
+
   ptree_context ctx = regex_ptree_create_context();
-  assert(regex_ptree_valid_context(ctx));
-  ptree px = regex_from_stringtable(tab, x, ctx);
-  ptree py = regex_from_stringtable(tab, y, ctx);
-  ptree cx = regex_canonicalise(ctx, px);
-  ptree cy = regex_canonicalise(ctx, py);
-  bool r = regex_ptree_definitionally_equal(cx, cy);
+  if (!regex_ptree_valid_context(ctx)) {
+    return regex_compare_out_of_memory;
+  }
+
+  ptree px = regex_from_stringtable(&cache->strtab, x, ctx);
+  ptree py = regex_from_stringtable(&cache->strtab, y, ctx);
+  if (ptree_is_failure(px) || ptree_is_failure(py)) {
+    // It's either out of memory or the strings were missing or malformed
+    regex_ptree_destroy_context(ctx);
+    return regex_compare_failure;
+  }
+
+  regex_compare_t r = regex_ptree_similar(px, py);
   regex_ptree_destroy_context(ctx);
   return r;
 }
@@ -112,55 +186,47 @@ static void put_smaller_on_left(stringtable_index_t *x,
   }
 }
 
-static bool regex_canonical_equivalent_with_structures(regex_cache_t *cache,
-                                                       stringtable_index_t x,
-                                                       stringtable_index_t y,
-                                                       void **stack_arg,
-                                                       intmap_t *map_arg) {
+static regex_compare_t regex_canonical_equivalent_with_structures(
+    regex_cache_t *cache, stringtable_index_t x, stringtable_index_t y,
+    intstack_t *stack_arg, intmap_t *map_arg) {
 
   // stringtable does not contain ptree_failure nodes
-  
-  void *stack = *stack_arg;
+  intstack_t stack = *stack_arg;
   intmap_t map = *map_arg;
 
   put_smaller_on_left(&x, &y);
-  stack_push_assuming_capacity(&stack_libc, stack, y.value);
-  stack_push_assuming_capacity(&stack_libc, stack, x.value);
+  intstack_push(&stack, y.value);
+  intstack_push(&stack, x.value);
 
-  for (uint64_t size = 2; size = stack_size(&stack_libc, stack), size != 0;) {
-    stringtable_index_t left = {.value = stack_pop(&stack_libc, stack)};
-    stringtable_index_t right = {.value = stack_pop(&stack_libc, stack)};
+  for (uint64_t size = 2; size = intstack_size(stack), size != 0;) {
+    stringtable_index_t left = {.value = intstack_pop(&stack)};
+    stringtable_index_t right = {.value = intstack_pop(&stack)};
     size = size - 2;
 
     assert(left.value < right.value);
 
     enum regex_cache_lookup_properties left_props =
-      regex_cache_lookup_properties(cache, left);
+        regex_cache_lookup_properties(cache, left);
     enum regex_cache_lookup_properties right_props =
-      regex_cache_lookup_properties(cache, right);
+        regex_cache_lookup_properties(cache, right);
 
-    
     {
       uint64_t xid = regex_properties_retrieve_root_identifier(left_props);
       uint64_t yid = regex_properties_retrieve_root_identifier(right_props);
-      
+
       if (regex_id_is_atomic(xid) && regex_id_is_atomic(yid)) {
         if (xid == yid) {
           continue;
         }
         if (xid != yid) {
-          return false;
+          return regex_compare_not_equal;
         }
       }
 
-      bool left_nullable_is_empty_string = regex_properties_is_nullable(left_props);
-      bool right_nullable_is_empty_string = regex_properties_is_nullable(right_props);
-
-      if (left_nullable_is_empty_string != right_nullable_is_empty_string)
-        {
-          return false;
-        }
-      
+      if (regex_properties_is_nullable(left_props) !=
+          regex_properties_is_nullable(right_props)) {
+        return regex_compare_not_equal;
+      }
     }
 
     if (intmap_lookup(map, left.value) == right.value) {
@@ -170,23 +236,20 @@ static bool regex_canonical_equivalent_with_structures(regex_cache_t *cache,
 
     if (!regex_cache_calculate_all_derivatives(cache, left) ||
         !regex_cache_calculate_all_derivatives(cache, right)) {
-      return false;
+      return regex_compare_out_of_memory;
     }
 
     if (intmap_available(map) < 4) {
       if (!intmap_rehash_double(&map)) {
-        return false;
+        return regex_compare_out_of_memory;
       }
       *map_arg = map;
     }
 
     {
-      void *r = stack_reserve(&stack_libc, stack,
-                              stack_size(&stack_libc, stack) + 256);
-      if (!r) {
-        return false;
+      if (!intstack_reserve(&stack, intstack_size(stack) + 256)) {
+        return regex_compare_out_of_memory;
       }
-      stack = r;
       *stack_arg = stack;
     }
 
@@ -200,37 +263,38 @@ static bool regex_canonical_equivalent_with_structures(regex_cache_t *cache,
 
       if (left_deriv.value != right_deriv.value) {
         put_smaller_on_left(&left_deriv, &right_deriv);
-        stack_push_assuming_capacity(&stack_libc, stack, right_deriv.value);
-        stack_push_assuming_capacity(&stack_libc, stack, left_deriv.value);
+        intstack_push(&stack, right_deriv.value);
+        intstack_push(&stack, left_deriv.value);
       }
     }
   }
 
-  return true;
+  return regex_compare_equal;
 }
 
 // returns "false" on out of memory, might want to change that
-bool regex_canonical_equivalent(regex_cache_t *cache, stringtable_index_t x,
-                                stringtable_index_t y) {
+regex_compare_t regex_canonical_equivalent(regex_cache_t *cache,
+                                           stringtable_index_t x,
+                                           stringtable_index_t y) {
 
   if (x.value == y.value) {
-    return true;
+    return regex_compare_equal;
   }
 
-  void *stack = stack_create(&stack_libc, 256);
-  if (!stack) {
-    return false;
+  intstack_t stack = intstack_create(256);
+  if (!intstack_valid(stack)) {
+    return regex_compare_out_of_memory;
   }
 
   intmap_t map = intmap_create(16);
   if (!intmap_valid(map)) {
-    stack_destroy(&stack_libc, stack);
-    return false;
+    intstack_destroy(stack);
+    return regex_compare_out_of_memory;
   }
 
   bool res =
       regex_canonical_equivalent_with_structures(cache, x, y, &stack, &map);
-  stack_destroy(&stack_libc, stack);
+  intstack_destroy(stack);
   intmap_destroy(map);
 
   return res;

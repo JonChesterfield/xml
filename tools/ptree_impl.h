@@ -23,11 +23,11 @@ static inline void ptree_require_func(bool expr, const char *name, int line) {
   }
 }
 
-static inline ptree_context ptree_create_context(const ptree_module *mod) { 
+static inline ptree_context ptree_create_context(const ptree_module *mod) {
   return mod->create_context();
 }
-static inline bool ptree_valid_context(const ptree_module *mod, ptree_context ctx)
-{
+static inline bool ptree_valid_context(const ptree_module *mod,
+                                       ptree_context ctx) {
   return mod->valid_context(ctx);
 }
 static inline void ptree_destroy_context(const ptree_module *mod,
@@ -188,19 +188,19 @@ static inline ptree ptree_expression_construct(const ptree_module *mod,
   ptree res = ptree_expression_create_uninitialised(mod, ctx, id, N);
   ptree_require(ptree_impl_expression_failure_or_has_N_elements(mod, res, N));
 
-  if (ptree_is_failure(res)) {return ptree_failure(); }
-  
+  if (ptree_is_failure(res)) {
+    return ptree_failure();
+  }
+
   for (size_t i = 0; i < N; i++) {
     ptree_expression_initialise_element(mod, res, i, elts[i]);
   }
-  
+
   return res;
 }
 
-static inline ptree ptree_expression_create_uninitialised(const ptree_module *mod,
-                                                          ptree_context ctx, uint64_t id,
-                                                          size_t N)
-{
+static inline ptree ptree_expression_create_uninitialised(
+    const ptree_module *mod, ptree_context ctx, uint64_t id, size_t N) {
   ptree_require(ptree_valid_context(mod, ctx));
   ptree_require(
       ptree_impl_identifier_number_elements_within_bounds(mod, id, N));
@@ -210,30 +210,28 @@ static inline ptree ptree_expression_create_uninitialised(const ptree_module *mo
   if (!ptree_is_failure(res)) {
     ptree_require(ptree_is_expression(mod, res));
     ptree_require(ptree_expression_elements(mod, res) == N);
-    for (size_t i = 0; i < N; i++)
-      {
-        ptree_require(ptree_is_failure(mod->expression_element(res, i)));
-      }
+    for (size_t i = 0; i < N; i++) {
+      ptree_require(ptree_is_failure(mod->expression_element(res, i)));
+    }
   } else {
-    printf("mod->create uninit failed\n"); 
+    printf("mod->create uninit failed\n");
   }
-  
+
   return res;
 }
 
-static inline void ptree_expression_initialise_element(const ptree_module *mod, ptree base,
-                                                       size_t index, ptree elt)
-{
+static inline void ptree_expression_initialise_element(const ptree_module *mod,
+                                                       ptree base, size_t index,
+                                                       ptree elt) {
   ptree_require(ptree_is_expression(mod, base));
   ptree_require(index < ptree_expression_elements(mod, base));
   ptree_require(!ptree_is_failure(elt));
-  
+
   ptree_require(ptree_is_failure(mod->expression_element(base, index)));
   mod->expression_initialise_element(base, index, elt);
   ptree_require(!ptree_is_failure(mod->expression_element(base, index)));
   ptree_require(mod->expression_element(base, index).state == elt.state);
 }
-
 
 static inline ptree ptree_expression0(const ptree_module *mod,
                                       ptree_context ctx, uint64_t id) {
@@ -627,32 +625,22 @@ static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
     uint64_t left_id = ptree_identifier(mod, left);
     uint64_t right_id = ptree_identifier(mod, right);
 
-    if (left_id < right_id) {
+    if (left_id != right_id) {
       stack_destroy(stackmod, stack);
-      return ptree_compare_lesser;
+      return (left_id < right_id) ? ptree_compare_lesser
+                                  : ptree_compare_greater;
     }
-
-    if (left_id > right_id) {
-      stack_destroy(stackmod, stack);
-      return ptree_compare_greater;
-    }
-
-    ptree_require(left_id == right_id);
 
     if (ptree_is_token(mod, left)) {
       ptree_require(ptree_is_token(mod, right));
       uint64_t left_width = ptree_token_width(mod, left);
       uint64_t right_width = ptree_token_width(mod, right);
 
-      if (left_width < right_width) {
+      if (left_width != right_width) {
         stack_destroy(stackmod, stack);
-        return ptree_compare_lesser;
+        return (left_width < right_width) ? ptree_compare_lesser
+                                          : ptree_compare_greater;
       }
-      if (left_width > right_width) {
-        stack_destroy(stackmod, stack);
-        return ptree_compare_greater;
-      }
-      ptree_require(left_width == right_width);
 
       const char *left_value = ptree_token_value(mod, left);
       const char *right_value = ptree_token_value(mod, right);
@@ -661,13 +649,9 @@ static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
         int l = (int)left_value[i] + 256;
         int r = (int)right_value[i] + 256;
 
-        if (l < r) {
+        if (l != r) {
           stack_destroy(stackmod, stack);
-          return ptree_compare_lesser;
-        }
-        if (r < l) {
-          stack_destroy(stackmod, stack);
-          return ptree_compare_greater;
+          return (l < r) ? ptree_compare_lesser : ptree_compare_greater;
         }
       }
       // Tokens were equal id, width, value
@@ -675,22 +659,18 @@ static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
       ptree_require(ptree_is_expression(mod, left));
       ptree_require(ptree_is_expression(mod, right));
 
-      uint64_t left_width = ptree_expression_elements(mod, left);
+      uint64_t width = ptree_expression_elements(mod, left);
       uint64_t right_width = ptree_expression_elements(mod, right);
 
-      if (left_width < right_width) {
+      if (width != right_width) {
         stack_destroy(stackmod, stack);
-        return ptree_compare_lesser;
+        return (width < right_width) ? ptree_compare_lesser
+                                     : ptree_compare_greater;
       }
-      if (left_width > right_width) {
-        stack_destroy(stackmod, stack);
-        return ptree_compare_greater;
-      }
-      ptree_require(left_width == right_width);
 
       {
         void *reserved_stack = stack_reserve(
-            stackmod, stack, stack_size(stackmod, stack) + 2 * left_width);
+            stackmod, stack, stack_size(stackmod, stack) + 2 * width);
         if (!reserved_stack) {
           stack_destroy(stackmod, stack);
           return ptree_compare_out_of_memory;
@@ -698,7 +678,7 @@ static inline enum ptree_compare_res ptree_compare(const ptree_module *mod,
         stack = reserved_stack;
       }
 
-      for (uint64_t i = left_width; i-- > 0;) {
+      for (uint64_t i = width; i-- > 0;) {
         ptree relt = ptree_expression_element(mod, right, i);
         ptree lelt = ptree_expression_element(mod, left, i);
         stack_push_assuming_capacity(stackmod, stack, relt.state);
