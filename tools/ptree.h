@@ -52,6 +52,7 @@ static inline bool ptree_valid_context(const ptree_module *mod, ptree_context ct
 static inline void ptree_destroy_context(const ptree_module *mod,
                                          ptree_context ctx);
 
+// Access to lexer
 static inline bool ptree_identifier_valid_token(const ptree_module *mod,
                                                 uint64_t id);
 static inline bool ptree_identifier_valid_expression(const ptree_module *mod,

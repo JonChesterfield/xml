@@ -34,7 +34,7 @@
 
     <Include value='#include &lt;stdbool.h&gt;' />
     <NL hexvalue="0a" />
-    <Include value='#include &lt;stdio.h&gt;' />
+    <Include value='#include &lt;stdint.h&gt;' />
     <NL hexvalue="0a0a" />
   </Header>
 
@@ -59,8 +59,9 @@
     <Decl value="bool {$LangName}_lexer_discard_token(enum {$LangName}_token);" />
     <NL hexvalue="0a" />
     <Decl value="lexer_token_t {$LangName}_lexer_iterator_step(lexer_t, lexer_iterator_t *);" />
-    <NL hexvalue="0a" />
-
+    <ValidDecl><xsl:attribute name="value" >
+static inline bool <xsl:value-of select='$LangName' />_lexer_identifier_valid_token(uint64_t);
+</xsl:attribute></ValidDecl>
     <NL hexvalue="0a" />
   </Lexer>
 
@@ -83,6 +84,14 @@
     <Count value = "enum {{ {$LangName}_token_count = {count(Token) + 1} }};" />
     <NL hexvalue="0a" />
   </TokenEnum>
+  <LexerInline>
+  <ValidDefn><xsl:attribute name="value" >
+static inline bool <xsl:value-of select='$LangName' />_lexer_identifier_valid_token(uint64_t id)
+{
+  return (id &gt; <xsl:value-of select='$LangName' />_token_UNKNOWN) &amp;&amp; (id &lt; <xsl:value-of select='$LangName' />_token_count);
+}
+</xsl:attribute></ValidDefn>
+</LexerInline>
 
   <TokenNames>
     <NL hexvalue="0a" />

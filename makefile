@@ -475,7 +475,7 @@ TOOLS_HDR := $(call rwildcard,$(TOOLS_DIR),*.h) $(call rwildcard,$(TOOLS_DIR),*.
 TOOLS_C_OBJ := $(TOOLS_C_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 TOOLS_CPP_OBJ := $(TOOLS_CPP_SRC:$(TOOLS_DIR)/%.cpp=$(TOOLS_DIR_OBJ)/%.o)
 
-$(TOOLS_C_OBJ):	TARGET_CFLAGS := -Wno-covered-switch-default -Wno-unused-function -Wno-unused-const-variable
+$(TOOLS_C_OBJ):	TARGET_CFLAGS := -Wno-covered-switch-default -Wno-unused-function -Wno-unused-const-variable -Wno-null-pointer-arithmetic
 
 $(TOOLS_C_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.c $(TOOLS_HDR)
 	@mkdir -p "$(dir $@)"

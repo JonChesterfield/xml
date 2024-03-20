@@ -148,7 +148,7 @@ regex/ascii_stdin_to_xml.c:	scripts/write_stdin_to_xml.lua
 	@lua $^ "ascii" > $@
 
 clean::
-	@rm -f regex/regex.declarations.h
+	@rm -f regex/regex.declarations.h regex/ascii.declarations.h
 	@rm -f regex/regex.ptree.byte_print_array.data regex/regex_grouping_byte_cases.data
 	@rm -f regex/regex_stdin_to_xml.c regex/ascii_stdin_to_xml.c
 

@@ -87,7 +87,7 @@ int main() {
     token lemon_token = token_create(LANGNAME_token_names[lexer_token.id],
                                      lexer_token.value, lexer_token.width);
 
-    if (!LANGNAME_ptree_identifier_valid_token(lexer_token.id)) {
+    if (!LANGNAME_lexer_identifier_valid_token(lexer_token.id)) {
       printf("Token invalid 0x%lx\n", lexer_token.id);
       return 3;
     }

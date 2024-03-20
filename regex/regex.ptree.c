@@ -1,12 +1,15 @@
 #include "regex.h"
 #include "regex.ptree.h"
 #include "regex.declarations.h"
-
 #include "../tools/ptree_malloc_allocator.h"
-
 #include "regex.lexer.h"
 
 #include <assert.h>
+
+//
+// This is a mix of wiring up an allocator and specialising to a language
+// Likely to be simpler if the two dimensions are separated
+//
 
 static ptree_context regex_impl_ptree_create_context(void) {
   return ptree_malloc_ptree_create_context();
@@ -23,15 +26,13 @@ static void regex_impl_ptree_destroy_context(ptree_context ctx) {
 _Static_assert(regex_token_UNKNOWN == 0, "");
 
 static bool regex_impl_ptree_identifier_valid_token(uint64_t id) {
-  return (id > regex_token_UNKNOWN) && (id < regex_token_count);
+  // Same as lexer, probably always must be
+  return regex_lexer_identifier_valid_token(id);
 }
 
 static bool regex_impl_ptree_identifier_valid_expression(uint64_t id) {
-  if (id < regex_token_count) {
-    return false;
-  }
-  
   switch (id) {
+#include "regex_grouping_byte_cases.data"
   case regex_grouping_empty_set:
   case regex_grouping_empty_string:
   case regex_grouping_any_char:
@@ -43,11 +44,7 @@ static bool regex_impl_ptree_identifier_valid_expression(uint64_t id) {
     return true;
   }
   default:
-    break;
-  }
-
-  if ((regex_grouping_byte_00 <= id) && (id <= regex_grouping_byte_ff)) {
-    return true;
+    return false;
   }
 
   return false;
@@ -71,11 +68,11 @@ static const char regex_ptree_byte_print_array[256 * regex_ptree_byte_print_arra
 
 static const char *
 regex_impl_ptree_identifier_expression_maybe_name(uint64_t id) {
-  switch (id) {
+  switch (id) {   
   case regex_grouping_empty_set:
-    return "Oset";
+    return "empty_set";
   case regex_grouping_empty_string:
-    return "Ostr";
+    return "empty_string";
   case regex_grouping_any_char:
     return "any";
   case regex_grouping_concat:
@@ -88,16 +85,15 @@ regex_impl_ptree_identifier_expression_maybe_name(uint64_t id) {
     return "and";
   case regex_grouping_not:
     return "not";
-  default:
-    break;
-  }
-
-  if (regex_grouping_id_is_single_byte(id)) {
+// Could change .data to be X macro style (defaulting to empty) to fold this arithmetic
+#include "regex_grouping_byte_cases.data"
+   {
     size_t offset = regex_ptree_byte_print_array_stride * regex_grouping_extract_single_byte(id);
     return &regex_ptree_byte_print_array[offset];
+  } 
+  default:
+    return 0;
   }
-
-  return 0;
 }
 
 static size_t regex_impl_ptree_identifier_minimum_elements(uint64_t id) {
