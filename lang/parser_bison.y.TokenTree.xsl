@@ -40,12 +40,6 @@
 #include "<xsl:value-of select='$LangName'/>.declarations.h"
 #include "<xsl:value-of select='$LangName'/>.productions.h"
 
- __attribute__((unused)) static int <xsl:value-of select='$LangName'/>_LemonFallback(int);
-
-static void <xsl:value-of select='$LangName'/>_LemonFinalize(void *p);
-static void <xsl:value-of select='$LangName'/>_LemonInit(void *, ptree_context);
-static void <xsl:value-of select='$LangName'/>_Lemon(void*, int, token, ptree*);
-
       </xsl:attribute>
     </Include>
 

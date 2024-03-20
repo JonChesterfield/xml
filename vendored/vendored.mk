@@ -39,6 +39,11 @@ vendored_libxml2:	deepclean
 #	the &va_list construct in trio.c provokes spurious warnings from clang
 	sed -i 's_(&(l))_((void*)\&(l))_' $(TOOLS_DIR)/libxml2/trio.c
 
+#	trio.c subtracts a null pointer with a comment about avoiding compiler warnings, but
+#	as subtracting the null pointer has undefined behavior according to clang, don't do that
+	sed -i 's_((char \*)pointer - (char \*)0)_((char *)pointer /*- (char *)0*/)_' $(TOOLS_DIR)/libxml2/trio.c
+
+
 #	triostr.c uses strcasecmp which is in strings.h on linux, but doesn't include that
 	sed -i 's_#include <string.h>_#include <string.h>\n#include <strings.h>_g' $(TOOLS_DIR)/libxml2/triostr.c
 

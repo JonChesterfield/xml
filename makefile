@@ -42,6 +42,9 @@ C_OR_CXX_FLAGS := -Wall -Wextra -Wcovered-switch-default -g -gdwarf-4
 CFLAGS := -std=c11 $(C_OR_CXX_FLAGS) -O1
 CXXFLAGS := -std=c++14 -Wno-c99-designator $(C_OR_CXX_FLAGS)
 
+TARGET_CFLAGS :=
+
+
 # Considering a single source single file approach to tools
 file_to_cdata := bin/file_to_cdata
 hex_to_binary := bin/hex_to_binary
@@ -100,9 +103,8 @@ include $(SELF_DIR)common/common.mk
 %.parser_bison.c:	%.parser_bison.y
 	bison --no-lines --header=$*.parser_bison.h $^ --output=$@ -Dparse.trace
 
-%.parser_bison.h:	%.parser_bison.c
 %.parser_bison.h:	%.parser_bison.y
-	bison --no-lines --header=$*.parser_bison.h $^ --output=$@ -Dparse.trace
+	bison --no-lines --header=$*.parser_bison.h $^ --output=/dev/null -Dparse.trace
 
 
 # Lemon writes a header file by default, the local version is hacked to not do that
@@ -473,13 +475,15 @@ TOOLS_HDR := $(call rwildcard,$(TOOLS_DIR),*.h) $(call rwildcard,$(TOOLS_DIR),*.
 TOOLS_C_OBJ := $(TOOLS_C_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 TOOLS_CPP_OBJ := $(TOOLS_CPP_SRC:$(TOOLS_DIR)/%.cpp=$(TOOLS_DIR_OBJ)/%.o)
 
+$(TOOLS_C_OBJ):	TARGET_CFLAGS := -Wno-covered-switch-default -Wno-unused-function -Wno-unused-const-variable
+
 $(TOOLS_C_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.c $(TOOLS_HDR)
 	@mkdir -p "$(dir $@)"
-	@$(CC) $(CFLAGS) $< -c -o $@
+	@$(CC) $(CFLAGS) $(TARGET_CFLAGS) $< -c -o $@
 
 $(TOOLS_CPP_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.cpp $(TOOLS_HDR)
 	@mkdir -p "$(dir $@)"
-	@$(CXX) $(CXXFLAGS) $< -c -o $@
+	@$(CXX) $(CXXFLAGS) $(TARGET_CXXFLAGS) $< -c -o $@
 
 # Build the binaries
 $(TOOLS_DIR_BIN):
