@@ -23,7 +23,6 @@ static void regex_impl_ptree_destroy_context(ptree_context ctx) {
 _Static_assert(regex_token_UNKNOWN == 0, "");
 
 static bool regex_impl_ptree_identifier_valid_token(uint64_t id) {
-  // No tokens defined at present
   return (id > regex_token_UNKNOWN) && (id < regex_token_count);
 }
 
@@ -35,6 +34,7 @@ static bool regex_impl_ptree_identifier_valid_expression(uint64_t id) {
   switch (id) {
   case regex_grouping_empty_set:
   case regex_grouping_empty_string:
+  case regex_grouping_any_char:
   case regex_grouping_concat:
   case regex_grouping_kleene:
   case regex_grouping_or:
@@ -76,6 +76,8 @@ regex_impl_ptree_identifier_expression_maybe_name(uint64_t id) {
     return "Oset";
   case regex_grouping_empty_string:
     return "Ostr";
+  case regex_grouping_any_char:
+    return "any";
   case regex_grouping_concat:
     return "cat";
   case regex_grouping_kleene:

@@ -128,6 +128,18 @@ MODULE(ascii_regex_consistent) {
     CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
   }
 
+  TEST("any") {
+    // ascii any excludes newline. Might end up excluding > 127 if
+    // that's what other engines do on utf8
+    static struct pair cases[] = {
+        {".", "(&.(~0a))"},
+    };
+    enum {
+      cases_size = sizeof(cases) / sizeof(cases[0]),
+    };
+    CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
+  }
+
   TEST("ranges") {
     static struct pair cases[] = {
         {"[A]", "41"},

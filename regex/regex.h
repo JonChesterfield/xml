@@ -48,6 +48,10 @@ static inline ptree regex_make_empty_set(ptree_context ctx) {
 static inline ptree regex_make_empty_string(ptree_context ctx) {
   return regex_ptree_expression0(ctx, regex_grouping_empty_string);
 }
+static inline ptree regex_make_any_char(ptree_context ctx) {
+  return regex_ptree_expression0(ctx, regex_grouping_any_char);
+}
+
 static inline ptree regex_make_kleene(ptree_context ctx, ptree val) {
   return regex_ptree_expression1(ctx, regex_grouping_kleene, val);
 }

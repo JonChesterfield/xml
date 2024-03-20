@@ -29,6 +29,7 @@
 
     <Token name="EMPTYSET" literal="%" />
     <Token name="EMPTYSTRING" literal="_" />
+    <Token name="ANYCHAR" literal="." />
 
     <Token name="CONCAT" literal=":" />
 
@@ -51,6 +52,7 @@
 
     <Grouping name="empty_set" type="ptree" />
     <Grouping name="empty_string" type="ptree" />
+    <Grouping name="any_char" type="ptree" />
 
     <Grouping name="concat" type="ptree" />
     <Grouping name="kleene" type="ptree" />
@@ -162,77 +164,65 @@
       <Grouping type="empty_string" position="1" />
     </AssignProduction>
 
-    <ListProduction label="make_concat" grouping="concat" >
+    <ListProduction label="make_any_char" grouping="any_char" >
+      <Token name="ANYCHAR" />
+    </ListProduction>
+    <AssignProduction label="from_any_char" grouping="regex" >
+      <Grouping type="any_char" position="1" />
+    </AssignProduction>
+
+    <AssignProduction label="group" grouping="regex" >
       <Token name="LPAREN" />
+      <Grouping type="regex" position="1" />
+      <Token name="RPAREN" />
+    </AssignProduction>
+
+    <ListProduction label="make_concat" grouping="concat" >
       <Token name="CONCAT" />
       <Grouping type="regex" position="1" />
       <Grouping type="regex" position="2" />
-      <Token name="RPAREN" />
     </ListProduction>
     <AssignProduction label="from_concat" grouping="regex" >
       <Grouping type="concat" position="1" />
     </AssignProduction>
 
     <ListProduction label="make_kleene" grouping="kleene" >
-      <Token name="LPAREN" />
       <Token name="KLEENE" />
       <Grouping type="regex" position="1" />
-      <Token name="RPAREN" />
     </ListProduction>
     <AssignProduction label="from_kleene" grouping="regex" >
       <Grouping type="kleene" position="1" />
     </AssignProduction>
 
     <ListProduction label="make_or" grouping="or" >
-      <Token name="LPAREN" />
       <Token name="OR" />
       <Grouping type="regex" position="1" />
       <Grouping type="regex" position="2" />
-      <Token name="RPAREN" />
     </ListProduction>
-
     <AssignProduction label="from_or" grouping="regex" >
       <Grouping type="or" position="1" />
     </AssignProduction>
 
     <ListProduction label="make_and" grouping="and" >
-      <Token name="LPAREN" />
       <Token name="AND" />
       <Grouping type="regex" position="1" />
       <Grouping type="regex" position="2" />
-      <Token name="RPAREN" />
     </ListProduction>
     <AssignProduction label="from_and" grouping="regex" >
       <Grouping type="and" position="1" />
     </AssignProduction>
 
     <ListProduction label="make_not" grouping="not" >
-      <Token name="LPAREN" />
       <Token name="NOT" />
       <Grouping type="regex" position="1" />
-      <Token name="RPAREN" />
     </ListProduction>
     <AssignProduction label="from_not" grouping="regex" >
       <Grouping type="not" position="1" />
     </AssignProduction>
 
-
-<!--
-    <AssignProduction label="DiscardWSLeft" grouping="regex" >
-      <Token name="WHITESPACE" />
-      <Grouping type="regex" position="1" />
-    </AssignProduction>
-
-    <AssignProduction label="DiscardWSRight" grouping="regex" >
-      <Grouping type="regex" position="1" />
-      <Token name="WHITESPACE" />
-    </AssignProduction>
--->
-
     <AssignProduction label="some_byte" grouping="regex" >
       <Grouping type="some_byte" position="1" />
     </AssignProduction>
-
 
   </Productions>
 </Language>

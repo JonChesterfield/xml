@@ -38,7 +38,7 @@ clean::
 CC := clang
 CXX := clang++
 
-C_OR_CXX_FLAGS := -Wall -Wextra -g -gdwarf-4
+C_OR_CXX_FLAGS := -Wall -Wextra -Wcovered-switch-default -g -gdwarf-4
 CFLAGS := -std=c11 $(C_OR_CXX_FLAGS) -O1
 CXXFLAGS := -std=c++14 -Wno-c99-designator $(C_OR_CXX_FLAGS)
 

@@ -10,7 +10,7 @@ end
 local template = [=[#include "../tools/io_buffer.h"
 #include <stdio.h>
 
-#include "LANGNAME.h"
+// #include "LANGNAME.h"
 #include "LANGNAME.ptree.h"
 
 #include "LANGNAME.lexer.h"
@@ -19,9 +19,6 @@ local template = [=[#include "../tools/io_buffer.h"
 #include "LANGNAME.parser_lemon.t"
 
 #include "LANGNAME.parser_bison.h"
-
-// Hack it for now, going to need to bring values into alignment
-enum {bison_offset = BISON_BYTE - regex_token_BYTE, };
 
 #include "../tools/stack.libc.h"
 #include "../tools/lexer.h"
@@ -52,10 +49,12 @@ int main() {
     return 1;
   }
 
+  // printf("Read %zu bytes\n", in->N);
   ptree_context ctx = LANGNAME_ptree_create_context();
 
   lexer_t lexer = LANGNAME_lexer_create();
   if (!LANGNAME_lexer_valid(lexer)) {
+    printf("lexer creation failed\n");
     return 2;
   }
 
@@ -65,6 +64,7 @@ int main() {
   LANGNAME_bison_pstate * bison_parser = LANGNAME_bison_pstate_new();
   ptree bison_arg = ptree_failure();
 
+  unsigned iter_count = 0;
   for (lexer_iterator_t lexer_iterator =
            lexer_iterator_t_create(in->data, in->N);
        !lexer_iterator_t_empty(lexer_iterator);) {
@@ -72,7 +72,12 @@ int main() {
         LANGNAME_lexer_iterator_step(lexer, &lexer_iterator);
     if (!(lexer_token.id < LANGNAME_token_count) ||
         (lexer_token.id == LANGNAME_token_UNKNOWN)) {
+      printf("Token %u unknown<%zu>:", iter_count++, lexer_token.id);
+      lexer_token_dump(lexer_token);
       return 2;
+    } else {
+      printf("Token %u: ", iter_count++);
+      lexer_token_dump(lexer_token);
     }
 
     if (LANGNAME_lexer_discard_token(lexer_token.id)) {
@@ -83,6 +88,7 @@ int main() {
                                      lexer_token.value, lexer_token.width);
 
     if (!LANGNAME_ptree_identifier_valid_token(lexer_token.id)) {
+      printf("Token invalid 0x%lx\n", lexer_token.id);
       return 3;
     }
 
@@ -92,7 +98,9 @@ int main() {
     union UPPERNAME_BISON_STYPE tmp = {
       .token = lemon_token,
     };
-    int bison_rc = LANGNAME_bison_push_parse(bison_parser, bison_offset + lexer_token.id, &tmp, &bison_arg, ctx);
+    // Note: This requires bison to be using the same tokentype numbers as the lexer
+    // i.e. [1, N) in definition order
+    int bison_rc = LANGNAME_bison_push_parse(bison_parser, lexer_token.id, &tmp, &bison_arg, ctx);
 
     // possible this expects to be called as do {} while (rc == YYPUSH_MORE)
     switch(bison_rc)

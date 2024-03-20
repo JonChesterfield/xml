@@ -48,7 +48,7 @@ static inline hashtable_t hashderiv_arena_to_hash(arena_t a) {
 
 enum {
   bytes_key_size = 8,
-  bytes_value_size = 8 * 256,
+  bytes_value_size = 8 * 256 + 8,
   element_size = bytes_key_size + bytes_value_size,
 };
 

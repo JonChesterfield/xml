@@ -115,6 +115,17 @@ MODULE(regex_match) {
           3,
         },
 
+        {
+          R("."),
+          R("k"),
+          1,
+        },
+        
+        {
+          R("(:61.)"),
+          R("abc"),
+          2,
+        },
 
         {
           R("(:61(|00(~00)))"),
@@ -127,7 +138,6 @@ MODULE(regex_match) {
           R("abc"),
           2,
         },
-
         
         {
           R("(:61(:(~%)63))"),
@@ -135,7 +145,6 @@ MODULE(regex_match) {
           3,
         },
 
-        
     };
     enum { size = sizeof(cases) / sizeof(cases[0]) };
 

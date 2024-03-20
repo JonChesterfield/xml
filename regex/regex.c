@@ -24,6 +24,9 @@ bool regex_nullable_p(ptree val) {
   case regex_grouping_empty_set:
     return false;
 
+  case regex_grouping_any_char:
+    return false;
+
   case regex_grouping_kleene:
     return true;
 
@@ -86,6 +89,9 @@ ptree regex_derivative(ptree_context ctx, ptree val, uint8_t byte) {
   case regex_grouping_empty_set:
     return regex_make_empty_set(ctx);
 
+  case regex_grouping_any_char:
+    return regex_make_empty_string(ctx);
+
   case regex_grouping_concat: {
     ptree r = regex_ptree_expression_element(val, 0);
     ptree s = regex_ptree_expression_element(val, 1);
@@ -136,8 +142,13 @@ static ptree regex_canonicalise_impl(ptree_context ctx, ptree val) {
     }
 
   uint64_t id = regex_ptree_identifier(val);
+
+  // Should probably do something with (!11,) and similar here
   if (regex_grouping_id_is_single_byte(id)) {
     return val;
+  }
+  if (id == regex_grouping_any_char) {
+      return val;
   }
 
   /*

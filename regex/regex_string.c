@@ -77,6 +77,11 @@ static int regex_to_char_sequence_pre(ptree tree, uint64_t depth, void *p) {
     return 0;
   }
 
+  case regex_grouping_any_char: {
+    arena_push_char(data->mod, data->arena, '.');
+    return 0;
+  }
+    
   case regex_grouping_concat:
   case regex_grouping_kleene:
   case regex_grouping_or:
@@ -92,7 +97,6 @@ static int regex_to_char_sequence_pre(ptree tree, uint64_t depth, void *p) {
 
     case regex_grouping_kleene: {
       arena_push_char(data->mod, data->arena, '*');
-
       return 0;
     }
 
@@ -156,6 +160,7 @@ static int regex_to_char_sequence_post(ptree tree, uint64_t depth, void *p) {
   switch (id) {
   case regex_grouping_empty_set:
   case regex_grouping_empty_string:
+  case regex_grouping_any_char:
     return 0;
 
   case regex_grouping_concat:

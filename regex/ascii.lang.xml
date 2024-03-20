@@ -91,10 +91,12 @@
     <Token name="QUESTION" literal="?" />
 -->
 
+  <Token name="DISCARDED_WHITESPACE" regex="[\f\n\r\t\v]+" />
 
   </Tokens>
 
   <TokenDiscard>
+    <Token name="DISCARDED_WHITESPACE" />
   </TokenDiscard>
 
   <Groupings>
@@ -115,16 +117,14 @@
     <Grouping name="elementary_RE" type="ptree" />
 
     <Grouping name="group" type="ptree" />
-    
-    <!-- probably excluding newline -->
-<!--
-    <Grouping name="any" type="ptree" />
--->
 
     <!-- Leaving $ / end of string out for now -->
     <!-- <Grouping name="eos" type="ptree" /> -->
 
     <Grouping name="char_RE" type="ptree" />
+
+    <!-- probably excluding newline -->
+    <Grouping name="any_RE" type="ptree" />
 
     <Grouping name="set" type="ptree" />
     <Grouping name="positive_set" type="ptree" />
@@ -223,6 +223,10 @@
       <Grouping type="char_RE" position="1" />  
     </AssignProduction>
 
+    <AssignProduction label="elementary_from_any" grouping="elementary_RE" >
+      <Grouping type="any_RE" position="1" />  
+    </AssignProduction>
+
     <AssignProduction label="elementary_from_set" grouping="elementary_RE" >
       <Grouping type="set" position="1" />  
     </AssignProduction>
@@ -233,6 +237,11 @@
       <Grouping type="result_RE" position="1" />
       <Token name="RPAREN" />
     </AssignProduction>
+
+    <!-- any -->
+    <CustomProduction label="from_any" grouping="any_RE" >
+      <Token name="PERIOD"/>
+    </CustomProduction>
 
     <!-- set -->
     <AssignProduction label="set_from_positive_set" grouping="set" >

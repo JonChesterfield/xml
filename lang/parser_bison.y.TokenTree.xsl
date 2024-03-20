@@ -121,6 +121,9 @@ int <xsl:value-of select='$LangName'/>_parser_bison_type_header(void)
 // is miscompiling BYTE00 = 0
 // I think this also ignores the numeric assignment to tokens
 // but with care is probably better
+// Definitely disables things like ';' in the grammar, but lemon also rejects that
+// Would have liked to use api.token.raw with an explicit UNKNOWN token at the start
+// but that doesn't suffice, known ends up at 3 (the internal symbols get put at the start)
 // %define api.token.raw
 
 // Try to have more internal asserts
@@ -226,7 +229,7 @@ int <xsl:value-of select='$LangName'/>_parser_bison_type_header(void)
 </xsl:template>
 
 <xsl:template match="Token">
-  <TokenDecl literal="%token &lt;token&gt; {@name} // {@regex}{@literal}?" />
+  <TokenDecl literal="%token &lt;token&gt; {@name} {position()} // {@regex}{@literal}?" />
   <NL hexvalue="0a" />
 </xsl:template>
 

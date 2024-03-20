@@ -13,6 +13,7 @@ static bool regex_id_is_atomic(uint64_t id) {
   switch (id) {
   case regex_grouping_empty_set:
   case regex_grouping_empty_string:
+  case regex_grouping_any_char:
     return true;
   default:
     return false;
