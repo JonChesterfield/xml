@@ -20,7 +20,8 @@ rm -rf $installdir "$thisdir"/*.log
 
 NP=$(nproc)
 
-CC=clang
+CC=$llvmdir/bin/clang
+CXX=$llvmdir/bin/clang++
 
 if [[ -d "$musldir" ]]
 then
@@ -50,16 +51,24 @@ make -j $NP install-headers
 # detour to build compiler_rt against those headers
 cd "$thisdir"
 compiler_rt_dir=build_compiler_rt
-
 rm -rf $compiler_rt_dir && mkdir $compiler_rt_dir && cd $compiler_rt_dir
 
+# /home/jon/xml/musl/install/include/c++/v1/cstring:65:5:
+# error: <cstring> tried including <string.h> but didn't find libc++'s <string.h> header.
+# This usually means that your header search paths are not configured properly.
+# The header search paths should contain the C++ Standard Library headers before
+# any C Standard Library, and you are probably using compiler flags that make that
+# not be the case.
+
 muslflags="-nostdinc -nostdlib -I$installdir/include"
+cxxmuslflags="-nostdinc -nostdlib -I$installdir/include/c++/v1/ -I$installdir/include"
+
 
 cmake -D CMAKE_BUILD_TYPE=Release                                              \
-      -D CMAKE_C_COMPILER=clang                                                \
-      -D CMAKE_C_FLAGS="$muslflags"             \
+      -D CMAKE_C_COMPILER=$CC                                                  \
+      -D CMAKE_C_FLAGS="$muslflags"                                            \
       -D CMAKE_C_COMPILER_TARGET=x86_64-unknown-linux-musl                     \
-      -D CMAKE_CXX_COMPILER=clang++                                            \
+      -D CMAKE_CXX_COMPILER=$CXX                                               \
       -D CMAKE_CXX_COMPILER_TARGET=x86_64-unknown-linux-musl                   \
       -D CMAKE_INSTALL_LIBDIR=lib                                              \
       -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
@@ -98,6 +107,8 @@ $CC --target=x86_64-unknown-linux-musl -no-pie $installdir/lib/crt1.o  $muslflag
 
 
 # try to build libc-test
+if false
+then
 cd "$libctestdir"
 cp config.mak.def config.mak
 
@@ -132,3 +143,152 @@ sed -i 's_$(CC) -shared_$(CC) '$installdir'/lib/Scrt1.o -shared_' Makefile
 sed -i 's_$(CC) $(LDFLAGS)_$(CC) '$installdir'/lib/Scrt1.o $(LDFLAGS)_' Makefile
 
 make
+
+fi
+
+
+# libcxx depends on linux
+# the files in question are under /usr/include and accesed via
+# #include <linux/futex.h>, and optionally linux/random.h
+# futex crawls various minor files from asm as well
+# not sure how stable this list is with regard to different kernel versions
+# make headers_install ARCH=i386 INSTALL_HDR_PATH=/usr is probably a better plan
+mkdir -p "$installdir"/include/linux "$installdir"/include/asm "$installdir"/include/asm-generic
+for i in \
+    linux/futex.h \
+        linux/types.h \
+        linux/stddef.h \
+        linux/posix_types.h \
+        asm/types.h \
+        asm/posix_types.h \
+        asm/posix_types_64.h \
+        asm-generic/types.h \
+        asm-generic/posix_types.h \
+        asm-generic/int-ll64.h \
+        asm/bitsperlong.h \
+        asm-generic/bitsperlong.h \
+    ; do
+    cp /usr/include/$i  "$installdir"/include/$i
+done
+         
+
+
+cd "$thisdir"
+libunwind_dir=build_libunwind
+rm -rf $libunwind_dir && mkdir $libunwind_dir && cd $libunwind_dir
+
+cmake -D CMAKE_BUILD_TYPE=Release                                              \
+      -D CMAKE_C_COMPILER=$CC                                                  \
+      -D CMAKE_C_FLAGS="$muslflags --sysroot=$installdir"                                            \
+      -D CMAKE_C_COMPILER_TARGET=x86_64-unknown-linux-musl                     \
+      -D CMAKE_CXX_COMPILER=$CXX                                               \
+      -D CMAKE_CXX_FLAGS="$muslflags --sysroot=$installdir"                                            \
+      -D CMAKE_CXX_COMPILER_TARGET=x86_64-unknown-linux-musl                   \
+      -D CMAKE_INSTALL_LIBDIR=lib                                              \
+      -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
+      -D LIBUNWIND_USE_COMPILER_RT=ON                                          \
+      -G Ninja                                                                 \
+      -S $HOME/llvm-project/libunwind
+
+ninja -v && ninja install
+
+
+# don't think I can install the headers without building the library
+# but I probably can install the headers without installing the library
+# todo: can we build from the headers in the source tree directly
+# decent chance since I think that's probably what the all in one build does
+
+# without doing anything with unicode one gets
+# error: unknown rune table for this platform -
+# do you mean to define _LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE
+# using LIBCXX_ENABLE_UNICODE=off to continue trying to bootstrap
+
+# benchmarks are some c++ programs, can't build them yet
+
+cd $thisdir
+libcxx_dir=build_libcxx_nounwind
+rm -rf $libcxx_dir && mkdir $libcxx_dir && cd $libcxx_dir
+
+cmake -D CMAKE_BUILD_TYPE=Release                                              \
+      -D CMAKE_C_COMPILER=$CC                                                  \
+      -D CMAKE_C_FLAGS="$muslflags --sysroot=$installdir"                      \
+      -D CMAKE_C_COMPILER_TARGET=x86_64-unknown-linux-musl                     \
+      -D CMAKE_CXX_COMPILER=$CXX                                               \
+      -D CMAKE_CXX_FLAGS="$muslflags --sysroot=$installdir"                    \
+      -D CMAKE_CXX_COMPILER_TARGET=x86_64-unknown-linux-musl                   \
+      -D CMAKE_INSTALL_LIBDIR=lib                                              \
+      -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
+      -D LIBCXX_USE_COMPILER_RT=ON                                          \
+      -D LIBCXX_ENABLE_SHARED=OFF \
+      -D LIBCXX_ENABLE_STATIC=ON \
+      -D LIBCXX_INCLUDE_BENCHMARKS=OFF \
+      -D LIBCXX_ENABLE_LOCALIZATION=OFF\
+      -D LIBCXX_ENABLE_UNICODE=OFF \
+      -D LIBCXX_CXX_ABI=none \
+      -G Ninja                                                                 \
+      -S $HOME/llvm-project/libcxx
+
+ninja -v && ninja install -v
+
+cd $thisdir
+libcxxabi_dir=build_libcxxabi
+rm -rf $libcxxabi_dir && mkdir $libcxxabi_dir && cd $libcxxabi_dir
+
+# LIBCXXABI_USE_LLVM_UNWINDER=ON sounds great and errors that we're not using
+# LLVM_ENABLE_RUNTIMES
+
+
+# libcxxabi depends on libc++ - at least on a lot of headers from it - which
+# is difficult since we don't have a libc++ yet, as it depends on libcxxabi
+# shared lib tries to link against -lcxx-headers despite nostdlib
+cmake -D CMAKE_BUILD_TYPE=Release                                              \
+      -D CMAKE_C_COMPILER=$CC                                                  \
+      -D CMAKE_C_FLAGS="$muslflags --sysroot=$installdir"                      \
+      -D CMAKE_C_COMPILER_TARGET=x86_64-unknown-linux-musl                     \
+      -D CMAKE_CXX_COMPILER=$CXX                                               \
+      -D CMAKE_CXX_FLAGS="$cxxmuslflags --sysroot=$installdir"                    \
+      -D CMAKE_CXX_COMPILER_TARGET=x86_64-unknown-linux-musl                   \
+      -D CMAKE_INSTALL_LIBDIR=lib                                              \
+      -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
+      -D LIBCXXABI_USE_COMPILER_RT=ON                                          \
+      -D LIBCXXABI_USE_LLVM_UNWINDER=OFF                                       \
+      -D LIBCXXABI_ENABLE_SHARED=OFF \
+      -G Ninja                                                                 \
+      -S $HOME/llvm-project/libcxxabi
+
+ninja -v && ninja install
+
+# Now we've got a libunwind, build a new libcxx
+
+cd $thisdir
+libcxx_dir=build_libcxx
+rm -rf $libcxx_dir && mkdir $libcxx_dir && cd $libcxx_dir
+
+# other interesting flags LIBCXX_ENABLE_STATIC_ABI_LIBRARY
+# LIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY
+
+# I think libcxx is failing to build using its own headers
+# first error is unknown type name ldiv_t, followed but a lot of missing size_t
+
+cmake -D CMAKE_BUILD_TYPE=Release                                              \
+      -D CMAKE_C_COMPILER=$CC                                                  \
+      -D CMAKE_C_FLAGS="$muslflags --sysroot=$installdir"                      \
+      -D CMAKE_C_COMPILER_TARGET=x86_64-unknown-linux-musl                     \
+      -D CMAKE_CXX_COMPILER=$CXX                                               \
+      -D CMAKE_CXX_FLAGS="$cxxmuslflags --sysroot=$installdir"                    \
+      -D CMAKE_CXX_COMPILER_TARGET=x86_64-unknown-linux-musl                   \
+      -D CMAKE_INSTALL_LIBDIR=lib                                              \
+      -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
+      -D LIBCXX_USE_COMPILER_RT=ON                                          \
+      -D LIBCXX_ENABLE_SHARED=OFF \
+      -D LIBCXX_ENABLE_STATIC=ON \
+      -D LIBCXX_INCLUDE_BENCHMARKS=OFF \
+      -D LIBCXX_ENABLE_LOCALIZATION=OFF\
+      -D LIBCXX_ENABLE_UNICODE=OFF \
+      -D LIBCXX_CXX_ABI=libcxxabi \
+      -G Ninja                                                                 \
+      -S $HOME/llvm-project/libcxx
+
+ninja -v && ninja install -v
+
+
