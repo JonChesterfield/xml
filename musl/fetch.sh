@@ -14,6 +14,7 @@ libctestdir="$thisdir/libc-test"
 
 installdir="$thisdir"/install
 
+llvmsrcdir="$HOME/llvm-project"
 llvmdir="$HOME/llvm-build/llvm"
 
 rm -rf $installdir "$thisdir"/*.log
@@ -172,7 +173,7 @@ for i in \
 done
          
 
-
+## libunwind start
 cd "$thisdir"
 libunwind_dir=build_libunwind
 rm -rf $libunwind_dir && mkdir $libunwind_dir && cd $libunwind_dir
@@ -187,16 +188,16 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_INSTALL_LIBDIR=lib                                              \
       -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
       -D LIBUNWIND_USE_COMPILER_RT=ON                                          \
+      -D LIBUNWIND_ENABLE_SHARED=OFF \
       -G Ninja                                                                 \
       -S $HOME/llvm-project/libunwind
 
 ninja -v && ninja install
-
+## libunwind complete
 
 # don't think I can install the headers without building the library
 # but I probably can install the headers without installing the library
-# todo: can we build from the headers in the source tree directly
-# decent chance since I think that's probably what the all in one build does
+# todo: can we build from the headers in the source tree directly? no, config_site
 
 # without doing anything with unicode one gets
 # error: unknown rune table for this platform -
@@ -204,9 +205,11 @@ ninja -v && ninja install
 # using LIBCXX_ENABLE_UNICODE=off to continue trying to bootstrap
 
 # benchmarks are some c++ programs, can't build them yet
+# maybe libcxx can be built against the header
 
+## libcxx start
 cd $thisdir
-libcxx_dir=build_libcxx_nounwind
+libcxx_dir=build_libcxx
 rm -rf $libcxx_dir && mkdir $libcxx_dir && cd $libcxx_dir
 
 cmake -D CMAKE_BUILD_TYPE=Release                                              \
@@ -214,29 +217,31 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_C_FLAGS="$muslflags --sysroot=$installdir"                      \
       -D CMAKE_C_COMPILER_TARGET=x86_64-unknown-linux-musl                     \
       -D CMAKE_CXX_COMPILER=$CXX                                               \
-      -D CMAKE_CXX_FLAGS="$muslflags --sysroot=$installdir"                    \
+      -D CMAKE_CXX_FLAGS="-I$llvmsrcdir/libcxxabi/include $muslflags --sysroot=$installdir"                    \
       -D CMAKE_CXX_COMPILER_TARGET=x86_64-unknown-linux-musl                   \
       -D CMAKE_INSTALL_LIBDIR=lib                                              \
       -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
       -D LIBCXX_USE_COMPILER_RT=ON                                          \
       -D LIBCXX_ENABLE_SHARED=OFF \
       -D LIBCXX_ENABLE_STATIC=ON \
+      -D LIBCXX_HAS_MUSL_LIBC=ON \
       -D LIBCXX_INCLUDE_BENCHMARKS=OFF \
       -D LIBCXX_ENABLE_LOCALIZATION=OFF\
       -D LIBCXX_ENABLE_UNICODE=OFF \
-      -D LIBCXX_CXX_ABI=none \
+      -D LIBCXX_CXX_ABI=libcxxabi \
       -G Ninja                                                                 \
       -S $HOME/llvm-project/libcxx
 
 ninja -v && ninja install -v
+## libcxx complete
 
+## libcxxabi start, have a libc++ install to build against
 cd $thisdir
 libcxxabi_dir=build_libcxxabi
 rm -rf $libcxxabi_dir && mkdir $libcxxabi_dir && cd $libcxxabi_dir
 
 # LIBCXXABI_USE_LLVM_UNWINDER=ON sounds great and errors that we're not using
 # LLVM_ENABLE_RUNTIMES
-
 
 # libcxxabi depends on libc++ - at least on a lot of headers from it - which
 # is difficult since we don't have a libc++ yet, as it depends on libcxxabi
@@ -258,37 +263,14 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
 
 ninja -v && ninja install
 
-# Now we've got a libunwind, build a new libcxx
+## libcxxabi complete
 
 cd $thisdir
-libcxx_dir=build_libcxx
-rm -rf $libcxx_dir && mkdir $libcxx_dir && cd $libcxx_dir
-
-# other interesting flags LIBCXX_ENABLE_STATIC_ABI_LIBRARY
-# LIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY
-
-# I think libcxx is failing to build using its own headers
-# first error is unknown type name ldiv_t, followed but a lot of missing size_t
-
-cmake -D CMAKE_BUILD_TYPE=Release                                              \
-      -D CMAKE_C_COMPILER=$CC                                                  \
-      -D CMAKE_C_FLAGS="$muslflags --sysroot=$installdir"                      \
-      -D CMAKE_C_COMPILER_TARGET=x86_64-unknown-linux-musl                     \
-      -D CMAKE_CXX_COMPILER=$CXX                                               \
-      -D CMAKE_CXX_FLAGS="$cxxmuslflags --sysroot=$installdir"                    \
-      -D CMAKE_CXX_COMPILER_TARGET=x86_64-unknown-linux-musl                   \
-      -D CMAKE_INSTALL_LIBDIR=lib                                              \
-      -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
-      -D LIBCXX_USE_COMPILER_RT=ON                                          \
-      -D LIBCXX_ENABLE_SHARED=OFF \
-      -D LIBCXX_ENABLE_STATIC=ON \
-      -D LIBCXX_INCLUDE_BENCHMARKS=OFF \
-      -D LIBCXX_ENABLE_LOCALIZATION=OFF\
-      -D LIBCXX_ENABLE_UNICODE=OFF \
-      -D LIBCXX_CXX_ABI=libcxxabi \
-      -G Ninja                                                                 \
-      -S $HOME/llvm-project/libcxx
-
-ninja -v && ninja install -v
-
-
+echo "create $installdir/lib/libcombinedc++.a
+addlib $installdir/lib/libunwind.a
+addlib $installdir/lib/libc++abi.a
+addlib $installdir/lib/libc++.a
+save
+end" | llvm-ar -M
+rm $installdir/lib/libunwind.a $installdir/lib/libc++abi.a $installdir/lib/libc++.a
+mv $installdir/lib/libcombinedc++.a $installdir/lib/libc++.a
