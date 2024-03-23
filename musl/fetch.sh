@@ -346,6 +346,12 @@ rm -rf $llvm_dir && mkdir $llvm_dir && cd $llvm_dir
 # build is doing something dubious with a subdir called NATIVE and tablegen, to
 # which some of the musl related flags are being passed and some aren't
 
+#
+# disabling tools because bugpoint builds some shared libraries without cross aware
+# logic, but that'll kill llvm-{link,ar} etc. lld plugins might be a problem too.
+# but if we can build clang as a native targets-musl program, hopefully the next
+# stage can build everything else
+#
 cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_AR=$llvmdir/bin/llvm-ar                                         \
       -D CMAKE_NM=$llvmdir/bin/llvm-nm                                         \
@@ -373,8 +379,8 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_SHARED_LINKER_FLAGS="-nostdlib -nostartfiles --rtlib=compiler-rt -fuse-ld=lld -Wl,--whole-archive $installdir/lib/libc++.a $musllink -Wl,--no-whole-archive" \
       -D CMAKE_INSTALL_LIBDIR=lib                                              \
       -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
-      -D LLVM_DEFAULT_TARGET_TRIPLE=x86_64-unknown-linux-musl \
       -D LLVM_ENABLE_PROJECTS="clang;lld" \
+      -D LLVM_DEFAULT_TARGET_TRIPLE=x86_64-unknown-linux-musl \
       -D LLVM_USE_LINKER=lld \
       -D LLVM_ENABLE_LIBCXX=ON \
       -D LLVM_ENABLE_ZLIB=OFF \
@@ -383,6 +389,8 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D LLVM_INCLUDE_EXAMPLES=OFF \
       -D LLVM_INCLUDE_TESTS=FALSE \
       -D LLVM_INCLUDE_BENCHMARKS=FALSE \
+      -D LLVM_INCLUDE_TOOLS=FALSE \
+      -D LLVM_INCLUDE_UTILS=FALSE \
       -D DEFAULT_SYSROOT="$installdir" \
       -D CLANG_DEFAULT_LINKER=lld \
       -D CLANG_DEFAULT_CXX_STDLIB=libc++ \
