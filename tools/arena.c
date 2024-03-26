@@ -107,15 +107,16 @@ static MODULE(increment_for_alignment) {
   }
 
   TEST("parametric") {
-    for (uint64_t base = 0; base < 100; base++) {
+    bool ok = true;
+    for (uint64_t base = 0; base < 1000; base++) {
       for (unsigned a = 0; a < 6; a++) {
         uint64_t align = UINT64_C(1) << a;
         uint64_t incr = arena_increment_needed_for_alignment(mod, base, align);
-
-        CHECK(incr < align);
-        CHECK(((base + incr) % align) == 0);
+        ok &= (incr < align);
+        ok &= (((base + incr) % align) == 0);
       }
     }
+    CHECK(ok);
   }
 }
 

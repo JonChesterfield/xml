@@ -296,7 +296,18 @@ static inline uint64_t arena_increment_needed_for_alignment(arena_module mod,
 
   arena_require(rem == (base % align));
 
-  return rem ? (align - rem) : 0;
+  // Obvious calculation lowers to a select. and/sub/test/cmov
+  uint64_t select = rem ? (align - rem) : 0;
+
+  // But can also just mask it again. and/sub/and
+  uint64_t snd_mask = (align - rem) & modulo_as_mask;
+  arena_require(select == snd_mask);
+
+  uint64_t result = select;
+
+  arena_require(result < align);
+  arena_require(((base + result) % align) == 0);
+  return result;
 }
 
 static inline void *arena_base_address(arena_module mod, arena_t a) {
