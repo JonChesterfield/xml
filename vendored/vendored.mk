@@ -1,8 +1,11 @@
 $(if $(TOOLS_DIR),,$(error vendored.mk requires tools dir))
 
+# should probably handle tools/cmark here as well
+# maybe produce a tarball for evilunit instead of pulling from github
+
 .PHONY: vendored
-vendored::	vendored_libxml2 vendored_libxslt
-#	Clean up some unused files across the two
+vendored::	vendored_libxml2 vendored_libxslt vendored_evilunit
+#	Clean up some additional unused files
 	@find $(TOOLS_DIR)/libx??? -type f '(' -iname Makefile -o -iname NEWS -o -iname '*.Po' -o -iname '*.Plo' -o -iname '*.in' -o -iname '*.am' -o -iname '*.pl' -o -iname '*.syms' -o -name configure -o -name libtool -o -name ltmain.sh -o -name CMakeLists.txt -o -name INSTALL -o -name missing ')' -delete
 	@find $(TOOLS_DIR)/libx??? -type d -iname .deps -delete
 	@rm -rf $(TOOLS_DIR)/libx???/m4
@@ -11,6 +14,7 @@ deepclean::
 	rm -rf $(TOOLS_DIR)/libxml2
 	rm -rf $(TOOLS_DIR)/libxslt
 	rm -f $(TOOLS_DIR)/xmllint.c $(TOOLS_DIR)/xsltproc.c
+	rm -rf $(TOOLS_DIR)/EvilUnit
 
 # considering this caching approach instead of fetch.sh, but want the tar checked in
 #vendored/libxml2-2.12.0.tar.xz:
@@ -82,3 +86,7 @@ vendored_libxslt:	deepclean
 	sed -i 's_<libxml/\(.*\)>_"libxml2/include/libxml/\1"_g' $(TOOLS_DIR)/xsltproc.c
 	sed -i 's_<libxslt/\(.*\)>_"libxslt/libxslt/\1"_g' $(TOOLS_DIR)/xsltproc.c
 	sed -i 's_<libexslt/\(.*\)>_"libxslt/libexslt/\1"_g' $(TOOLS_DIR)/xsltproc.c
+
+.PHONY: vendored_evilunit
+vendored_evilunit:	deepclean
+	git clone https://github.com/JonChesterfield/EvilUnit.git $(TOOLS_DIR)/EvilUnit
