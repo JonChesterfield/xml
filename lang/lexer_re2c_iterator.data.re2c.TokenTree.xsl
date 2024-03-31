@@ -100,11 +100,21 @@ match:;
 </xsl:template>
 
 <!-- re2c has different quoting rules to other regex engines
-     and doesn't need string literal escaping
+     Getting this to work consistently has been a pain as re2c fails to
+     recognise things like \( or \xAB outside of its literal syntax.
+     Also it hasn't implemented \e (can encode as a hex literal 5c1b for \ then 1b)
+
+     Doesn't need C string literal escaping
      There's reasonable chance 'literal' with single quotes is right
      Need to escape ' values within the literal. Can optionally escape
      other values. Probably need to special case the */ sequence to avoid
      early-exit the comment from C's perspective.
+     Using <LiteralRegex value="'{@literal}';" /> is working for some cases,
+     but things like \t, which should be turning into matching a slash then a t,
+     are probably being interpreted as matching a tab. In particular, '\e' warns
+     about a useless escape, which suggests it thinks \ in literals are escapes
+     Currently turning literal and hexliteral into regex then letting re2c
+     turn that back into a state machine as that seems to have fewer edge cases.
 -->
 <xsl:template match="Token" mode="Names">  
   <ID value="  RE2C_{@name} = " />
@@ -114,6 +124,19 @@ match:;
     </xsl:when>
     <xsl:when test="@literal" >
       <LiteralRegex value="'{@literal}';" />
+    </xsl:when>
+    <!-- re2c is rejecting \xAB syntax outside of literals, so wrap it in a ' -->
+    <xsl:when test="@hexliteral" >
+      <Quote value="'" />
+      <HexLiteralRegex>
+        <xsl:attribute name="value">
+          <xsl:call-template name="hex_to_c_literal">
+            <xsl:with-param name="str" select="@hexliteral"/>
+          </xsl:call-template>
+        </xsl:attribute>
+      </HexLiteralRegex>
+      <Quote value="'" />
+      <Semicolon value=";" />
     </xsl:when>
     <xsl:otherwise>
       <Error value="$^" /> 

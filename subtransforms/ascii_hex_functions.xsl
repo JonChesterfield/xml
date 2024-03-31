@@ -18,7 +18,7 @@
          <!-- extract first 2 digits -->
          <xsl:variable name="char1" select="substring($str, 1, 1)"/>
          <xsl:variable name="char2" select="substring($str, 2, 1)"/>
-         <xsl:variable name="char12" select="substring($str, 3, 1)"/>
+         <xsl:variable name="char12" select="substring($str, 1, 2)"/>
 
          <xsl:choose>
            <xsl:when test="$char12 = 'x9'" >
@@ -163,7 +163,6 @@
        <xsl:variable name="char" select="substring($str, 1, 1)"/>
 
          <xsl:choose>
-           <!-- If string is a single _, discard it -->
            <xsl:when test="contains($alpha,$char)">
              <xsl:value-of select="$char"/>
            </xsl:when>
@@ -184,7 +183,6 @@
        <xsl:variable name="char" select="substring($str, 1, 1)"/>
 
          <xsl:choose>
-           <!-- If string is a single _, discard it -->
            <xsl:when test="contains($alpha,$char)">
              <xsl:value-of select="$char"/>
            </xsl:when>
@@ -196,6 +194,60 @@
             <xsl:with-param name="str" select="substring($str, 2)"/>
          </xsl:call-template>       
      </xsl:if>     
+   </xsl:template>
+
+   <xsl:template name="hex_to_c_literal_inner">
+     <xsl:param name="str"/>
+     <xsl:param name="prefix"/>
+     <xsl:if test="$str">
+       <xsl:variable name="char1" select="substring($str, 1, 1)"/>
+       <xsl:variable name="char2" select="substring($str, 2, 1)"/>
+       <xsl:variable name="char12" select="substring($str, 1, 2)"/>
+
+       <xsl:value-of select="concat($prefix,$char12)"/>
+         <xsl:call-template name="hex_to_c_literal_inner">
+            <xsl:with-param name="str" select="substring($str, 3)"/>
+            <xsl:with-param name="prefix" select="$prefix"/>
+         </xsl:call-template>       
+     </xsl:if>     
+   </xsl:template>
+
+   <!-- No " chars around them so re2c can use the same template-->
+   <!-- might want to rename them, it's prefix-hex-with-\x or \\x -->
+   <xsl:template name="hex_to_c_literal">
+     <xsl:param name="str"/>
+     <xsl:call-template name="hex_to_c_literal_inner">
+       <xsl:with-param name="str" select="$str"/>
+       <xsl:with-param name="prefix" select="'\x'" />
+     </xsl:call-template>
+   </xsl:template>
+
+   <xsl:template name="hex_to_escaped_slash_c_literal">
+     <xsl:param name="str"/>
+     <xsl:call-template name="hex_to_c_literal_inner">
+       <xsl:with-param name="str" select="$str"/>
+       <xsl:with-param name="prefix" select="'\\x'" />
+     </xsl:call-template>
+   </xsl:template>
+
+   <xsl:template name="slash_to_double_slash">     
+     <xsl:param name="str"/>
+     <xsl:if test="$str">
+       <xsl:variable name="char" select="substring($str, 1, 1)"/>
+         <xsl:choose>
+           <xsl:when test="$char = '\'">
+             <!-- \\ is interpreted as an invalid xpath -->
+             <xsl:value-of select="concat('\',$char)"/>
+           </xsl:when>
+           <xsl:otherwise>
+             <xsl:value-of select="$char"/>
+           </xsl:otherwise>
+         </xsl:choose>
+         <xsl:call-template name="slash_to_double_slash">
+            <xsl:with-param name="str" select="substring($str, 2)"/>
+         </xsl:call-template>       
+     </xsl:if>     
+     
    </xsl:template>
 
 </xsl:transform>

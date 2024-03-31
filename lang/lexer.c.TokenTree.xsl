@@ -120,6 +120,27 @@
     <NL hexvalue="0a" />
   </LiteralsTable>
 
+  <HexLiteralsTable >
+    <NL hexvalue="0a" />
+    <Comment value="// Language hex literals table" />
+    <NL hexvalue="0a" />
+
+    <Scope value="static __attribute__((unused))"/>
+    <Type value="const char*" />
+    <LangName value="{$LangName}_language_hex_literals[{$LangName}_token_count]" />
+    <SP value = " " />
+    <Assign value="="/>
+    <SP value = " " />
+    <LB hexvalue = "7b0a" />
+    <Default value='  [{$LangName}_token_UNKNOWN] = 0,' />
+    <NL hexvalue="0a" />    
+    <xsl:apply-templates select="Token" mode="HexLiterals"/>
+    <RB hexvalue = "7d" />
+    <SC value=";" />
+    <NL hexvalue="0a" />
+  </HexLiteralsTable>
+
+
   <NL hexvalue="0a" />
   <Comment value="// Lexer instantiations" />
   <xsl:call-template name="LexerInstantiate">
@@ -188,6 +209,9 @@
       <xsl:when test="@literal" >
         <Literal value="0," />
       </xsl:when>
+      <xsl:when test="@hexliteral" >
+        <HexLiteral value="0," />
+      </xsl:when>
       <xsl:otherwise>
         <Error value="error_no_regex_or_literal," />
       </xsl:otherwise>
@@ -206,7 +230,49 @@
         <Regex value='0,' />
       </xsl:when>
       <xsl:when test="@literal" >
-        <Literal value='"{@literal}",' />
+        <LiteralRegex>
+          <xsl:attribute name="value">
+            <xsl:text>"</xsl:text>
+            <xsl:call-template name="slash_to_double_slash">
+              <xsl:with-param name="str" select="@literal"/>
+            </xsl:call-template>
+            <xsl:text>",</xsl:text>
+          </xsl:attribute>
+        </LiteralRegex>
+      </xsl:when>
+      <xsl:when test="@hexliteral" >
+        <HexLiteral value='0,' />
+      </xsl:when>
+      <xsl:otherwise>
+        <Error value="error_no_regex_or_literal," />
+      </xsl:otherwise>
+  </xsl:choose>
+  <NL hexvalue = "0a" />
+</xsl:template>
+
+<xsl:template match="Token" mode="HexLiterals">
+  <SP value="  " />
+  <ID value="[{$LangName}_token_{@name}]" />
+  <SP value = " " />
+  <Assign value="=" />
+  <SP value = " " />
+  <xsl:choose>
+      <xsl:when test="@regex" >
+        <Regex value='0,' />
+      </xsl:when>
+      <xsl:when test="@literal" >
+        <Literal value='0,' />
+      </xsl:when>
+      <xsl:when test="@hexliteral" >
+        <HexLiteral>
+          <xsl:attribute name="value">
+            <xsl:text>"</xsl:text>
+            <xsl:call-template name="hex_to_c_literal">
+              <xsl:with-param name="str" select="@hexliteral"/>
+            </xsl:call-template>
+            <xsl:text>",</xsl:text>
+          </xsl:attribute>            
+        </HexLiteral>
       </xsl:when>
       <xsl:otherwise>
         <Error value="error_no_regex_or_literal," />
@@ -235,6 +301,17 @@
             <xsl:text>",</xsl:text>
           </xsl:attribute>
         </LiteralRegex>
+      </xsl:when>
+      <xsl:when test="@hexliteral" >
+        <HexLiteral>
+          <xsl:attribute name="value">
+            <xsl:text>"</xsl:text>
+            <xsl:call-template name="hex_to_escaped_slash_c_literal">
+              <xsl:with-param name="str" select="@hexliteral"/>
+            </xsl:call-template>
+            <xsl:text>",</xsl:text>
+          </xsl:attribute>            
+        </HexLiteral>
       </xsl:when>
       <xsl:otherwise>
         <!-- Idea is to match nothing, should check whether that's the behaviour -->

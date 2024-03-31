@@ -21,15 +21,20 @@
     <Token name="Lowercase" regex="[a-z]" />
     <Token name="Uppercase" regex="[A-Z]" />
 
+    <!-- literal syntax currently understands alphanumeric and \, otherwise use hex -->
 
-    <Token name="Escaped_a" literal="\\a" />
-    <Token name="Escaped_e" literal="\\e" />
+    <Token name="Escaped_a" literal="\a" />
 
-    <Token name="Escaped_t" literal="\\t" />
-    <Token name="Escaped_n" literal="\\n" />
-    <Token name="Escaped_v" literal="\\v" />
-    <Token name="Escaped_f" literal="\\f" />
-    <Token name="Escaped_r" literal="\\r" />
+    <!-- re2c hasn't implemented \e -->
+    <Token name="Escaped_e" hexliteral="5c1b" />
+
+    <Token name="Escaped_t" literal="\t" />
+    <Token name="Escaped_n" literal="\n" />
+
+    <!-- used \v while testing codegen -->
+    <Token name="Escaped_v" hexliteral="5c76" />
+    <Token name="Escaped_f" literal="\f" />
+    <Token name="Escaped_r" literal="\r" />
 
     <Token name="Space" literal=" " />
 
