@@ -23,6 +23,7 @@ enum lexer_engines
   lexer_engines_posix,
   lexer_engines_re2,
   lexer_engines_re2c,
+  lexer_engines_interp,
 };
 
 // Defines here controls which lexers are used by the multiple engine
@@ -31,6 +32,7 @@ enum lexer_engines
 // to not build/link any which are unused. Multi will tend to mark all those
 // that can be used as in use, but posix only needs libc.
 
+// Uses regex.h from the posix libc extensions
 #define LEXER_POSIX_ENABLE 1
 
 #if __has_include(<re2/re2.h>) && __has_include(<re2/set.h>)
@@ -44,8 +46,11 @@ enum lexer_engines
 #undef LEXER_RE2_ENABLE
 #define LEXER_RE2_ENABLE 0
 
-
+// Build a lexer using re2c program
 #define LEXER_RE2C_ENABLE 1
+
+// An interpreter for regex, implemented in this repo
+#define LEXER_INTERP_ENABLE 1
 
 // Not sure how best to specify the interface.
 // Currently nothing implements these exact symbols, but posix/multi etc

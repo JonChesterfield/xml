@@ -406,7 +406,7 @@ $(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,html,$(call get_
 	@$(xmllint) --relaxng $(call get_schema_name, %common/html.rng) "$<" $(XMLLINTOPTS) --quiet
 	@$(xsltproc) $(XSLTPROCOPTS) --output "$@" xml_to_html.xsl "$<"
 
-
+LEXER_OBJECTS := $(addprefix $(TOOLS_DIR_OBJ)/,lexer.posix.o lexer.re2.o lexer.re2c.o lexer.interp.o)
 
 # TODO: automatically detect this
 # apt install libre2-dev puts it here under debian
@@ -423,7 +423,7 @@ arith.lexer:	$(arith_tmp)/arith.lexer.o
 arith.main:	$(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.main.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-arith.stdin_to_tree:	$(arith_tmp)/stdin_to_tree.o $(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.ptree.o $(arith_tmp)/arith.definitions.o $(TOOLS_DIR_OBJ)/lexer.posix.o $(TOOLS_DIR_OBJ)/lexer.re2.o $(TOOLS_DIR_OBJ)/lexer.re2c.o 
+arith.stdin_to_tree:	$(arith_tmp)/stdin_to_tree.o $(arith_tmp)/arith.lemon.o $(arith_tmp)/arith.ptree.o $(arith_tmp)/arith.definitions.o $(LEXER_OBJECTS)
 	$(CXX) $(CXXFLAGS) $^ $(RE2LIB) -o $@
 
 arith.tests:	$(arith_tmp)/arith.tests.o $(arith_tmp)/arith.ptree.o $(TOOLS_DIR_OBJ)/generic_ptree.o

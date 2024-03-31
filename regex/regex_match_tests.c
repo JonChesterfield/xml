@@ -55,7 +55,7 @@ MODULE(regex_match) {
   TEST("wip") {
     regex_cache_t cache = regex_cache_create();
     CHECK(regex_cache_valid(cache));
-    printf("length of \x01 is %lu\n", strlen("\x01"));
+
     struct regex_case cases[] = {
         {
             R("01"),
@@ -149,13 +149,13 @@ MODULE(regex_match) {
     enum { size = sizeof(cases) / sizeof(cases[0]) };
 
     for (size_t i = 0; i < size; i++) {
-      printf("\n");
       CHECK(regex_in_byte_representation(cases[i].reg, cases[i].sz_reg));
       uint64_t res = regex_interpreter_with_context_string_matches(
           &cache, (const unsigned char *)cases[i].reg, cases[i].sz_reg,
           (const unsigned char *)cases[i].str, cases[i].sz_str);
 
       if (res != cases[i].expect) {
+        printf("\nFailing case: ");
         dump_case(cases[i], res);
       }
       

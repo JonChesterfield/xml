@@ -163,15 +163,15 @@ lexer_token_t lexer_posix_iterator_step(lexer_t l, lexer_iterator_t* iter)
 {
   assert(iter);
   assert(!lexer_iterator_t_empty(*iter));
-  posix_lexer* lexer = to_posix(l);
+  assert(lexer_posix_valid(l));
 
+  posix_lexer* lexer = to_posix(l);
   size_t N = lexer->size;
   assert(N > 0);
   // Zeroth regex matches anything and returns width one
   assert(ith_regex_matches_start(lexer, iter->cursor, iter->end, 0) == 1);
 
   // Looking for longest match wins, with earliest match on tie break
-
   lexer_token_t result = {
     .id = 0,
     .value = iter->cursor,

@@ -360,6 +360,7 @@ static inline int ptree_traverse_without_mod_callback_wrap_func(
     const ptree_module *mod, ptree tree, uint64_t depth, void *p) {
   struct ptree_traverse_without_mod_callback_wrap_ty *arg =
       (struct ptree_traverse_without_mod_callback_wrap_ty *)p;
+  (void)mod;
   return arg->func(tree, depth, arg->data);
 }
 

@@ -28,4 +28,10 @@ uint64_t regex_interpreter_with_context_string_matches(regex_cache_t *context,
                                                        const unsigned char *target,
                                                        size_t target_len);
 
+// As above but takes a stringtable_index_t into the cache instead of a char*
+uint64_t regex_interpreter_known_regex_matches(regex_cache_t *context,
+                                               stringtable_index_t regex,
+                                               const unsigned char *target,
+                                               size_t target_len);
+
 #endif

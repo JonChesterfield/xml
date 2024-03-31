@@ -42,7 +42,7 @@ REGEX_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_SOURCE:.c=.o))
 REGEX_PROGRAM_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_PROGRAM_SOURCE:.c=.o))
 
 
-REGEX_TOOLS_OBJECTS := $(addprefix $(TOOLS_DIR_OBJ)/,lexer.re2c.o lexer.posix.o lexer.re2.o stringtable.o intset.o intstack.o intmap.o)
+REGEX_TOOLS_OBJECTS := $(LEXER_OBJECTS) $(addprefix $(TOOLS_DIR_OBJ)/,stringtable.o intset.o intstack.o intmap.o)
 
 
 # Lemon either overwrites the .h file, or if passed -m includes its guess at where

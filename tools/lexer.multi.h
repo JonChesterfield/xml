@@ -30,9 +30,14 @@ lexer_token_t LEXER_PASTE(LEXER_LANGUAGE,
 #error "Require macro LEXER_RE2C_ENABLE"
 #endif
 
+#ifndef LEXER_INTERP_ENABLE
+#error "Require macro LEXER_INTERP_ENABLE"
+#endif
+
+                                                     
 #define LEXER_MULTI_COUNT()                                                    \
   (LEXER_POSIX_ENABLE ? 1 : 0) + (LEXER_RE2_ENABLE ? 1 : 0) +                  \
-      (LEXER_RE2C_ENABLE ? 1 : 0)
+      (LEXER_RE2C_ENABLE ? 1 : 0) + (LEXER_INTERP_ENABLE ? 1 : 0)
 
 #if LEXER_MULTI_COUNT() == 0
 #error "Require at least one lexer to compose into a multi lexer"
@@ -50,6 +55,10 @@ lexer_token_t LEXER_PASTE(LEXER_LANGUAGE,
 #include "lexer.re2c.h"
 #endif
 
+#if LEXER_INTERP_ENABLE
+#include "lexer.interp.h"
+#endif
+                                                     
 typedef struct {
   enum lexer_engines engine;
 #if LEXER_POSIX_ENABLE
@@ -60,6 +69,9 @@ typedef struct {
 #endif
 #if LEXER_RE2C_ENABLE
   lexer_t re2c;
+#endif
+#if LEXER_INTERP_ENABLE
+  lexer_t interp;
 #endif
 } lexer_multi_t;
 
@@ -72,6 +84,9 @@ static const char * lexer_multi_components[LEXER_MULTI_COUNT()] = {
 #endif
 #if LEXER_RE2C_ENABLE
   "re2c",
+#endif
+#if LEXER_INTERP_ENABLE
+  "interp",
 #endif
 };
 
@@ -94,6 +109,9 @@ lexer_t LEXER_PASTE(LEXER_LANGUAGE, _lexer_multi_create)(void) {
 #if LEXER_RE2C_ENABLE
   multi->re2c = LEXER_PASTE(LEXER_LANGUAGE, _lexer_re2c_create)();
 #endif
+#if LEXER_INTERP_ENABLE
+  multi->interp = LEXER_PASTE(LEXER_LANGUAGE, _lexer_interp_create)();
+#endif
 
   return result;
 }
@@ -114,6 +132,9 @@ void LEXER_PASTE(LEXER_LANGUAGE, _lexer_multi_destroy)(lexer_t lex) {
 #if LEXER_RE2C_ENABLE
   LEXER_PASTE(LEXER_LANGUAGE, _lexer_re2c_destroy)(multi->re2c);
 #endif
+#if LEXER_INTERP_ENABLE
+  LEXER_PASTE(LEXER_LANGUAGE, _lexer_interp_destroy)(multi->interp);
+#endif
 }
 
 bool LEXER_PASTE(LEXER_LANGUAGE, _lexer_multi_valid)(lexer_t lex) {
@@ -132,6 +153,9 @@ bool LEXER_PASTE(LEXER_LANGUAGE, _lexer_multi_valid)(lexer_t lex) {
 #endif
 #if LEXER_RE2C_ENABLE
   valid &= LEXER_PASTE(LEXER_LANGUAGE, _lexer_re2c_valid)(multi->re2c);
+#endif
+#if LEXER_INTERP_ENABLE
+  valid &= LEXER_PASTE(LEXER_LANGUAGE, _lexer_interp_valid)(multi->interp);
 #endif
 
   return valid;
@@ -165,6 +189,11 @@ lexer_token_t LEXER_PASTE(LEXER_LANGUAGE,
 #if LEXER_RE2C_ENABLE
   tokens[i] = LEXER_PASTE(LEXER_LANGUAGE,
                           _lexer_re2c_iterator_step)(multi->re2c, &iters[i]);
+  i++;
+#endif
+#if LEXER_INTERP_ENABLE
+  tokens[i] = LEXER_PASTE(LEXER_LANGUAGE,
+                          _lexer_interp_iterator_step)(multi->re2c, &iters[i]);
   i++;
 #endif
 

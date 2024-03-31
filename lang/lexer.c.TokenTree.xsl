@@ -41,6 +41,8 @@
     <NL hexvalue="0a" />
     <Include value='#include "../tools/lexer.re2c.h"' />
     <NL hexvalue="0a" />
+    <Include value='#include "../tools/lexer.interp.h"' />
+    <NL hexvalue="0a" />
   </Header>
   
   <TokenNames>
@@ -129,7 +131,9 @@
   <xsl:call-template name="LexerInstantiate">
     <xsl:with-param name="variant">re2c</xsl:with-param>
   </xsl:call-template>
-
+  <xsl:call-template name="LexerInstantiate">
+    <xsl:with-param name="variant">interp</xsl:with-param>
+  </xsl:call-template>
 
   <Def value="#define LEXER_LANGUAGE {$LangName}" />
   <NL hexvalue="0a" />
