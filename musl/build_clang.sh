@@ -18,6 +18,8 @@ if true
 then
 rm -rf "$bootstrapdir" "$installdir"
 
+# Build a clang that targets musl by default. This hacks around it being difficult to
+# persuade cmake to do the right thing in terms of consistently passing flags around
 
 cd "$thisdir"
 clang_dir=build_clang
@@ -25,7 +27,6 @@ rm -rf $clang_dir && mkdir $clang_dir && cd $clang_dir
 
 # clang doesn't look in sysroot for compiler-rt, try building it a local copy
 # might want LLVM_HOST_TRIPLE instead of default target triple, might need both
-# i dont think this works, sadly - its using glibc headers
 cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_C_COMPILER=$CC                                                  \
       -D CMAKE_CXX_COMPILER=$CXX                                               \
@@ -61,12 +62,12 @@ musldir="$thisdir/musl"
 cd "$musldir"
 make clean
 
-CC=$CC LIBCC="" CFLAGS="-fPIC" ./configure --prefix="$installdir" --syslibdir="$installdir"/lib --disable-shared
+CC=$CC LIBCC="$installdir/lib/clang/19/lib/linux/libclang_rt.builtins-x86_64.a" CFLAGS="-fPIC" ./configure --prefix="$installdir" --syslibdir="$installdir"/lib
 
-make -j $NP install
+make -j $NP install-headers
 
 
-mkdir -p "$installdir"/include/linux "$installdir"/include/asm "$installdir"/include/asm-generic
+mkdir -p "$installdir"/include/linux "$installdir"/include/asm "$installdir"/include/asm-generic "$installdir"/include/x86_64-linux-gnu/asm
 for i in \
     linux/futex.h \
         linux/types.h \
@@ -81,14 +82,17 @@ for i in \
         asm-generic/int-ll64.h \
         asm/bitsperlong.h \
         asm-generic/bitsperlong.h \
+        x86_64-linux-gnu/asm/unistd_64.h \
     ; do
     cp /usr/include/$i  "$installdir"/include/$i
 done
 
-cd "$thisdir"
-compiler_rt_dir=build_compiler_rt
-rm -rf $compiler_rt_dir && mkdir $compiler_rt_dir && cd $compiler_rt_dir
 
+cd "$thisdir"
+runtimes_dir=build_runtimes
+rm -rf $runtimes_dir && mkdir $runtimes_dir && cd $runtimes_dir
+
+# builds static libraries only - they don't need to be linked against a libc or a compiler-rt
 cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_C_COMPILER=$CC                                                  \
       -D CMAKE_CXX_COMPILER=$CXX                                               \
@@ -96,6 +100,7 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_CXX_FLAGS="-fPIC" \
       -D CMAKE_INSTALL_LIBDIR=lib                                              \
       -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
+      -D LLVM_ENABLE_RUNTIMES="compiler-rt;libcxx;libcxxabi;libunwind"         \
       -D COMPILER_RT_BUILD_LIBFUZZER=NO                                        \
       -D COMPILER_RT_BUILD_PROFILE=NO                                          \
       -D COMPILER_RT_BUILD_MEMPROF=NO                                          \
@@ -104,26 +109,6 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D COMPILER_RT_BUILD_SANITIZERS=NO                                       \
       -D COMPILER_RT_BUILD_XRAY=NO                                             \
       -D COMPILER_RT_DEFAULT_TARGET_TRIPLE=x86_64-unknown-linux-musl           \
-      -D CMAKE_EXE_LINKER_FLAGS="-static -nostdlib -nostartfiles"              \
-      -G Ninja                                                                 \
-      -S $HOME/llvm-project/compiler-rt
-ninja -v && ninja install
-
-
-
-# can probably fold compiler-rt into this one
-cd "$thisdir"
-runtimes_dir=build_runtimes
-rm -rf $runtimes_dir && mkdir $runtimes_dir && cd $runtimes_dir
-
-cmake -D CMAKE_BUILD_TYPE=Release                                              \
-      -D CMAKE_C_COMPILER=$CC                                                  \
-      -D CMAKE_CXX_COMPILER=$CXX                                               \
-      -D CMAKE_C_FLAGS="-fPIC" \
-      -D CMAKE_CXX_FLAGS="-fPIC" \
-      -D CMAKE_INSTALL_LIBDIR=lib                                              \
-      -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
-      -D LLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind"                     \
       -D LIBUNWIND_USE_COMPILER_RT=ON                                          \
       -D LIBCXXABI_USE_COMPILER_RT=ON                                          \
       -D LIBCXX_USE_COMPILER_RT=ON                                             \
@@ -141,20 +126,29 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -S $HOME/llvm-project/runtimes
 ninja -v && ninja install
 
+# This has put compiler-rt in $installdir/lib/linux but clang looks for it
+# under $installdir/lib/clang/19/lib/linux/. Whatever, move it, and give bootstrap a copy.
+ 
+mkdir -p $bootstrapdir/lib/clang/19/lib/linux/
+mkdir -p $installdir/lib/clang/19/lib/linux/
+cp $installdir/lib/linux/* $bootstrapdir/lib/clang/19/lib/linux/
+mv $installdir/lib/linux/* $installdir/lib/clang/19/lib/linux/
+rmdir $installdir/lib/linux
+
+
+# Build libc now we have a compiler-rt to link against the loader
+cd "$musldir"
+make -j $NP && make -j $NP install
+
+
+# Now try to build clang and the llvm tools
 cd "$thisdir"
 clang_dir=build_clang
 rm -rf $clang_dir && mkdir $clang_dir && cd $clang_dir
 
-# may try to apply EXE_LINKER_FLAGS to building libclang.so, and then fall over
-# bootstrap can't compile executables because it doesn't have builtins / crt etc
+
 
 # clang looks next to itself for these, not in the sysroot
-mkdir -p $bootstrapdir/lib/clang/19/lib/linux/
-mkdir -p $installdir/lib/clang/19/lib/linux/
-cp $installdir/lib/linux/* $bootstrapdir/lib/clang/19/lib/linux/
-# also move them to the clang dir under installdir so the not yet built clang will be able to find them
-mv $installdir/lib/linux/* $installdir/lib/clang/19/lib/linux/
-rmdir $installdir/lib/linux
 
 # can't find atomic because it hasn't put c++/v1 on the include path
 # failed to work out how that's meant to be working, looked like it involved gcc_install_prefix
@@ -183,37 +177,10 @@ rmdir $installdir/lib/linux
 # added LLVM_BUILD_STATIC, which along with some find_library hacks adds
 # -static to EXE_LINKER_FLAGS
 
+# Should be able to use  -D CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES="$installdir/include/c++/v1/;$installdir/include"
+# and in a brighter world clang would find the libc++ headers anyway, but right now that means CheckAtomic.cmake fails
+# to find <atomic> and falls over
 
-if false
-then
-
-# test if it's immediately dead without the cross - yes, but not if libclang static
-CC=$HOME/llvm-install/bin/clang
-CXX=$HOME/llvm-install/bin/clang++
-
-# llvm build static fails to link c-arcmt-test because there is no llibclang_static
-# should set LIBCLANG_BUILD_STATIC on (defaults to off)
-cmake -D CMAKE_BUILD_TYPE=Release                                              \
-      -D CMAKE_C_COMPILER=$CC                                                  \
-      -D CMAKE_CXX_COMPILER=$CXX                                               \
-      -D CMAKE_ASM_COMPILER=$CC                                                \
-      -D CMAKE_INSTALL_LIBDIR=lib                                              \
-      -D CMAKE_INSTALL_PREFIX="$installdir"                                  \
-      -D LLVM_ENABLE_PROJECTS="clang" \
-      -D LLVM_BUILD_STATIC=ON \
-      -D LIBCLANG_BUILD_STATIC=ON \
-      -D LLVM_ENABLE_ZLIB=OFF \
-      -D LLVM_ENABLE_ZSTD=OFF \
-      -D LLVM_ENABLE_LIBEDIT=OFF\
-      -D LLVM_ENABLE_LIBXML2=OFF \
-      -D LLVM_ENABLE_LIBPFM=OFF \
-      -D LLVM_ENABLE_TERMINFO=OFF \
-      -D CMAKE_SKIP_RPATH=TRUE \
-      -G Ninja                                                                 \
-      -S $HOME/llvm-project/llvm
-ninja -v
-exit 0
-fi
 
 cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_C_COMPILER=$CC                                                  \
@@ -250,3 +217,7 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -G Ninja                                                                 \
       -S $HOME/llvm-project/llvm
 ninja -v && ninja -v install
+
+
+# If that worked out, we now have a complete statically linked toolchain under install. No dynamic libaries but otherwise good.
+

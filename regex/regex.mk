@@ -71,10 +71,10 @@ $(regex_tmp)/regex_parser_bison_header_gen.c: | $(regex_tmp)
 	@echo 'int main(void) { return regex_parser_bison_type_header(); }' >> $@
 
 $(regex_tmp)/regex_parser_lemon_header_gen: $(regex_tmp)/regex_parser_lemon_header_gen.c $(regex_tmp)/regex.parser_lemon.o
-	$(CC) $(CFLAGS) $^ -o $@ -Wl,--unresolved-symbols=ignore-all -static
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -Wl,--unresolved-symbols=ignore-all -static
 
 $(regex_tmp)/regex_parser_bison_header_gen: $(regex_tmp)/regex_parser_bison_header_gen.c $(regex_tmp)/regex.parser_bison.o
-	$(CC) $(CFLAGS) $^ -o $@ -Wl,--unresolved-symbols=ignore-all -static
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -Wl,--unresolved-symbols=ignore-all -static
 
 $(regex_tmp)/ascii_parser_lemon_header_gen.c: | $(regex_tmp)
 	@echo 'int ascii_parser_lemon_type_header(void);' > $@
@@ -85,10 +85,10 @@ $(regex_tmp)/ascii_parser_bison_header_gen.c: | $(regex_tmp)
 	@echo 'int main(void) { return ascii_parser_bison_type_header(); }' >> $@
 
 $(regex_tmp)/ascii_parser_lemon_header_gen: $(regex_tmp)/ascii_parser_lemon_header_gen.c $(regex_tmp)/ascii.parser_lemon.o
-	$(CC) $(CFLAGS) $^ -o $@ -Wl,--unresolved-symbols=ignore-all -static
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -Wl,--unresolved-symbols=ignore-all -static
 
 $(regex_tmp)/ascii_parser_bison_header_gen: $(regex_tmp)/ascii_parser_bison_header_gen.c $(regex_tmp)/ascii.parser_bison.o
-	$(CC) $(CFLAGS) $^ -o $@ -Wl,--unresolved-symbols=ignore-all -static
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -Wl,--unresolved-symbols=ignore-all -static
 
 
 $(regex_tmp)/regex_string.o:	regex/regex.parser_lemon.t
@@ -116,15 +116,15 @@ regex::	$(REGEX_OBJECTS) regex/regex.parser_lemon.t regex/regex.parser_bison.t b
 
 bin/regex.tests:	$(regex_tmp)/regex.tests.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
 	@mkdir -p "$(dir $@)"
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 bin/regex_stdin_to_xml:	$(regex_tmp)/regex_stdin_to_xml.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
 	@mkdir -p "$(dir $@)"
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 bin/ascii_stdin_to_xml:	$(regex_tmp)/ascii_stdin_to_xml.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
 	@mkdir -p "$(dir $@)"
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 clean::
 	@rm -f bin/regex.tests bin/regex_stdin_to_xml bin/ascii_stdin_to_xml

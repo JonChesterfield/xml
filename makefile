@@ -5,7 +5,7 @@ MAKEFLAGS += -r
 .SECONDARY:
 # .DELETE_ON_ERROR:
 
-# SHELL = sh -xv
+SHELL = sh -xv
 
 # Design notes.
 # Slowly moving towards a more framework layout. This file can define
@@ -41,6 +41,11 @@ CXX := clang++
 C_OR_CXX_FLAGS := -Wall -Wextra -Wcovered-switch-default -g -gdwarf-4
 CFLAGS := -std=c11 $(C_OR_CXX_FLAGS) -O1
 CXXFLAGS := -std=c++14 -Wno-c99-designator $(C_OR_CXX_FLAGS)
+
+# Runs fine under statically linked musl
+# CC=$(MAKEFILE_DIR)/musl/install/bin/clang
+# CXX=$(MAKEFILE_DIR)/musl/install/bin/clang++
+# LDFLAGS := -static
 
 TARGET_CFLAGS :=
 
@@ -491,13 +496,13 @@ $(TOOLS_DIR_BIN):
 
 CMARK_OBJ := $(CMARK_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 $(cmark):	$(CMARK_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $^ -o $@
+	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 # Runs unit tests for hashtable
 HASHTABLE_SRC := $(addprefix $(TOOLS_DIR)/,hashtable.c intset.c intmap.c stringtable.c intstack.c)
 HASHTABLE_OBJ := $(HASHTABLE_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 $(TOOLS_DIR_BIN)/hashtable:	$(HASHTABLE_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $^ -o $@
+	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 
 # Doesnt construct a library, directly links against the objects
@@ -505,13 +510,13 @@ LIBXML2_OBJ := $(LIBXML2_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 LIBXSLT_OBJ := $(LIBXSLT_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 
 $(TOOLS_DIR_BIN)/xmllint:	$(TOOLS_DIR_OBJ)/xmllint.o $(LIBXML2_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $^ -o $@ -lm
+	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -lm
 
 $(TOOLS_DIR_BIN)/xsltproc:	$(TOOLS_DIR_OBJ)/xsltproc.o $(LIBXSLT_OBJ) $(LIBXML2_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $^ -o $@ -lm
+	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -lm
 
 $(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $< -o $@
+	@$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
 
 tools:	$(SIMPLE_TOOLS_BIN)
 tools:	$(TOOLS_DIR_BIN)/cmark $(TOOLS_DIR_BIN)/xmllint $(TOOLS_DIR_BIN)/xsltproc
