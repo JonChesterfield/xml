@@ -34,9 +34,9 @@ cd "$linuxdir"
 cd $(find . -mindepth 1 -maxdepth 1 -type d)
 make headers_install ARCH=x86_64 INSTALL_HDR_PATH="$installdir"
 
-if true
+if false
 then
-rm -rf "$bootstrapdir"
+rm -rf "$bootstrapdir" && mkdir "$bootstrapdir"
 
 # Build a clang that targets musl by default. This hacks around it being difficult to
 # persuade cmake to do the right thing in terms of consistently passing flags around
@@ -51,6 +51,7 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_C_COMPILER=$CC                                                  \
       -D CMAKE_CXX_COMPILER=$CXX                                               \
       -D CMAKE_ASM_COMPILER=$CC                                                \
+      -D LLVM_ENABLE_ASSERTIONS=On                                             \
       -D CMAKE_INSTALL_LIBDIR=lib                                              \
       -D CMAKE_INSTALL_PREFIX="$bootstrapdir"                                  \
       -D LLVM_ENABLE_PROJECTS="clang;lld"                                      \
@@ -61,7 +62,7 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D LLVM_ENABLE_ZSTD=OFF                                                  \
       -D LLVM_ENABLE_TERMINFO=OFF                                              \
       -D DEFAULT_SYSROOT="$installdir"                                         \
-      -D GCC_INSTALL_PREFIX="$installdir" \
+      -D GCC_INSTALL_PREFIX="$installdir"                                      \
       -D CLANG_DEFAULT_LINKER=lld                                              \
       -D CLANG_DEFAULT_CXX_STDLIB=libc++                                       \
       -D CLANG_DEFAULT_RTLIB=compiler-rt                                       \
@@ -88,7 +89,7 @@ make -j $NP install-headers
 # Clang depends on Linux headers. e.g. apt-get source linux
 
 
-if false
+if true
 then
 mkdir -p "$installdir"/include/linux "$installdir"/include/asm "$installdir"/include/asm-generic "$installdir"/include/x86_64-linux-gnu/asm
 for i in \
@@ -119,11 +120,12 @@ rm -rf $runtimes_dir && mkdir $runtimes_dir && cd $runtimes_dir
 cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_C_COMPILER=$CC                                                  \
       -D CMAKE_CXX_COMPILER=$CXX                                               \
-      -D CMAKE_C_FLAGS="$GLOBALFLAGS" \
-      -D CMAKE_CXX_FLAGS="$GLOBALFLAGS" \
+      -D CMAKE_C_FLAGS="$GLOBALFLAGS"                                          \
+      -D CMAKE_CXX_FLAGS="$GLOBALFLAGS"                                        \
       -D CMAKE_INSTALL_LIBDIR=lib                                              \
       -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
       -D LLVM_ENABLE_RUNTIMES="compiler-rt;libcxx;libcxxabi;libunwind"         \
+      -D LLVM_ENABLE_ASSERTIONS=On                                             \
       -D COMPILER_RT_BUILD_LIBFUZZER=NO                                        \
       -D COMPILER_RT_BUILD_PROFILE=NO                                          \
       -D COMPILER_RT_BUILD_MEMPROF=NO                                          \
@@ -204,39 +206,39 @@ rm -rf $clang_dir && mkdir $clang_dir && cd $clang_dir
 # and in a brighter world clang would find the libc++ headers anyway, but right now that means CheckAtomic.cmake fails
 # to find <atomic> and falls over
 
-
 cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_C_COMPILER=$CC                                                  \
       -D CMAKE_CXX_COMPILER=$CXX                                               \
       -D CMAKE_ASM_COMPILER=$CC                                                \
-      -D CMAKE_C_FLAGS="$GLOBALFLAGS" \
-      -D CMAKE_CXX_FLAGS="$GLOBALFLAGS -I$installdir/include/c++/v1"                  \
+      -D CMAKE_C_FLAGS="$GLOBALFLAGS"                                          \
+      -D CMAKE_CXX_FLAGS="$GLOBALFLAGS -I$installdir/include/c++/v1"           \
       -D CMAKE_INSTALL_LIBDIR=lib                                              \
-      -D CMAKE_INSTALL_PREFIX="$installdir"                                  \
-      -D LLVM_ENABLE_PROJECTS="clang;lld" \
-      -D LLVM_DEFAULT_TARGET_TRIPLE=x86_64-unknown-linux-musl \
-      -D LLVM_BUILD_STATIC=ON \
-      -D LLVM_USE_LINKER=lld \
-      -D LLVM_ENABLE_LIBCXX=ON \
-      -D LLVM_ENABLE_ZLIB=OFF \
-      -D LLVM_ENABLE_ZSTD=OFF \
-      -D LLVM_ENABLE_LIBEDIT=OFF\
-      -D LLVM_ENABLE_LIBXML2=OFF \
-      -D LLVM_ENABLE_LIBPFM=OFF \
-      -D LLVM_ENABLE_TERMINFO=OFF \
-      -D DEFAULT_SYSROOT="$installdir" \
-      -D GCC_INSTALL_PREFIX="$installdir" \
-      -D CLANG_DEFAULT_LINKER=lld \
-      -D CLANG_DEFAULT_CXX_STDLIB=libc++ \
-      -D CLANG_DEFAULT_RTLIB=compiler-rt \
-      -D CLANG_DEFAULT_UNWINDLIB=none \
-      -D LLVM_INCLUDE_BENCHMARKS=FALSE \
-      -D LLVM_INCLUDE_TESTS=FALSE \
-      -D LLVM_INCLUDE_EXAMPLES=FALSE \
-      -D LIBCLANG_BUILD_STATIC=ON \
-      -D CMAKE_SKIP_RPATH=TRUE \
-      -D CLANG_BUILD_TOOLS=ON \
-      -D CLANG_ENABLE_ARCMT=ON \
+      -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
+      -D LLVM_ENABLE_PROJECTS="clang;lld"                                      \
+      -D LLVM_ENABLE_ASSERTIONS=On                                             \
+      -D LLVM_DEFAULT_TARGET_TRIPLE=x86_64-unknown-linux-musl                  \
+      -D LLVM_BUILD_STATIC=ON                                                  \
+      -D LLVM_USE_LINKER=lld                                                   \
+      -D LLVM_ENABLE_LIBCXX=ON                                                 \
+      -D LLVM_ENABLE_ZLIB=OFF                                                  \
+      -D LLVM_ENABLE_ZSTD=OFF                                                  \
+      -D LLVM_ENABLE_LIBEDIT=OFF                                               \
+      -D LLVM_ENABLE_LIBXML2=OFF                                               \
+      -D LLVM_ENABLE_LIBPFM=OFF                                                \
+      -D LLVM_ENABLE_TERMINFO=OFF                                              \
+      -D DEFAULT_SYSROOT="$installdir"                                         \
+      -D GCC_INSTALL_PREFIX="$installdir"                                      \
+      -D CLANG_DEFAULT_LINKER=lld                                              \
+      -D CLANG_DEFAULT_CXX_STDLIB=libc++                                       \
+      -D CLANG_DEFAULT_RTLIB=compiler-rt                                       \
+      -D CLANG_DEFAULT_UNWINDLIB=none                                          \
+      -D LLVM_INCLUDE_BENCHMARKS=FALSE                                         \
+      -D LLVM_INCLUDE_TESTS=FALSE                                              \
+      -D LLVM_INCLUDE_EXAMPLES=FALSE                                           \
+      -D LIBCLANG_BUILD_STATIC=ON                                              \
+      -D CMAKE_SKIP_RPATH=TRUE                                                 \
+      -D CLANG_BUILD_TOOLS=ON                                                  \
+      -D CLANG_ENABLE_ARCMT=ON                                                 \
       -G Ninja                                                                 \
       -S $HOME/llvm-project/llvm
 ninja -v && ninja -v install
