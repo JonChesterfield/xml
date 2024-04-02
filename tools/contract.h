@@ -7,7 +7,15 @@
 
 #include "syscall.h"
 
+// Possibly dubious to assume __NR_write etc are consistent across architectures
+#if defined(__x86_64__)
 #include <x86_64-linux-gnu/asm/unistd_64.h>
+#endif
+
+#if defined(__aarch64__)
+// Might have the include path wrong for this
+#include <asm-generic/unistd.h>
+#endif
 
 #include "EvilUnit/EvilUnit_contract.h"
 
