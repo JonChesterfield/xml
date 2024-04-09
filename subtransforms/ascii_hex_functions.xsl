@@ -11,6 +11,8 @@
 
    <xsl:variable name="alpha">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789</xsl:variable>
    
+
+
    <!-- https://stackoverflow.com/questions/70987650/convert-hex-to-ascii-characters-xslt -->
    <xsl:template name="hex-to-ascii">
       <xsl:param name="str"/>
@@ -179,10 +181,14 @@
    <xsl:template name="doublequotemeta">
      <!-- Same as above but \\, the obvious factoring out fails with "invalid xpath" -->
      <xsl:param name="str"/>
+     <xsl:variable name="slash">\</xsl:variable>
      <xsl:if test="$str">
        <xsl:variable name="char" select="substring($str, 1, 1)"/>
-
          <xsl:choose>
+           <!-- Probably want to send \ to \\. Definitely don't want to sent it to \\\ -->
+           <xsl:when test="contains($slash,$char)">
+             <xsl:value-of select="concat('\',$char)"/>
+           </xsl:when>
            <xsl:when test="contains($alpha,$char)">
              <xsl:value-of select="$char"/>
            </xsl:when>
@@ -231,6 +237,7 @@
    </xsl:template>
 
    <xsl:template name="slash_to_double_slash">     
+     <!-- leaves all other characters alone -->
      <xsl:param name="str"/>
      <xsl:if test="$str">
        <xsl:variable name="char" select="substring($str, 1, 1)"/>
@@ -246,8 +253,41 @@
          <xsl:call-template name="slash_to_double_slash">
             <xsl:with-param name="str" select="substring($str, 2)"/>
          </xsl:call-template>       
-     </xsl:if>     
-     
+     </xsl:if>          
    </xsl:template>
+
+   <xsl:template name="ascii-to-escaped-c-string">
+      <xsl:param name="str"/>
+      
+      <!-- a few characters to make the hex string slightly more legible -->
+      <xsl:variable name="c-hex-escape-exclusions">[]-=+*</xsl:variable>
+      <xsl:if test="$str">
+         <!-- extract first digit -->
+         <xsl:variable name="char" select="substring($str, 1, 1)"/>
+
+         <xsl:choose>
+           <xsl:when test="contains($c-hex-escape-exclusions,$char)">
+             <xsl:value-of select="$char"/>
+           </xsl:when>
+           <xsl:otherwise>
+
+         <!-- find it in the ascii string -->
+         <xsl:variable name="val" select="string-length(substring-before($ascii, $char))"/>
+         <xsl:variable name="dec-value" select="$val + 32"/>
+         <xsl:variable name="lo" select="$dec-value mod 16"/>
+         <xsl:variable name="hi" select="floor($dec-value div 16)"/>
+         <xsl:text>\x</xsl:text>
+         <xsl:value-of select="substring($hex, $hi+1, 1)"/>
+         <xsl:value-of select="substring($hex, $lo+1, 1)"/>
+
+           </xsl:otherwise>
+         </xsl:choose>
+
+         <xsl:call-template name="ascii-to-escaped-c-string">
+            <xsl:with-param name="str" select="substring($str, 2)"/>
+         </xsl:call-template>
+      </xsl:if>
+   </xsl:template>
+
 
 </xsl:transform>

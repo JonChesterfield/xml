@@ -47,7 +47,8 @@ enum lexer_engines
 #define LEXER_RE2_ENABLE 0
 
 // Build a lexer using re2c program
-#define LEXER_RE2C_ENABLE 1
+// Disabled while trying to work out escaping across the languages
+#define LEXER_RE2C_ENABLE 0
 
 // An interpreter for regex, implemented in this repo
 #define LEXER_INTERP_ENABLE 1

@@ -28,7 +28,7 @@ REGEX_SOURCE := $(REGEX_SOURCE) regex.production_assign.c regex.production_custo
 
 REGEX_SOURCE := $(REGEX_SOURCE) regex_interpreter.c ascii_interpreter.c ascii.ptree.c
 
-ASCII_HEADERS := ascii.lexer.h ascii.productions.h ascii.parser_bison.h ascii.parser_lemon.h ascii.lexer_re2c_iterator.data
+ASCII_HEADERS := ascii.lexer.h ascii.productions.h ascii.parser_bison.h ascii.parser_lemon.h # ascii.lexer_re2c_iterator.data
 
 REGEX_HEADERS := $(REGEX_HEADERS) $(addprefix regex/,$(ASCII_HEADERS))
 

@@ -1,5 +1,6 @@
 // Not a normal header file
 
+#include <assert.h>
 #include <stdlib.h>
 
 // This file needs to be instantiated with a language prefix
@@ -193,7 +194,7 @@ lexer_token_t LEXER_PASTE(LEXER_LANGUAGE,
 #endif
 #if LEXER_INTERP_ENABLE
   tokens[i] = LEXER_PASTE(LEXER_LANGUAGE,
-                          _lexer_interp_iterator_step)(multi->re2c, &iters[i]);
+                          _lexer_interp_iterator_step)(multi->interp, &iters[i]);
   i++;
 #endif
 

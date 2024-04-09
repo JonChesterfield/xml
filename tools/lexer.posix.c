@@ -169,7 +169,15 @@ lexer_token_t lexer_posix_iterator_step(lexer_t l, lexer_iterator_t* iter)
   size_t N = lexer->size;
   assert(N > 0);
   // Zeroth regex matches anything and returns width one
-  assert(ith_regex_matches_start(lexer, iter->cursor, iter->end, 0) == 1);
+  bool zeroth_matches = ith_regex_matches_start(lexer, iter->cursor, iter->end, 0) == 1;
+  if (!zeroth_matches) {
+    size_t width = iter->end - iter->cursor;
+    printf("Internal error. Zeroth regex did not match %s 0x%x. Iterator width %zu.\n", iter->cursor, (int)iter->cursor[0], width);
+    for (size_t i = 0; i < width; i++) {
+      printf("Char [%u] = 0x%x (%c) \n", i, iter->cursor[i], iter->cursor[i]);
+    }
+  }
+  assert(zeroth_matches);
 
   // Looking for longest match wins, with earliest match on tie break
   lexer_token_t result = {

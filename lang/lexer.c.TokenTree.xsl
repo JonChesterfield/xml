@@ -165,6 +165,17 @@
     <Comment value="// Lexer using engine {$RegexEngine}" />
     <NL hexvalue="0a" />
 
+    <xsl:variable name="upcase-engine" >
+      <xsl:value-of select="translate($RegexEngine,$lowercase,$uppercase)" />
+    </xsl:variable>
+
+    <Pre value="#if !LEXER_{$upcase-engine}_ENABLE" />
+    <NL hexvalue="0a" />
+    <Err value='#error "Requested engine {$RegexEngine} is not enabled"' />
+    <NL hexvalue="0a" />
+    <Post value="#endif" />
+    <NL hexvalue="0a" />
+
     <Defn value="lexer_t {$LangName}_lexer_create(void) {{ return {$LangName}_lexer_{$RegexEngine}_create(); }}" />
     <NL hexvalue="0a" />
     
@@ -203,17 +214,27 @@
   <Assign value="=" />
   <SP value = " " />
   <xsl:choose>
+    <!-- C thinks \ is a special thing and xsl does not
+         It is thus tempting to replace \ with \\
+         however this falls over badly in character classes
+         since [\t] is a literal tab, and rewriting it to [\\t] is no good
+         Going to use hex escapes on the C literal as that works everywhere,
+         and the context-sensitivity of \ meaning different things inside/outside
+         of a charset is difficult to model here.
+    -->
       <xsl:when test="@regex" >
-        <Regex value='"{@regex}",' />
-      </xsl:when>
-      <xsl:when test="@literal" >
-        <Literal value="0," />
-      </xsl:when>
-      <xsl:when test="@hexliteral" >
-        <HexLiteral value="0," />
+        <Regex>
+          <xsl:attribute name="value">
+            <xsl:text>"</xsl:text>
+            <xsl:call-template name="ascii-to-escaped-c-string">
+              <xsl:with-param name="str" select="@regex"/>
+            </xsl:call-template>
+            <xsl:text>",</xsl:text>
+          </xsl:attribute>
+        </Regex>
       </xsl:when>
       <xsl:otherwise>
-        <Error value="error_no_regex_or_literal," />
+        <Other value="0," />
       </xsl:otherwise>
   </xsl:choose>
   <NL hexvalue = "0a" />
@@ -226,25 +247,19 @@
   <Assign value="=" />
   <SP value = " " />
   <xsl:choose>
-      <xsl:when test="@regex" >
-        <Regex value='0,' />
-      </xsl:when>
       <xsl:when test="@literal" >
         <LiteralRegex>
           <xsl:attribute name="value">
             <xsl:text>"</xsl:text>
-            <xsl:call-template name="slash_to_double_slash">
+            <xsl:call-template name="doublequotemeta">
               <xsl:with-param name="str" select="@literal"/>
             </xsl:call-template>
             <xsl:text>",</xsl:text>
           </xsl:attribute>
         </LiteralRegex>
       </xsl:when>
-      <xsl:when test="@hexliteral" >
-        <HexLiteral value='0,' />
-      </xsl:when>
       <xsl:otherwise>
-        <Error value="error_no_regex_or_literal," />
+        <Other value="0," />
       </xsl:otherwise>
   </xsl:choose>
   <NL hexvalue = "0a" />
@@ -257,17 +272,11 @@
   <Assign value="=" />
   <SP value = " " />
   <xsl:choose>
-      <xsl:when test="@regex" >
-        <Regex value='0,' />
-      </xsl:when>
-      <xsl:when test="@literal" >
-        <Literal value='0,' />
-      </xsl:when>
       <xsl:when test="@hexliteral" >
         <HexLiteral>
           <xsl:attribute name="value">
             <xsl:text>"</xsl:text>
-            <xsl:call-template name="hex_to_c_literal">
+            <xsl:call-template name="hex_to_escaped_slash_c_literal">
               <xsl:with-param name="str" select="@hexliteral"/>
             </xsl:call-template>
             <xsl:text>",</xsl:text>
@@ -275,7 +284,7 @@
         </HexLiteral>
       </xsl:when>
       <xsl:otherwise>
-        <Error value="error_no_regex_or_literal," />
+        <Other value="0," />
       </xsl:otherwise>
   </xsl:choose>
   <NL hexvalue = "0a" />
@@ -289,8 +298,17 @@
   <SP value = " " />
   <xsl:choose>
       <xsl:when test="@regex" >
-        <Regex value='"{@regex}",' />
+        <Regex>
+          <xsl:attribute name="value">
+            <xsl:text>"</xsl:text>
+            <xsl:call-template name="ascii-to-escaped-c-string">
+              <xsl:with-param name="str" select="@regex"/>
+            </xsl:call-template>
+            <xsl:text>",</xsl:text>
+          </xsl:attribute>
+        </Regex>
       </xsl:when>
+
       <xsl:when test="@literal" >
         <LiteralRegex>
           <xsl:attribute name="value">
@@ -302,6 +320,7 @@
           </xsl:attribute>
         </LiteralRegex>
       </xsl:when>
+
       <xsl:when test="@hexliteral" >
         <HexLiteral>
           <xsl:attribute name="value">
@@ -313,6 +332,7 @@
           </xsl:attribute>            
         </HexLiteral>
       </xsl:when>
+
       <xsl:otherwise>
         <!-- Idea is to match nothing, should check whether that's the behaviour -->
         <Error value="$^" /> 

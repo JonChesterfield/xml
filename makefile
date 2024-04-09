@@ -1,11 +1,11 @@
 # xslt pipeline handling
 
 .SUFFIXES:
-MAKEFLAGS += -r
+MAKEFLAGS += -r -j$(shell nproc)
 .SECONDARY:
 # .DELETE_ON_ERROR:
 
-SHELL = sh -xv
+# SHELL = sh -xv
 
 # Design notes.
 # Slowly moving towards a more framework layout. This file can define
@@ -167,7 +167,7 @@ $(lang_tmp)/$(dir $1): $(lang_tmp)
 	@mkdir -p "$$@"
 
 # copy the lang xml file into tmp
-$(lang_tmp)/$1:	$1 | $(xmllint) $(xsltproc) $(lang_tmp)/$(dir $1)
+$(lang_tmp)/$1:	$1 | $(xmllint) $(xsltproc) $(lang_tmp)/$(dir $1) validate/subtransforms
 	@cp "$$<" "$$@"
 
 # copy from temp directory into the source tree

@@ -86,7 +86,6 @@ ptree ascii_custom_production_from_decimal(ptree_context ctx,
       return regex_grouping_single_from_byte(ctx, u);
     }
   }
-  printf("failure from decimal\n");
   return ptree_failure();
 }
 
@@ -98,7 +97,6 @@ ptree ascii_custom_production_from_lowercase(ptree_context ctx,
       return regex_grouping_single_from_byte(ctx, u);
     }
   }
-  printf("failure from lowercase\n");
   return ptree_failure();
 }
 
@@ -110,6 +108,5 @@ ptree ascii_custom_production_from_uppercase(ptree_context ctx,
       return regex_grouping_single_from_byte(ctx, u);
     }
   }
-  printf("failure from uppercase\n");
   return ptree_failure();
 }

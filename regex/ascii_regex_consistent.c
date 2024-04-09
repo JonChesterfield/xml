@@ -11,6 +11,11 @@
 // Probably want an ascii.h defining things like the conversion to prefix string
 #include "ascii_interpreter.h"
 
+
+// while debugging
+#include "ascii.lexer.h"
+#include "../tools/lexer.h"
+
 struct pair {
   const char *ascii;
   const char *regex;
@@ -33,8 +38,46 @@ bool equivalent(struct pair *cases, size_t N) {
       equal = false;
     }
 
+    if (ptree_is_failure(ascii)) {
+      const char * data = cases[i].ascii;
+       ptree_context context = ascii_context;
+       printf("Failed to parse case %zu, %s\n", i, data);
+       
+      lexer_t lexer = ascii_lexer_create();
+      if (!ascii_lexer_valid(lexer)) { exit(1); }
+
+      for (lexer_iterator_t lexer_iterator = lexer_iterator_t_create(data, N);
+           !lexer_iterator_t_empty(lexer_iterator);) {
+        lexer_token_t lexer_token =
+          ascii_lexer_iterator_step(lexer, &lexer_iterator);
+    
+        token lemon_token = token_create(ascii_token_names[lexer_token.id],
+                                         lexer_token.value, lexer_token.width);
+
+        if (ascii_lexer_discard_token(lexer_token.id)) {
+          printf("discard a token\n");
+          token_dump(lemon_token);
+          break;
+        }
+
+        
+        // 0 is the unknown token                                 
+        if (lexer_token.id == 0) {
+          printf("token unknown: ");
+          token_dump(lemon_token);
+          break;
+        }
+
+        token_dump(lemon_token);
+      }      
+    }
+    
     if (failed || differ) {
-      printf("%s ?= %s\n", cases[i].ascii, cases[i].regex);
+      printf("%s ?= %s. Failed %u %u, differ %u\n", cases[i].ascii, cases[i].regex,
+             ptree_is_failure(ascii),
+             ptree_is_failure(regex),
+             differ
+             );
       if (0) {
         // Weird. The malloc'ed pointer prints correctly before it is returned,
         // and valgrind thinks the program is clean, but looking at the string
@@ -71,6 +114,15 @@ bool equivalent(struct pair *cases, size_t N) {
 
 MODULE(ascii_regex_consistent) {
 
+  TEST("dump")
+    {
+      printf("Ascii set:\n");
+      for (unsigned i = 0; i < ascii_token_count; i++)
+        {
+          printf("Regex [%u] = %s\n", i, ascii_regexes[i]);
+        }
+    }
+  
   TEST("decimals") {
     static struct pair cases[] = {
         {"0", "30"}, {"1", "31"}, {"2", "32"}, {"3", "33"}, {"4", "34"},
@@ -161,10 +213,21 @@ MODULE(ascii_regex_consistent) {
                      "(|62(|63(|6465)))"
                      ")"},
 
-        // Negated charsets are a not of the charset
+        // Negated charsets are a not of the charset. This is wrong - need to specify that it's a single byte
         {
             "[^A-C]",
             "(~(|41(|4243)))",
+        },
+
+        // C escaped slashes inside the regex
+        {
+          "[\\f\\n\\r]*", "(*(|0c(|0a0d)))",
+        },
+
+        // single whitespace character, exclusive of space, hex escaped in C
+        {
+          "[\x5c\x66\x5c\x6e\x5c\x72\x5c\x74\x5c\x76]",
+          "(|0c(|0a(|0d(|090b))))",
         },
     };
     enum {

@@ -102,8 +102,8 @@ static bool intset_util_key_equal(hashtable_user_t user,
   const char *L = arena_base + word_left;
   const char *R = arena_base + word_right;
 
-  uint64_t left_size = word_from_bytes(L - 8);
-  uint64_t right_size = word_from_bytes(R - 8);
+  uint64_t left_size = word_from_bytes((const unsigned char*)(L - 8));
+  uint64_t right_size = word_from_bytes((const unsigned char*)(R - 8));
 
   if (left_size != right_size) {
     return false;
