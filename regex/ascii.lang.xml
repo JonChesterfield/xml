@@ -88,10 +88,7 @@
     <Token name="PIPE" literal="|" />
     <Token name="STAR" literal="*" />
     <Token name="PLUS" literal="+" />
-
-<!-- to be added later 
     <Token name="QUESTION" literal="?" />
--->
 
   <!-- Not sure this is doing the right thing, may be matching a \ then a t -->
   <!-- Should be trailing + but there is an interaction with longest-wins that is being debugged -->
@@ -119,6 +116,7 @@
     <Grouping name="basic_RE" type="ptree" />
     <Grouping name="star" type="ptree" />
     <Grouping name="plus" type="ptree" />
+    <Grouping name="question" type="ptree" />
     <Grouping name="elementary_RE" type="ptree" />
 
     <Grouping name="group" type="ptree" />
@@ -202,6 +200,9 @@
     <AssignProduction label="basic_from_plus" grouping="basic_RE" >
       <Grouping type="plus" position="1" />  
     </AssignProduction>
+    <AssignProduction label="basic_from_question" grouping="basic_RE" >
+      <Grouping type="question" position="1" />  
+    </AssignProduction>
     <AssignProduction label="basic_from_elementary" grouping="basic_RE" >
       <Grouping type="elementary_RE" position="1" />  
     </AssignProduction>
@@ -216,6 +217,12 @@
     <CustomProduction label="plus_ctor" grouping="plus" >
       <Grouping type="elementary_RE" />
       <Token name="PLUS" />
+    </CustomProduction>
+
+    <!-- question -->
+    <CustomProduction label="question_ctor" grouping="question" >
+      <Grouping type="elementary_RE" />
+      <Token name="QUESTION" />
     </CustomProduction>
 
     <!-- elementary-RE -->

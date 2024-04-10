@@ -32,6 +32,12 @@ ptree ascii_custom_production_plus_ctor(ptree_context ctx,
   return regex_make_concat(ctx, x1, regex_make_kleene(ctx, x1));
 }
 
+ptree ascii_custom_production_question_ctor(ptree_context ctx,
+                                        ptree /*elementary_RE*/ x1,
+                                        token /*QUESTION*/ x2) { 
+  return regex_make_or(ctx, x1, regex_make_empty_string(ctx));
+}
+
 ptree ascii_custom_production_from_any(ptree_context ctx, token /*PERIOD*/ x1) {
   ptree any = regex_make_any_char(ctx);
   ptree nl = regex_grouping_single_from_byte(ctx, 0x0a);

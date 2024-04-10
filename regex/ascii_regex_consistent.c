@@ -203,6 +203,49 @@ MODULE(ascii_regex_consistent) {
     CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
   }
 
+  TEST("or") {
+    static struct pair cases[] = {
+      {
+          "A",
+          "41",
+      },
+      {
+          "A|B",
+          "(|4142)",
+      },
+      {
+          "A|A",
+          "(|4141)",
+      },
+    };
+    enum {
+      cases_size = sizeof(cases) / sizeof(cases[0]),
+    };
+    CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
+  }
+
+  TEST("concat") {
+    static struct pair cases[] = {
+      {
+          "A",
+          "41",
+      },
+      {
+          "A|B",
+          "(:4142)",
+      },
+      {
+          "A|A",
+          "(:4141)",
+      },
+    };
+    enum {
+      cases_size = sizeof(cases) / sizeof(cases[0]),
+    };
+    CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
+  }
+  
+  
   TEST("any") {
     // ascii any excludes newline. Might end up excluding > 127 if
     // that's what other engines do on utf8
@@ -258,7 +301,7 @@ MODULE(ascii_regex_consistent) {
     };
     CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
   }
-
+  
 #if 0
   TEST("hyphen")
     {
@@ -288,19 +331,12 @@ MODULE(ascii_regex_consistent) {
   }
 #endif
 
-  TEST("ad hoc") {
+  TEST("suffixes") {
+    // todo: are things like A*+ or B+? legal in pcre?
     static struct pair cases[] = {
       {
           "A",
           "41",
-      },
-      {
-          "A|B",
-          "(|4142)",
-      },
-      {
-          "AB",
-          "(:4142)",
       },
       {
           "D*",
@@ -322,12 +358,14 @@ MODULE(ascii_regex_consistent) {
           "((G*))",
           "(*47)",
       },
-#if 0
-        {
-          "G?",
-          "(|G_)",
-        },
-#endif
+      {
+        "G?",
+        "(|47_)",
+      },
+      {
+        "(G)?",
+        "(|47_)",
+      },
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),
