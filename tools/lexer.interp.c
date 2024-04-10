@@ -1,5 +1,6 @@
 #include "lexer.interp.h"
 #include "../regex/regex_interpreter.h"
+#include "../regex/ascii.parser_lemon.h"
 
 #include <assert.h>
 #include <string.h>
@@ -77,15 +78,23 @@ lexer_t lexer_interp_create(size_t N, const char** regexes)
 
   lexer->size = N;
   bool regex_ok = true;
+  ptree_context ascii_context = regex_ptree_create_context();
+  
   for (size_t i = 0; i < N; i++)
     {
       const char * r = regexes[i];
       if (r == 0) {
         regex_ok = false;        
       } else {
-        size_t N = strlen(r);
+        ptree ascii = ascii_parser_lemon_parse_cstr(ascii_context, r);
+        if (ptree_is_failure(ascii)) {
+          if (verbose) {
+            printf("lexer.interp failed to parse regex %zu %s\n", i, r);
+          }
+        }
         stringtable_index_t current =
-          regex_cache_insert_regex_bytes(&lexer->cache, r, N);
+          regex_cache_insert_regex_ptree(&lexer->cache, ascii_context, ascii);
+
         lexer->regexes[i] = current;
         if (!stringtable_index_valid(current)) {
           if (verbose) {
@@ -95,7 +104,8 @@ lexer_t lexer_interp_create(size_t N, const char** regexes)
         }
       }
     }
-
+  regex_ptree_destroy_context(ascii_context);
+  
   if (!regex_ok) {
     lexer_interp_destroy(from_interp(lexer));
     return lexer_t_failed();    

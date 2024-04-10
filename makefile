@@ -79,7 +79,7 @@ XMLLINTOPTS := --nonet --huge --noout --dropdtd
 # this is getting borderline, need to build xsltproc with O2 and push these limits up
 XSLTPROCOPTS := --huge  --maxdepth 40000 --maxvars 150000 --novalid
 
-RE2COPTS := --no-debug-info -W --no-generation-date
+RE2COPTS := --no-debug-info -W -Wno-useless-escape --no-generation-date
 
 #
 # Global transform rules. Make a file next to the current file with a different suffix.

@@ -47,11 +47,13 @@ enum lexer_engines
 #define LEXER_RE2_ENABLE 0
 
 // Build a lexer using re2c program
-// Disabled while trying to work out escaping across the languages
-#define LEXER_RE2C_ENABLE 0
+#define LEXER_RE2C_ENABLE 1
 
 // An interpreter for regex, implemented in this repo
 #define LEXER_INTERP_ENABLE 1
+
+// Run all the enabled lexers and fail if they disagree
+#define LEXER_MULTI_ENABLE 1
 
 // Not sure how best to specify the interface.
 // Currently nothing implements these exact symbols, but posix/multi etc

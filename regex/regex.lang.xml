@@ -2,10 +2,10 @@
 <Language>
   <LanguageName>regex</LanguageName>
   <Lexer>
-    <!-- Currently posix, re2, re2c or multi -->
+    <!-- Currently posix, re2, re2c, interp or multi -->
     <!-- considering lex and the posix from musl -->
-    <!-- Multi is set up to run all the engines that lexer.h says are available -->    
-    <Engine value="posix" />
+    <!-- Multi is set up to run all the engines that lexer.h says are available -->
+    <Engine value="re2c" />
   </Lexer>
 
   <Tokens>

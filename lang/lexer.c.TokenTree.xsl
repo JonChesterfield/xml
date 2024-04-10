@@ -74,7 +74,7 @@
     <Assign value="="/>
     <SP value = " " />
     <LB hexvalue = "7b0a" />
-    <Default value='  [{$LangName}_token_UNKNOWN] = ".",' />
+    <Default value='  [{$LangName}_token_UNKNOWN] = ".|[\n]",' />
     <NL hexvalue="0a" />    
     <xsl:apply-templates select="Token" mode="Combined"/>
     <RB hexvalue = "7d" />
@@ -93,7 +93,7 @@
     <Assign value="="/>
     <SP value = " " />
     <LB hexvalue = "7b0a" />
-    <Default value='  [{$LangName}_token_UNKNOWN] = ".",' />
+    <Default value='  [{$LangName}_token_UNKNOWN] = ".|[\n]",' />
     <NL hexvalue="0a" />
     <xsl:apply-templates select="Token" mode="Regexes"/>
     <RB hexvalue = "7d" />

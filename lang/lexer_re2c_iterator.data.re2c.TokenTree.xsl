@@ -122,9 +122,30 @@ match:;
     <xsl:when test="@regex" >
       <Regex value="{@regex};" />
     </xsl:when>
+
+    <!--
+        Tricky. Can't quote meta characters and call it a day because
+        re2c doesn't accept \\n as a regex for \ followed by n
+        It does recognise various escape sequences within a string literal,
+        so also can't use '\n' for it. '\\n' would work.
+        That's going to choke on single quotes in the literal, could replace those
+        with a hex escape.
+    -->
     <xsl:when test="@literal" >
-      <LiteralRegex value="'{@literal}';" />
+      <!-- <LiteralRegex value="'{@literal}';" /> -->
+
+        <LiteralRegex>
+          <xsl:attribute name="value">
+            <xsl:text>'</xsl:text>
+            <xsl:call-template name="quotemeta">
+              <xsl:with-param name="str" select="@literal"/>
+            </xsl:call-template>
+            <xsl:text>';</xsl:text>
+          </xsl:attribute>
+        </LiteralRegex>
     </xsl:when>
+
+
     <!-- re2c is rejecting \xAB syntax outside of literals, so wrap it in a ' -->
     <xsl:when test="@hexliteral" >
       <Quote value="'" />

@@ -24,14 +24,17 @@
 
     <!-- used \v while testing codegen -->
     <Token name="Escaped_v" hexliteral="5c76" />
-    <Token name="Escaped_r" regex="[\]r" />
+    <!-- regex [\]r is rejected by re2c, looks like it treats the \ as escaping the close brace -->
+    <Token name="Escaped_r" literal="\r" />
     <Token name="Escaped_f" literal="\f" />
 
     <!-- Alternative to handling \f etc one at a time. Requires a custom production but less xml -->
     <Token name="Escaped_character" regex="[\][fnrtvae]" />
 
     <!-- Must be a slash, then x, then exactly two hex digits -->
-    <Token name="Escaped_hex" regex="[\]x[0-9a-f][0-9a-f]" />
+    <!-- re2c does not cope with [\] for a slash but would accept [\\] -->
+    <!-- re2c also rejected an x by itself in the middle of the ranges... -->
+    <Token name="Escaped_hex" regex="[\\][x][0-9a-f][0-9a-f]" />
 
 
     <Token name="Space" literal=" " />
