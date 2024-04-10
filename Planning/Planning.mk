@@ -7,6 +7,12 @@ WORKDIR := /tmp/.ObsidianXML
 # TODO: Read these from somewhere under obsidian_dir
 project_names := $(file < ${obsidian_dir}/Projects/projects.md)
 
+# If projects.md is missing, this ran find on the current directory for
+# very noisy output. Change to a string that reduces the noise.
+ifeq ($(project_names),)
+project_names := NO_PROJECTS_FOUND
+endif
+
 planning_src := $(addprefix ${obsidian_dir}/,${project_names})
 
 # Timestamp dependency is fixable
@@ -35,6 +41,7 @@ SPACE_ESCAPED_DIRS := $(shell find $(planning_src) -mindepth 1 -type d | sed 's/
 # Simpler to prefix than to substitute
 WORKDIR_ESCAPED_SRC := $(addprefix $(WORKDIR),$(SPACE_ESCAPED_SRC))
 WORKDIR_ESCAPED_DIRS := $(addprefix $(WORKDIR),$(SPACE_ESCAPED_DIRS))
+
 
 $(WORKDIR):
 	@mkdir -p $(WORKDIR)
