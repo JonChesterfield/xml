@@ -11,8 +11,8 @@
   <Tokens>
     <Token name="BYTE" regex="[0-9a-f][0-9a-f]" />
 
-    <Token name="LPAREN" literal="(" />
-    <Token name="RPAREN" literal=")" />
+    <Token name="LPAREN" hexliteral="28" />
+    <Token name="RPAREN" hexliteral="29" />
 
     <!--
     a slightly different lexer could do something like:
@@ -24,22 +24,23 @@
     <Token name="LSQUARE" regex="\[|S" />
     -->
 
-    <Token name="LSQUARE" literal="[" />
-    <Token name="RSQUARE" literal="]" />
+    <Token name="LSQUARE" hexliteral="5b" />
+    <Token name="RSQUARE" hexliteral="5d" />
 
-    <Token name="EMPTYSET" literal="%" />
-    <Token name="EMPTYSTRING" literal="_" />
-    <Token name="ANYCHAR" literal="." />
+    <Token name="EMPTYSET" hexliteral="25" />
+    <Token name="EMPTYSTRING" hexliteral="5f" /> <!-- _ -->
+    <Token name="ANYCHAR" hexliteral="2e" />
 
-    <Token name="CONCAT" literal=":" />
+    <Token name="CONCAT" hexliteral="3a" />
 
-    <Token name="KLEENE" literal="*" />
+    <Token name="KLEENE" hexliteral="2a" />
 
-    <Token name="OR" literal="|" />
-    <Token name="AND" literal="&amp;" />
-    <Token name="NOT" literal="~" />
+    <Token name="OR" hexliteral="7c" />
+    <Token name="AND" hexliteral="26" />
+    <Token name="NOT" hexliteral="7e" />
 
-    <Token name="WHITESPACE" regex="[ \f\n\r\t\v]+" />
+    <!-- don't currently have literal space in the character class -->
+    <Token name="WHITESPACE" regex="[\x20\f\n\r\t\v]+" />
   </Tokens>
 
   <TokenDiscard>

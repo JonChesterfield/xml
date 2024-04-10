@@ -7,6 +7,8 @@
 
 #include "../tools/stack.libc.h"
 
+#include <assert.h>
+
 ptree ascii_custom_production_union_ctor(ptree_context ctx,
                                          ptree /*result_RE*/ x1,
                                          token /*PIPE*/ x2,
@@ -17,6 +19,8 @@ ptree ascii_custom_production_union_ctor(ptree_context ctx,
 ptree ascii_custom_production_concat_ctor(ptree_context ctx,
                                           ptree /*simple_RE*/ x1,
                                           ptree /*basic_RE*/ x2) {
+  assert(!ptree_is_failure(x1));
+  assert(!ptree_is_failure(x2));
   return regex_make_concat(ctx, x1, x2);
 }
 
@@ -134,6 +138,39 @@ ptree ascii_custom_production_from_escaped_character(ptree_context ctx,
         default: break;
         }
     }
+  return ptree_failure();
+}
+
+ptree ascii_custom_production_from_escaped_meta(ptree_context ctx,
+                                             token /*Escaped_meta*/ x1) {
+  if ((x1.width == 2) &&
+      (x1.value[0] == '\\'))
+    {
+      switch(x1.value[1])
+        {
+#if 1
+        case 0x28:
+        case 0x29:
+        case 0x7c:
+        case 0x2a:
+        case 0x2b:
+        case 0x3f:
+        case 0x5c:
+#else
+        case '(':
+        case ')':
+        case '|':
+        case '*':
+        case '+':
+        case '?':
+        case '\\':
+#endif
+          return regex_grouping_single_from_byte(ctx, x1.value[1]);
+        default: break;
+        }
+    }
+
+  printf("escaped meta failing: %x%x %c\n", x1.value[0],x1.value[1], x1.value[1]);
   return ptree_failure();
 }
 

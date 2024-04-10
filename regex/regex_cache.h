@@ -103,10 +103,10 @@ bool regex_cache_calculate_all_derivatives(regex_cache_t *,
 // until functor returns != 0. Will calculate derivatives and add to the cache
 // as required.
 int regex_cache_traverse(regex_cache_t *,
-                         stringtable_index_t,
+                         stringtable_index_t root,
                          int (*functor)(regex_cache_t *,
                                         stringtable_index_t,
-                                        void*),
-                         void*);
+                                        void* data),
+                         void* data);
 
 #endif

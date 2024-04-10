@@ -301,8 +301,9 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
   // Hack around that for now
   // Example that fails is (cat (cat (cat (cat whatever)))),
   // each pass through canonicalise reassociates it by a depth of one
-  const unsigned N = 10;
+  const unsigned N = 128;
   const bool verbose = false;
+  const bool permissive = false;
   ptree orig = val;
   
   for (unsigned i = 0; i < N; i++)
@@ -343,7 +344,16 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
       val = canon;
     }
 
-  printf("Canonicalise failed to reach a fixpoint after %u iter\n", N);
+  if (permissive)
+    {
+      // hopefully that'll converge anyway
+      return val;
+    }
+
+  // Debugging why equality is going awry or the convergence has failed
+  printf("Warning: Canonicalise failed to reach a fixpoint after %u iter\n", N);
+  regex_ptree_as_xml(&stack_libc, stdout, val);
+  
   exit(1);
 }
 

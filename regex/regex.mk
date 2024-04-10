@@ -21,7 +21,7 @@ REGEX_HEADERS := $(REGEX_HEADERS) regex/regex.lexer_re2c_iterator.data
 
 REGEX_HEADERS := $(REGEX_HEADERS) regex/regex_interpreter.h regex/ascii_interpreter.h regex/interpreter.data
 
-REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c ascii_regex_consistent.c
+REGEX_SOURCE := regex.ptree.c regex.c regex.lexer.c regex_string.c regex_driver.c regex_cache.c regex_equality.c regex_queries.c ascii_regex_consistent.c regex_to_c_mvp.c regex.lexer_mvp.c
 
 REGEX_SOURCE := $(REGEX_SOURCE) regex.parser_bison.c regex.parser_lemon.c
 REGEX_SOURCE := $(REGEX_SOURCE) regex.production_assign.c regex.production_custom.c regex.production_list.c
@@ -36,11 +36,10 @@ REGEX_SOURCE := $(REGEX_SOURCE) ascii.lexer.c ascii.parser_bison.c ascii.parser_
 REGEX_SOURCE := $(REGEX_SOURCE) ascii.production_assign.c ascii.production_custom.c ascii.production_list.c
 REGEX_SOURCE := $(REGEX_SOURCE) regex_match_tests.c
 
-REGEX_PROGRAM_SOURCE := regex.tests.c regex_stdin_to_xml.c ascii_stdin_to_xml.c
+REGEX_PROGRAM_SOURCE := regex.tests.c regex_stdin_to_xml.c ascii_stdin_to_xml.c regex.lexer_mvp.c.c
 
 REGEX_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_SOURCE:.c=.o))
 REGEX_PROGRAM_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_PROGRAM_SOURCE:.c=.o))
-
 
 REGEX_TOOLS_OBJECTS := $(LEXER_OBJECTS) $(addprefix $(TOOLS_DIR_OBJ)/,stringtable.o intset.o intstack.o intmap.o)
 
@@ -125,6 +124,18 @@ bin/regex_stdin_to_xml:	$(regex_tmp)/regex_stdin_to_xml.o $(REGEX_OBJECTS) $(REG
 bin/ascii_stdin_to_xml:	$(regex_tmp)/ascii_stdin_to_xml.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
 	@mkdir -p "$(dir $@)"
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+bin/regex.lexer_mvp.c:	$(regex_tmp)/regex.lexer_mvp.c.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+
+regex/regex.lexer_mvp.c:	bin/regex.lexer_mvp.c
+	./$^ > $@
+
+clean::
+	@rm -f regex/regex.lexer_mvp.c
+
 
 clean::
 	@rm -f bin/regex.tests bin/regex_stdin_to_xml bin/ascii_stdin_to_xml

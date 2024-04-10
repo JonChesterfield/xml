@@ -29,15 +29,21 @@
     <Token name="Escaped_f" literal="\f" />
 
     <!-- Alternative to handling \f etc one at a time. Requires a custom production but less xml -->
-    <Token name="Escaped_character" regex="[\][fnrtvae]" />
+    <Token name="Escaped_character" regex="[\\][fnrtvae]" />
 
     <!-- Must be a slash, then x, then exactly two hex digits -->
     <!-- re2c does not cope with [\] for a slash but would accept [\\] -->
     <!-- re2c also rejected an x by itself in the middle of the ranges... -->
-    <Token name="Escaped_hex" regex="[\\][x][0-9a-f][0-9a-f]" />
+    <Token name="Escaped_hex" regex="[\x5c][x][0-9a-f][0-9a-f]" />
 
+    <!-- The metacharacter that aren't special in a character class, i.e. not
+         [\]^-
+         Would like to use "[\\][()|*+?]" but haven't implemented it yet
+         The following is matching \\ even without the \x5c, but shouldn't be
+    -->
+    <Token name="Escaped_meta" regex="[\x5c][\x28\x29\x7c\x2a\x2b\x3f\x5c]" />
 
-    <Token name="Space" literal=" " />
+    <Token name="Space" hexliteral="20" />
 
     <!-- probably going to be literals
     <Token name="BYTE3a" literal=":" />
@@ -76,6 +82,10 @@
     <Token name="BYTE7e" literal="~" />
     -->
 
+    <!-- These are better written as literals but that exposes the complexity
+         of literal escapes which are difficult to get right across various engines
+    -->
+    
     <Token name="LPAREN" literal="(" />
     <Token name="RPAREN" literal=")" />
 
@@ -316,6 +326,10 @@
     <!-- Goes directly from token to char_RE by reading the value again -->
     <CustomProduction label="from_escaped_character" grouping="char_RE" >
       <Token name="Escaped_character" />
+    </CustomProduction>
+
+    <CustomProduction label="from_escaped_meta" grouping="char_RE" >
+      <Token name="Escaped_meta" />
     </CustomProduction>
 
     <ListProduction label="list_space" grouping="byte_20" >
