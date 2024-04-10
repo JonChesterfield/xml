@@ -40,7 +40,6 @@ bool equivalent(struct pair *cases, size_t N) {
 
     if (ptree_is_failure(ascii)) {
       const char * data = cases[i].ascii;
-       ptree_context context = ascii_context;
        printf("Failed to parse case %zu, %s\n", i, data);
        
       lexer_t lexer = ascii_lexer_create();
@@ -164,6 +163,30 @@ MODULE(ascii_regex_consistent) {
     CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
   }
 
+  TEST("hex escapes") {
+    // check all 256 single byte escapes
+    const char tab[16] = "0123456789abcdef";
+
+    char ascii[5] = {'\\', 'x', 0, 0, '\0'};
+    char regex[3] = {0, 0, '\0'};
+    bool ok = true;
+    for (unsigned l = 0; l < 16; l++)
+      {
+        for (unsigned h = 0; h < 16; h++)
+          {
+            ascii[3] = tab[h];
+            ascii[4] = tab[l];
+            regex[0] = tab[h];
+            regex[1] = tab[l];
+            struct pair cases[1] = {
+              {ascii, regex},
+            };
+            ok &= equivalent(cases, 1);
+          }
+      } 
+    CHECK(ok);
+  }
+  
   TEST("escaped non-printing / whitespace") {
     // Double \\ is one for C, one for the regex
     static struct pair cases[] = {

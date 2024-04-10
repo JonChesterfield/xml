@@ -9,36 +9,32 @@
   </Lexer>
 
   <Tokens>
+    <!-- Simpler than separate decimal/lower/upper tokens -->
+    <Token name="Alphanumeric" regex="[0-9a-zA-Z]" />
 
-<!--
-    Might use a token with a name and no regex/literal to indicate that the
-    corresponding integer is reserved but no token will use it
--->
-
-    <!-- Decimal numbers -->
-
-    <Token name="Decimal" regex="[0-9]" />
-    <Token name="Lowercase" regex="[a-z]" />
-    <Token name="Uppercase" regex="[A-Z]" />
-
-    <!-- literal syntax currently understands alphanumeric and \, otherwise use hex -->
-
-   <!-- <Token name="Escaped_a" literal="\a" /> -->
-    <Token name="Escaped_a" hexliteral="5c07" />
+    <!-- Escaped characters like \n or \a work inside or outside of a character class in perl, seems reasonable -->
+    <Token name="Escaped_a" literal="\a" />
 
     <!-- re2c hasn't implemented \e -->
     <Token name="Escaped_e" hexliteral="5c1b" />
 
+    <!-- distinction between t & n is useful when checking codegen -->
     <Token name="Escaped_t" regex="[\t]" />
     <Token name="Escaped_n" literal="\n" />
 
     <!-- used \v while testing codegen -->
     <Token name="Escaped_v" hexliteral="5c76" />
-    <Token name="Escaped_f" literal="\f" />
     <Token name="Escaped_r" regex="[\]r" />
+    <Token name="Escaped_f" literal="\f" />
+
+    <!-- Alternative to handling \f etc one at a time. Requires a custom production but less xml -->
+    <Token name="Escaped_character" regex="[\][fnrtvae]" />
+
+    <!-- Must be a slash, then x, then exactly two hex digits -->
+    <Token name="Escaped_hex" regex="[\]x[0-9a-f][0-9a-f]" />
+
 
     <Token name="Space" literal=" " />
-
 
     <!-- probably going to be literals
     <Token name="BYTE3a" literal=":" />
@@ -144,14 +140,13 @@
 
     <Grouping name="range" type="ptree" />
 
+    <!-- exist only as transitionary nodes for the specific escapes-->
     <Grouping name="byte_07" type="ptree" />
-
     <Grouping name="byte_09" type="ptree" />
     <Grouping name="byte_0a" type="ptree" />
     <Grouping name="byte_0b" type="ptree" />
     <Grouping name="byte_0c" type="ptree" />
     <Grouping name="byte_0d" type="ptree" />
-
     <Grouping name="byte_1b" type="ptree" />
     <Grouping name="byte_20" type="ptree" />
 
@@ -300,26 +295,27 @@
     </CustomProduction>
 
     <!-- char -->
-    <CustomProduction label="from_decimal" grouping="char_RE" >
-      <Token name="Decimal"/>
+    <CustomProduction label="from_alphanumeric" grouping="char_RE" >
+      <Token name="Alphanumeric"/>
     </CustomProduction>
 
-    <CustomProduction label="from_lowercase" grouping="char_RE" >
-      <Token name="Lowercase"/>
+    <CustomProduction label="from_escaped_hex" grouping="char_RE" >
+      <Token name="Escaped_hex" />
     </CustomProduction>
 
-    <CustomProduction label="from_uppercase" grouping="char_RE" >
-      <Token name="Uppercase"/>
+    <!-- Goes directly from token to char_RE by reading the value again -->
+    <CustomProduction label="from_escaped_character" grouping="char_RE" >
+      <Token name="Escaped_character" />
     </CustomProduction>
 
     <ListProduction label="list_space" grouping="byte_20" >
         <Token name="Space" />
     </ListProduction>
 
+    <!-- map escaped_k onto a specific byte -->
     <ListProduction label="list_escaped_a" grouping="byte_07" >
         <Token name="Escaped_a" />
     </ListProduction>
-
     <ListProduction label="list_escaped_t" grouping="byte_09" >
         <Token name="Escaped_t" />
     </ListProduction>
@@ -335,17 +331,15 @@
     <ListProduction label="list_escaped_r" grouping="byte_0d" >
         <Token name="Escaped_r" />
     </ListProduction>
-
     <ListProduction label="list_escaped_e" grouping="byte_1b" >
         <Token name="Escaped_e" />
     </ListProduction>
 
 
-    <!-- May want all 256 bytes mappd to char here, might get away with only the special cases -->
+    <!-- then map the specific byte onto a char_RE -->
     <AssignProduction label="byte_07" grouping="char_RE" >
       <Grouping type="byte_07" position="1" />
     </AssignProduction>
-
     <AssignProduction label="byte_09" grouping="char_RE" >
       <Grouping type="byte_09" position="1" />
     </AssignProduction>
@@ -361,7 +355,6 @@
     <AssignProduction label="byte_0d" grouping="char_RE" >
       <Grouping type="byte_0d" position="1" />
     </AssignProduction>
-
     <AssignProduction label="byte_1b" grouping="char_RE" >
       <Grouping type="byte_1b" position="1" />
     </AssignProduction>

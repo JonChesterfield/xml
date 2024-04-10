@@ -3,6 +3,7 @@
 #include "ascii.ptree.h"
 
 #include "regex.h"
+#include "parse_hex.h"
 
 #include "../tools/stack.libc.h"
 
@@ -78,35 +79,55 @@ ptree ascii_custom_production_range_ctor(ptree_context ctx,
   return cursor;
 }
 
-ptree ascii_custom_production_from_decimal(ptree_context ctx,
-                                           token /*Decimal*/ x1) {
+ptree ascii_custom_production_from_alphanumeric(ptree_context ctx,
+                                           token /*Alphanumeric*/ x1) {
   if (x1.width == 1) {
     uint8_t u = x1.value[0];
-    if ((u >= 0x30u) && (u <= 0x39u)) {
+    bool decimal = (u >= 0x30u) && (u <= 0x39u);
+    bool lower = (u >= 0x61u) && (u <= 0x7au);
+    bool upper = (u >= 0x41u) && (u <= 0x5au);
+    if (decimal || lower || upper) {
       return regex_grouping_single_from_byte(ctx, u);
     }
   }
   return ptree_failure();
 }
 
-ptree ascii_custom_production_from_lowercase(ptree_context ctx,
-                                             token /*Lowercase*/ x1) {
-  if (x1.width == 1) {
-    uint8_t u = x1.value[0];
-    if ((u >= 0x61u) && (u <= 0x7au)) {
-      return regex_grouping_single_from_byte(ctx, u);
+ptree ascii_custom_production_from_escaped_hex(ptree_context ctx,
+                                             token /*Escaped_hex*/ x1) {
+  if ((x1.width == 4) &&
+      (x1.value[0] == '\\') &&
+      (x1.value[1] == 'x'))
+    {
+      uint8_t l = parse_hex(x1.value[2]);
+      uint8_t r = parse_hex(x1.value[3]);
+
+      if ((l < 16) && (r < 16))
+        {
+          uint8_t byte = (uint8_t)(l * 16) + r;
+          return regex_grouping_single_from_byte(ctx, byte);
+        }    
     }
-  }
   return ptree_failure();
 }
 
-ptree ascii_custom_production_from_uppercase(ptree_context ctx,
-                                             token /*Uppercase*/ x1) {
-  if (x1.width == 1) {
-    uint8_t u = x1.value[0];
-    if ((u >= 0x41u) && (u <= 0x5au)) {
-      return regex_grouping_single_from_byte(ctx, u);
+ptree ascii_custom_production_from_escaped_character(ptree_context ctx,
+                                             token /*Escaped_character*/ x1) {
+  if ((x1.width == 2) &&
+      (x1.value[0] == '\\'))
+    {
+      switch(x1.value[1])
+        {
+        case 'f': return regex_grouping_single_from_byte(ctx, 0x0c);
+        case 'n': return regex_grouping_single_from_byte(ctx, 0x0a);
+        case 'r': return regex_grouping_single_from_byte(ctx, 0x0d);
+        case 't': return regex_grouping_single_from_byte(ctx, 0x09);
+        case 'v': return regex_grouping_single_from_byte(ctx, 0x0b);
+        case 'a': return regex_grouping_single_from_byte(ctx, 0x07);
+        case 'e': return regex_grouping_single_from_byte(ctx, 0x1b);
+        default: break;
+        }
     }
-  }
   return ptree_failure();
 }
+
