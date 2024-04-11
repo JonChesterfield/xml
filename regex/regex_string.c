@@ -81,7 +81,7 @@ static int regex_to_char_sequence_pre(ptree tree, uint64_t depth, void *p) {
     arena_push_char(data->mod, data->arena, '.');
     return 0;
   }
-    
+
   case regex_grouping_concat:
   case regex_grouping_kleene:
   case regex_grouping_or:
@@ -133,12 +133,11 @@ static int regex_to_char_sequence_elt(ptree tree, uint64_t depth, void *p) {
   (void)p;
   (void)data;
 
-  if (0)
-    {
-      printf("sequence elt\n");
-      regex_ptree_as_xml(&stack_libc, stdout, tree);
-      fprintf(stdout, "\n");
-    }
+  if (0) {
+    printf("sequence elt\n");
+    regex_ptree_as_xml(&stack_libc, stdout, tree);
+    fprintf(stdout, "\n");
+  }
   return 0;
 }
 
@@ -204,14 +203,11 @@ int regex_to_char_sequence(arena_module mod, arena_t *arena, ptree val) {
   return r;
 }
 
-ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
+ptree regex_from_char_sequence_using_lexer(lexer_t lexer, ptree_context ctx,
+                                           const char *bytes, size_t N) {
   const bool verbose = false;
 
-  lexer_t lexer = regex_lexer_create();
   if (!regex_lexer_valid(lexer)) {
-    if (verbose) {
-      fprintf(stderr, "Failed to make lexer\n");
-    }
     return ptree_failure();
   }
 
@@ -232,8 +228,10 @@ ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
       goto done;
     }
 
-    if (lexer_token.id == regex_token_WHITESPACE) { continue; }
-    
+    if (lexer_token.id == regex_token_WHITESPACE) {
+      continue;
+    }
+
     token lemon_token = token_create(regex_token_names[lexer_token.id],
                                      lexer_token.value, lexer_token.width);
 
@@ -249,6 +247,23 @@ ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
 
 done:;
   regex_parser_lemon_finalize(&parser);
+
+  return res;
+}
+
+ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
+  const bool verbose = false;
+
+  lexer_t lexer = regex_lexer_create();
+  if (!regex_lexer_valid(lexer)) {
+    if (verbose) {
+      fprintf(stderr, "Failed to make lexer\n");
+    }
+    return ptree_failure();
+  }
+
+  ptree res = regex_from_char_sequence_using_lexer(lexer, ctx, bytes, N);
+
   regex_lexer_destroy(lexer);
 
   return res;
@@ -302,8 +317,9 @@ stringtable_index_t regex_insert_into_stringtable(stringtable_t *strtab,
     };
   }
 
-  uint64_t offset_after = arena_next_offset(strtab->arena_mod, strtab->arena);    
-  return stringtable_record_with_trailing_nul(strtab, offset_after - offset_before);
+  uint64_t offset_after = arena_next_offset(strtab->arena_mod, strtab->arena);
+  return stringtable_record_with_trailing_nul(strtab,
+                                              offset_after - offset_before);
 }
 
 ptree regex_from_stringtable(stringtable_t *tab, stringtable_index_t index,

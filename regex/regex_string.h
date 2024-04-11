@@ -3,6 +3,7 @@
 #include "../tools/arena.h"
 #include "../tools/ptree.h"
 #include "../tools/stringtable.h"
+#include "../tools/lexer.t"
 
 // Considering supporting two different syntaxes, maybe in the same grammar
 // One is (&(*11)(~22)) style, prefix and fully parens
@@ -17,6 +18,9 @@
 
 // construct into the passed context. N is exclusive of nul, no nul required
 ptree regex_from_char_sequence(ptree_context ctx, const char * bytes, size_t N);
+
+// As above but using a specific valid lexer instance
+ptree regex_from_char_sequence_using_lexer(lexer_t, ptree_context ctx, const char * bytes, size_t N);
 
 // append to arena. Maybe return bool? Should leave arena unchanged on failure
 // todo: failures not well checked yet. Does not allocate a trailing 0.
