@@ -21,23 +21,21 @@
     <Token name="Alphanumeric" regex="[0-9a-zA-Z]" />
     
     <!-- Other characters that only match themselves as far as ascii regex is concerned -->
-    <Token name="OtherAscii" regex="[&quot;&apos;&amp;%_~!:,#/]" />
+    <Token name="OtherAscii" regex="[&quot;&apos;&amp;%_~!:,#/{},`&lt;=&gt;@;]" />
 
     <!-- Escaped characters like \n or \a work inside or outside of a character class in perl, seems reasonable -->
-    <Token name="Escaped_a" literal="\a" />
-
-    <!-- re2c hasn't implemented \e -->
-    <Token name="Escaped_e" hexliteral="5c1b" />
+    <Token name="Escaped_a" regex="[\\][a]" />
+    <Token name="Escaped_e" regex="[\\][e]" />
 
     <!-- distinction between t & n is useful when checking codegen -->
-    <Token name="Escaped_t" regex="[\t]" />
-    <Token name="Escaped_n" literal="\n" />
+    <Token name="Escaped_t" regex="[\\][t]" />
+    <Token name="Escaped_n" regex="[\\][n]" />
 
     <!-- used \v while testing codegen -->
-    <Token name="Escaped_v" hexliteral="5c76" />
+    <Token name="Escaped_v" regex="[\\][v]" />
     <!-- regex [\]r is rejected by re2c, looks like it treats the \ as escaping the close brace -->
-    <Token name="Escaped_r" literal="\r" />
-    <Token name="Escaped_f" literal="\f" />
+    <Token name="Escaped_r" regex="[\\][r]" />
+    <Token name="Escaped_f" regex="[\\][f]" />
 
     <!-- Alternative to handling \f etc one at a time. Requires a custom production but less xml -->
     <Token name="Escaped_character" regex="[\\][fnrtvae]" />
@@ -45,7 +43,7 @@
     <!-- Must be a slash, then x, then exactly two hex digits -->
     <!-- re2c does not cope with [\] for a slash but would accept [\\] -->
     <!-- re2c also rejected an x by itself in the middle of the ranges... -->
-    <Token name="Escaped_hex" regex="[\x5c][x][0-9a-f][0-9a-f]" />
+    <Token name="Escaped_hex" regex="[\\][x][0-9a-f][0-9a-f]" />
 
     <!-- The metacharacter that aren't special in a character class, i.e. not
          [\]^-
@@ -53,9 +51,8 @@
          The following is matching \\ even without the \x5c, but shouldn't be
     -->
 
-<!--
-    <Token name="Escaped_meta" regex="[\x5c][\x28\x29\x7c\x2a\x2b\x3f\x5c]" />
--->
+
+    <Token name="Escaped_meta" regex="[\\][.^$*+?(){}|]" />
 
     <Token name="Space" regex="[ ]" />
 
@@ -100,8 +97,8 @@
          of literal escapes which are difficult to get right across various engines
     -->
     
-    <Token name="LPAREN" literal="(" />
-    <Token name="RPAREN" literal=")" />
+    <Token name="LPAREN" regex="[(]" />
+    <Token name="RPAREN" regex="[)]" />
 
     <Token name="LSQUARE" literal="[" />
     <Token name="RSQUARE" literal="]" />
@@ -115,17 +112,16 @@
 
     <Token name="LSQUARECARETHYPHEN" literal="[^-" />
 
-    <Token name="PERIOD" literal="." />
-    <Token name="HYPHEN" literal="-" />
+    <Token name="PERIOD" regex="[.]" />
+    <Token name="HYPHEN" regex="[-]" />
 
-    <Token name="PIPE" literal="|" />
-    <Token name="STAR" literal="*" />
-    <Token name="PLUS" literal="+" />
-    <Token name="QUESTION" literal="?" />
+    <Token name="PIPE" regex="[|]" />
+    <Token name="STAR" regex="[*]" />
+    <Token name="PLUS" regex="[+]" />
+    <Token name="QUESTION" regex="[?]" />
 
-<!-- leave ^,$ for now
+    <Token name="CARET" literal="^" />
     <Token name="DOLLAR" literal="$" />
--->
 
     <!-- Not sure this is doing the right thing, may be matching a \ then a t -->
     <!-- Should be trailing + but there is an interaction with longest-wins that is being debugged -->
@@ -189,6 +185,7 @@
     <Grouping name="byte_0d" type="ptree" />
     <Grouping name="byte_1b" type="ptree" />
     <Grouping name="byte_20" type="ptree" />
+    <Grouping name="byte_24" type="ptree" />
 
     <Grouping name="byte_2a" type="ptree" />
     <Grouping name="byte_2b" type="ptree" />
@@ -196,6 +193,8 @@
     <Grouping name="byte_2e" type="ptree" />    
     <Grouping name="byte_28" type="ptree" />
     <Grouping name="byte_29" type="ptree" />
+    <Grouping name="byte_3f" type="ptree" />
+    <Grouping name="byte_5e" type="ptree" />
     <Grouping name="byte_7c" type="ptree" />    
   </Groupings>
 
@@ -314,6 +313,13 @@
     </AssignProduction>
     <ListProduction label="byte_2d_from_hyphen" grouping="byte_2d" >
         <Token name="HYPHEN" />
+    </ListProduction>
+
+    <AssignProduction label="elementary_from_caret" grouping="positive_elementary_RE" >
+      <Grouping type="byte_5e" position="1" />  
+    </AssignProduction>
+    <ListProduction label="byte_5e_from_caret" grouping="byte_5e" >
+        <Token name="CARET" />
     </ListProduction>
 
 
@@ -484,6 +490,19 @@
       <Token name="PIPE" />
     </ListProduction>
 
+    <AssignProduction label="set_item_from_byte_24" grouping="set_item" >
+      <Grouping type="byte_24" position="1" />
+    </AssignProduction>
+    <ListProduction label="byte_24_from_dollar" grouping="byte_24" >
+        <Token name="DOLLAR" />
+    </ListProduction>
+
+    <AssignProduction label="set_item_from_byte_3f" grouping="set_item" >
+      <Grouping type="byte_3f" position="1" />
+    </AssignProduction>
+    <ListProduction label="byte_3f_from_question" grouping="byte_3f" >
+        <Token name="QUESTION" />
+    </ListProduction>
 
     <!-- range -->
     <CustomProduction label="range_ctor" grouping="range" >
@@ -510,11 +529,10 @@
       <Token name="Escaped_character" />
     </CustomProduction>
 
-<!--
     <CustomProduction label="from_escaped_meta" grouping="char_RE" >
       <Token name="Escaped_meta" />
     </CustomProduction>
--->
+
     <ListProduction label="list_space" grouping="byte_20" >
         <Token name="Space" />
     </ListProduction>

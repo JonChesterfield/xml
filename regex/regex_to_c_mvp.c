@@ -64,7 +64,6 @@ int regex_to_c_mvp(const char *lang, const char *prefix, ptree_context context,
 static int declare(regex_cache_t *cache, stringtable_index_t current, void *d) {
   functor_state *data = (functor_state *)d;
   const char *prefix = data->prefix;
-  const char *lang = data->lang;
   const char *params = data->params;
   const char *state_type = data->state_type;
   printf("static %s %s_regex_%lu(%s);\n", state_type, prefix,
@@ -197,7 +196,6 @@ static int prolog(regex_cache_t *cache, stringtable_index_t current, void *d) {
   functor_state *data = (functor_state *)d;
   const char *prefix = data->prefix;
   const char *params = data->params;
-  const char *lang = data->lang;
   const char *state_type = data->state_type;
   
   printf("static %s %s_regex_match(%s);\n", state_type, prefix,
@@ -209,7 +207,6 @@ static int epilog(regex_cache_t *cache, stringtable_index_t current, void *d) {
   functor_state *data = (functor_state *)d;
   const char *prefix = data->prefix;
   const char *params = data->params;
-  const char *lang = data->lang;
   const char *state_type = data->state_type;
   printf("static %s %s_regex_match(%s)\n"
          "{\n"

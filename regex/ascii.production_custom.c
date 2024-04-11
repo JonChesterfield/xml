@@ -143,6 +143,14 @@ ptree ascii_custom_production_from_otherascii(ptree_context ctx,
       case ',':
       case '#':
       case '/':
+      case '{':
+      case '}':
+      case '`':
+      case '<':
+      case '=':
+      case '>':
+      case '@':
+      case ';':
         return regex_grouping_single_from_byte(ctx, u);
       }
   }
@@ -196,23 +204,17 @@ ptree ascii_custom_production_from_escaped_meta(ptree_context ctx,
     {
       switch(x1.value[1])
         {
-#if 1
-        case 0x28:
-        case 0x29:
-        case 0x7c:
-        case 0x2a:
-        case 0x2b:
-        case 0x3f:
-        case 0x5c:
-#else
-        case '(':
-        case ')':
-        case '|':
+        case '.':
+        case '^':
+        case '$':
         case '*':
         case '+':
         case '?':
-        case '\\':
-#endif
+        case '(':
+        case ')':
+        case '{':
+        case '}':
+        case '|':
           return regex_grouping_single_from_byte(ctx, x1.value[1]);
         default: break;
         }
