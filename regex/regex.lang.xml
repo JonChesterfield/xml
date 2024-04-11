@@ -8,11 +8,22 @@
     <Engine value="re2c" />
   </Lexer>
 
+    <!-- hexliterals are unambiguous and have a very direct lowering in the local
+         regex dialect and in re2c. Unfortunately it turns out they're unavailable
+         in posix ere. Don't really want to bootstrap from re2c or re2 though. 
+         This source therefore uses regex everywhere, despite hexliterals being clearer,
+         and tends to put things in character classes unnecessarily because that makes
+         the escaping rules more consistent across different engines.
+         ascii.lang.xml understands at least these instances of non-alphanumeric
+         characters inside brackets, though several are special cased in the parser
+         to achieve that (e.g. [(] has its own case, while [&], [~], [:] share one
+    -->
+
   <Tokens>
     <Token name="BYTE" regex="[0-9a-f][0-9a-f]" />
 
-    <Token name="LPAREN" hexliteral="28" />
-    <Token name="RPAREN" hexliteral="29" />
+    <Token name="LPAREN" regex="[(]" />
+    <Token name="RPAREN" regex="[)]" />
 
     <!--
     a slightly different lexer could do something like:
@@ -24,20 +35,17 @@
     <Token name="LSQUARE" regex="\[|S" />
     -->
 
-    <Token name="LSQUARE" hexliteral="5b" />
-    <Token name="RSQUARE" hexliteral="5d" />
+    <Token name="EMPTYSET" regex="[%]" />
+    <Token name="EMPTYSTRING" regex="[_]" />
+    <Token name="ANYCHAR" regex="[.]" />
 
-    <Token name="EMPTYSET" hexliteral="25" />
-    <Token name="EMPTYSTRING" hexliteral="5f" /> <!-- _ -->
-    <Token name="ANYCHAR" hexliteral="2e" />
+    <Token name="CONCAT" regex="[:]" />
 
-    <Token name="CONCAT" hexliteral="3a" />
+    <Token name="KLEENE" regex="[*]" />
 
-    <Token name="KLEENE" hexliteral="2a" />
-
-    <Token name="OR" hexliteral="7c" />
-    <Token name="AND" hexliteral="26" />
-    <Token name="NOT" hexliteral="7e" />
+    <Token name="OR" regex="[|]" />
+    <Token name="AND" regex="[&amp;]" />
+    <Token name="NOT" regex="[~]" />
 
     <!-- don't currently have literal space in the character class -->
     <Token name="WHITESPACE" regex="[\x20\f\n\r\t\v]+" />

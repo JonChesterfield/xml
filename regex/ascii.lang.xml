@@ -8,9 +8,20 @@
     <Engine value="posix" />
   </Lexer>
 
+
+<!-- "posix" means ERE. Specifically it means passing REG_EXTENDED to the implementation
+     in libc. This has consequences, such as hex escapes aren't available.
+     Also \k is undefined unless k is a paren. In particular, it's not obvious that \t
+     means tab, as opposed to undefined.
+ -->
+
+
   <Tokens>
     <!-- Simpler than separate decimal/lower/upper tokens -->
     <Token name="Alphanumeric" regex="[0-9a-zA-Z]" />
+    
+    <!-- Other characters that only match themselves as far as ascii regex is concerned -->
+    <Token name="OtherAscii" regex="[&quot;&apos;&amp;%_~!:,#/]" />
 
     <!-- Escaped characters like \n or \a work inside or outside of a character class in perl, seems reasonable -->
     <Token name="Escaped_a" literal="\a" />
@@ -41,9 +52,12 @@
          Would like to use "[\\][()|*+?]" but haven't implemented it yet
          The following is matching \\ even without the \x5c, but shouldn't be
     -->
-    <Token name="Escaped_meta" regex="[\x5c][\x28\x29\x7c\x2a\x2b\x3f\x5c]" />
 
-    <Token name="Space" hexliteral="20" />
+<!--
+    <Token name="Escaped_meta" regex="[\x5c][\x28\x29\x7c\x2a\x2b\x3f\x5c]" />
+-->
+
+    <Token name="Space" regex="[ ]" />
 
     <!-- probably going to be literals
     <Token name="BYTE3a" literal=":" />
@@ -161,6 +175,13 @@
     <Grouping name="byte_1b" type="ptree" />
     <Grouping name="byte_20" type="ptree" />
 
+    <!-- adding these as handling for special characters inside square brackets -->
+    <Grouping name="byte_2a" type="ptree" />
+    <Grouping name="byte_2b" type="ptree" />
+    <Grouping name="byte_2e" type="ptree" />    
+    <Grouping name="byte_28" type="ptree" />
+    <Grouping name="byte_29" type="ptree" />
+    <Grouping name="byte_7c" type="ptree" />    
   </Groupings>
 
   <Precedences>
@@ -307,6 +328,56 @@
       <Grouping type="char_RE" position="1" />
     </AssignProduction>
 
+
+    <!-- 
+         Can put other things in [bracket expressions], such as ( or *
+         Nervous about messing up the grammar with these so keeping them in a form
+         lemon/bison can analyse, i.e. not in custom
+    -->
+
+    <AssignProduction label="set_item_from_byte_28" grouping="set_item" >
+      <Grouping type="byte_28" position="1" />
+    </AssignProduction>
+    <ListProduction label="byte_28_from_lparen" grouping="byte_28" >
+        <Token name="LPAREN" />
+    </ListProduction>
+
+    <AssignProduction label="set_item_from_byte_29" grouping="set_item" >
+      <Grouping type="byte_29" position="1" />
+    </AssignProduction>
+    <ListProduction label="byte_29_from_rparen" grouping="byte_29" >
+        <Token name="RPAREN" />
+    </ListProduction>
+
+    <AssignProduction label="set_item_from_byte_2a" grouping="set_item" >
+      <Grouping type="byte_2a" position="1" />
+    </AssignProduction>
+    <ListProduction label="byte_2a_from_star" grouping="byte_2a" >
+        <Token name="STAR" />
+    </ListProduction>
+
+    <AssignProduction label="set_item_from_byte_2b" grouping="set_item" >
+      <Grouping type="byte_2b" position="1" />
+    </AssignProduction>
+    <ListProduction label="byte_2b_from_plus" grouping="byte_2b" >
+        <Token name="PLUS" />
+    </ListProduction>
+
+    <AssignProduction label="set_item_from_byte_2e" grouping="set_item" >
+      <Grouping type="byte_2e" position="1" />
+    </AssignProduction>
+    <ListProduction label="byte_2e_from_period" grouping="byte_2e" >
+      <Token name="PERIOD" />
+    </ListProduction>
+
+    <AssignProduction label="set_item_from_byte_7c" grouping="set_item" >
+      <Grouping type="byte_7c" position="1" />
+    </AssignProduction>
+    <ListProduction label="byte_7c_from_pipe" grouping="byte_7c" >
+      <Token name="PIPE" />
+    </ListProduction>
+
+
     <!-- range -->
     <CustomProduction label="range_ctor" grouping="range" >
       <Grouping type="char_RE" />
@@ -319,6 +390,10 @@
       <Token name="Alphanumeric"/>
     </CustomProduction>
 
+    <CustomProduction label="from_otherascii" grouping="char_RE" >
+      <Token name="OtherAscii"/>
+    </CustomProduction>
+
     <CustomProduction label="from_escaped_hex" grouping="char_RE" >
       <Token name="Escaped_hex" />
     </CustomProduction>
@@ -328,10 +403,11 @@
       <Token name="Escaped_character" />
     </CustomProduction>
 
+<!--
     <CustomProduction label="from_escaped_meta" grouping="char_RE" >
       <Token name="Escaped_meta" />
     </CustomProduction>
-
+-->
     <ListProduction label="list_space" grouping="byte_20" >
         <Token name="Space" />
     </ListProduction>

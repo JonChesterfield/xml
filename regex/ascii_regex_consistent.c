@@ -203,6 +203,50 @@ MODULE(ascii_regex_consistent) {
     CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
   }
 
+  TEST("special characters") {
+    // in order of ascii table. Some of them need to be escaped, some don't
+    // should probably check all escaping patterns for each one, / prefixed etc
+    static struct pair cases[] = {
+        {" ", "20"},
+        {"[ ]", "20"},
+        {"!", "21"},
+        {"[!]", "21"},
+        {"\"", "22"},
+        {"[\"]", "22"},
+        {"#", "23"},
+        {"[#]", "23"},
+        // {"$", "24"}, // special
+        // {"[$]", "24"},
+        {"%", "25"},
+        {"[%]", "25"},
+        {"&", "26"},
+        {"[&]", "26"},
+        {"'", "27"},
+        {"[']", "27"},
+        // {"(", "28"},
+        {"[(]", "28"},
+        // {")", "29"},
+        {"[)]", "29"},
+        // {"*", "2a"},
+        {"[*]", "2a"},
+        // {"+", "2b"},
+        {"[+]", "2b"},
+        {",", "2c"},
+        {"[,]", "2c"},
+        // {"-", "2d"},
+        // {"[-]", "2d"}, // complicated
+        // {".", "2e"},
+        {"[.]", "2e"},
+        {"/", "2f"},        
+        {"[/]", "2f"},        
+    };
+    enum {
+      cases_size = sizeof(cases) / sizeof(cases[0]),
+    };
+    CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
+
+  }
+
   TEST("or") {
     static struct pair cases[] = {
       {

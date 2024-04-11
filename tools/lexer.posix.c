@@ -173,6 +173,7 @@ lexer_token_t lexer_posix_iterator_step(lexer_t l, lexer_iterator_t* iter)
   if (!zeroth_matches) {
     size_t width = iter->end - iter->cursor;
     printf("Internal error. Zeroth regex did not match %s 0x%x. Iterator width %zu.\n", iter->cursor, (int)iter->cursor[0], width);
+    if (width > 8) width = 8;
     for (size_t i = 0; i < width; i++) {
       printf("Char [%zu] = 0x%x (%c) \n", i, iter->cursor[i], iter->cursor[i]);
     }

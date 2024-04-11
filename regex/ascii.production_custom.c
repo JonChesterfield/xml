@@ -103,6 +103,30 @@ ptree ascii_custom_production_from_alphanumeric(ptree_context ctx,
   return ptree_failure();
 }
 
+ptree ascii_custom_production_from_otherascii(ptree_context ctx,
+                                           token /*OtherAscii*/ x1) {
+  if (x1.width == 1) {
+    uint8_t u = x1.value[0];
+    switch(x1.value[0])
+      {
+      case '&':
+      case '%':
+      case '_':
+      case '~':
+      case '!':
+      case ':':
+      case '"':
+      case '\'':
+      case ',':
+      case '#':
+      case '/':
+        return regex_grouping_single_from_byte(ctx, u);
+      }
+  }
+  return ptree_failure();
+}
+
+
 ptree ascii_custom_production_from_escaped_hex(ptree_context ctx,
                                              token /*Escaped_hex*/ x1) {
   if ((x1.width == 4) &&
@@ -143,6 +167,7 @@ ptree ascii_custom_production_from_escaped_character(ptree_context ctx,
 
 ptree ascii_custom_production_from_escaped_meta(ptree_context ctx,
                                              token /*Escaped_meta*/ x1) {
+  // This was giving trouble in bootstrap from ERE, currently disabled
   if ((x1.width == 2) &&
       (x1.value[0] == '\\'))
     {
