@@ -301,13 +301,13 @@ MODULE(ascii_regex_consistent) {
         
         {"\\[", "5b",},
         // {"[[]", "5b",}, // unimplemented
-        {"\\", "5c",},
+        {"\\\\", "5c",},
         {"[\\\\]", "5c",}, // A \\ in the character class, with C escapes
         {"\\]", "5d",},
         // {"[]]", "5d",}, // should work but needs to be special cased
         {"^", "5e",},
         // "[^]" means negated empty bracket, but [k^] is supposed to match the literal ^
-        {"[B^]", "(|425e)",},
+        {"[B^]", "(|5e42)",},
         {"_", "5f",},
         {"[_]", "5f",},
         {"`", "60",},
@@ -394,17 +394,17 @@ MODULE(ascii_regex_consistent) {
         {"[AB]", "(|4142)"},
         {"[A-B]", "(|4142)"},
 
-        {"[ABC]", "(|41(|4243))"},
-        {"[A-C]", "(|41(|4243))"},
+        {"[ABC]", "(|(|4142)43)"},
+        {"[A-C]", "(|(|4142)43)"},
 
-        {"[ABCD]", "(|41(|42(|4344)))"},
-        {"[A-D]", "(|41(|42(|4344)))"},
+        {"[ABCD]", "(|(|(|4142)43)44)"},
+        {"[A-D]", "(|(|(|4142)43)44)"},
 
-        {"[b-e]", "(|62(|63(|6465)))"},
+        {"[b-e]", "(|(|(|6263)64)65)"},
 
         {"[A-Db-e]", "(|"
-                     "(|41(|42(|4344)))"
-                     "(|62(|63(|6465)))"
+                     "(|(|(|4142)43)44)"
+                     "(|(|(|6263)64)65)"
                      ")"},
 
         {"[^B]", "(&.(~42))"},
@@ -414,19 +414,19 @@ MODULE(ascii_regex_consistent) {
 
         {
             "[^A-C]",
-            "(&.(~(|41(|4243))))",
+            "(&.(~(|(|4142)43)))",
         },
 
         // C escaped slashes inside the regex
         {
             "[\\f\\n\\r]*",
-            "(*(|0c(|0a0d)))",
+            "(*(|(|0c0a)0d))",
         },
 
         // single whitespace character, exclusive of space, hex escaped in C
         {
             "[\x5c\x66\x5c\x6e\x5c\x72\x5c\x74\x5c\x76]",
-            "(|0c(|0a(|0d(|090b))))",
+            "(|(|(|(|0c0a)0d)09)0b)",
         },
 
         // empty brackets.
@@ -494,6 +494,12 @@ If a bracket expression specifies both '-' and ']', the ']' shall be placed firs
           "[-]*",
           "(*2d)",
       },
+#if 0
+      {
+          "\\-",
+          "2d",
+      },
+#endif
       {
           "[-B]",
           "(|2d42)",
@@ -590,15 +596,16 @@ If a bracket expression specifies both '-' and ']', the ']' shall be placed firs
         // simplified from [0-9] to [0-2]
         {
             "[-]?[0-2]+[0-2]*",
-            "(:(:(|2d_)(:(|30(|3132))(*(|30(|3132)))))(*(|30(|3132))))",
+            "(:(:(|2d_)(:(|(|3031)32)(*(|(|3031)32))))(*(|(|3031)32)))",
         },
 
         {
             // has a + suffix, splitting into two cases here
-            "[ \\f\\n\\r\\t\\v]",
-            "(|20(|0c(|0a(|0d(|090b)))))",
+            "[\\f\\n\\r\\t\\v]",
+            "(|(|(|(|0c0a)0d)09)0b)",
         },
-        {"[ \\f]+", "(:(|200c)(*(|200c)))"},
+
+        {"[ \\f]+", "(:(|200c)(*(|200c)))",},
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),

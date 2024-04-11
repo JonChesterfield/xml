@@ -50,7 +50,7 @@ enum lexer_engines
 #define LEXER_RE2C_ENABLE 1
 
 // An interpreter for regex, implemented in this repo
-#define LEXER_INTERP_ENABLE 1
+#define LEXER_INTERP_ENABLE 0
 
 // Run all the enabled lexers and fail if they disagree
 #define LEXER_MULTI_ENABLE 1

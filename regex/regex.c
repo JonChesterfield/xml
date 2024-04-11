@@ -303,7 +303,7 @@ ptree regex_canonicalise(ptree_context ctx, ptree val) {
   // each pass through canonicalise reassociates it by a depth of one
   const unsigned N = 128;
   const bool verbose = false;
-  const bool permissive = false;
+  const bool permissive = true;
   ptree orig = val;
   
   for (unsigned i = 0; i < N; i++)

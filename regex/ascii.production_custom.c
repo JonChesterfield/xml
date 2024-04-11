@@ -77,9 +77,15 @@ ptree ascii_custom_production_negative_set_empty(ptree_context ctx ,token /*LSQU
 }
 
 ptree ascii_custom_production_set_item_multiple(ptree_context ctx,
-                                                ptree /*set_item*/ x1,
-                                                ptree /*set_items*/ x2) {
+                                                ptree /*set_items*/ x1,
+                                                ptree /*set_item*/ x2) {
   return regex_make_or(ctx, x1, x2);
+}
+
+ptree ascii_custom_production_set_item_insert_caret(ptree_context ctx ,ptree /*set_items*/ x1 ,token /*CARET*/ x2)
+{
+  ptree caret = regex_grouping_single_from_byte(ctx, 0x5e);
+  return regex_make_or(ctx, caret, x1);
 }
 
 ptree ascii_custom_production_range_ctor(ptree_context ctx,
@@ -101,12 +107,12 @@ ptree ascii_custom_production_range_ctor(ptree_context ctx,
     return ptree_failure();
   }
 
-  ptree cursor = regex_grouping_single_from_byte(ctx, right);
+  ptree cursor = regex_grouping_single_from_byte(ctx, left);
 
   while (left != right) {
-    right--;
-    ptree tmp = regex_grouping_single_from_byte(ctx, right);
-    cursor = regex_make_or(ctx, tmp, cursor);
+    left++;
+    ptree tmp = regex_grouping_single_from_byte(ctx, left);
+    cursor = regex_make_or(ctx, cursor, tmp);
   }
 
   return cursor;

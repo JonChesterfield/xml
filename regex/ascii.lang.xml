@@ -5,7 +5,7 @@
     <!-- Currently posix, re2, re2c or multi -->
     <!-- considering lex and the posix from musl -->
     <!-- Multi is set up to run all the engines that lexer.h says are available -->    
-    <Engine value="posix" />
+    <Engine value="multi" />
   </Lexer>
 
 
@@ -93,12 +93,24 @@
     <Token name="BYTE7e" literal="~" />
     -->
 
-    <!-- These are better written as literals but that exposes the complexity
+    <!-- These are better written as literals but that exposes the complexityo
          of literal escapes which are difficult to get right across various engines
     -->
     
     <Token name="LPAREN" regex="[(]" />
     <Token name="RPAREN" regex="[)]" />
+
+    <!-- Some of these seem to be impossible to match with posix and with re2c
+         [ ] ^ and probably - are a problem
+         Probably need to extend the syntax to allow a different regex on different engines
+         Can simplify by rejecting literal/hexliteral in that setting and require writing
+         them out explicitly. Directly filtering is difficult because currently all engines
+         run off the same combined regex table.
+         Alternative is to introduce another literal style syntax, perhaps one that puts the
+         bytes down directly as opposed to trying to \ or hex escape them, and then add
+         more careful logic to posix to handle the result - possibly not too bad since a
+         lot of bytes get passed through unchanged.         
+    -->
 
     <Token name="LSQUARE" literal="[" />
     <Token name="RSQUARE" literal="]" />
@@ -121,16 +133,25 @@
     <Token name="QUESTION" regex="[?]" />
 
     <Token name="CARET" literal="^" />
-    <Token name="DOLLAR" literal="$" />
+    <Token name="DOLLAR" regex="[$]" />
+
+    <Token name="ESCAPED_BACKSLASH" regex="[\\][\\]" />
 
     <!-- Not sure this is doing the right thing, may be matching a \ then a t -->
+    <!-- it doesn't - the problem is posix ere does not have escaped n like this -->
     <!-- Should be trailing + but there is an interaction with longest-wins that is being debugged -->
-    <Token name="DISCARDED_WHITESPACE" regex="[\f\n\r\t\v]" />
+    <!-- <Token name="DISCARDED_WHITESPACE" regex="[\f\n\r\t\v]" /> -->
+
+    <!-- This probably works on posix ere but isn't great elsewhere and re2c rejects it -->a-b
+    <!-- <Token name="DISCARDED_WHITESPACE" regex="[&#09;&#10;&#13;&#32;]" /> -->
+
+    <!-- Difficult to match whitespace but can throw away all the non-printable chars instead -->
+    <Token name="DISCARDED" regex="[^!-~]" />
 
   </Tokens>
 
   <TokenDiscard>
-    <Token name="DISCARDED_WHITESPACE" />
+    <Token name="DISCARDED" />
   </TokenDiscard>
 
   <Groupings>
@@ -194,6 +215,7 @@
     <Grouping name="byte_28" type="ptree" />
     <Grouping name="byte_29" type="ptree" />
     <Grouping name="byte_3f" type="ptree" />
+    <Grouping name="byte_5c" type="ptree" />
     <Grouping name="byte_5e" type="ptree" />
     <Grouping name="byte_7c" type="ptree" />    
   </Groupings>
@@ -319,9 +341,8 @@
       <Grouping type="byte_5e" position="1" />  
     </AssignProduction>
     <ListProduction label="byte_5e_from_caret" grouping="byte_5e" >
-        <Token name="CARET" />
+      <Token name="CARET" />
     </ListProduction>
-
 
     <!-- group -->
     <AssignProduction label="group_ctor" grouping="group" >
@@ -427,9 +448,15 @@
       <Grouping type="set_item" position="1" />
     </AssignProduction>
 
+    <!-- this might be iterating in the wrong order -->
     <CustomProduction label="set_item_multiple" grouping="set_items" >
-      <Grouping type="set_item" />
       <Grouping type="set_items" />
+      <Grouping type="set_item" />
+    </CustomProduction>
+
+    <CustomProduction label="set_item_insert_caret" grouping="set_items" >
+      <Grouping type="set_items" />
+      <Token name="CARET" />
     </CustomProduction>
 
     <!-- set-item -->
@@ -559,7 +586,9 @@
     <ListProduction label="list_escaped_e" grouping="byte_1b" >
         <Token name="Escaped_e" />
     </ListProduction>
-
+    <ListProduction label="list_escaped_backslash" grouping="byte_5c" >
+        <Token name="ESCAPED_BACKSLASH" />
+    </ListProduction>
 
     <!-- then map the specific byte onto a char_RE -->
     <AssignProduction label="byte_07" grouping="char_RE" >
@@ -583,6 +612,11 @@
     <AssignProduction label="byte_1b" grouping="char_RE" >
       <Grouping type="byte_1b" position="1" />
     </AssignProduction>
+
+    <AssignProduction label="byte_5c" grouping="char_RE" >
+      <Grouping type="byte_5c" position="1" />
+    </AssignProduction>
+
 
     <AssignProduction label="byte_20" grouping="char_RE" >
       <Grouping type="byte_20" position="1" />
