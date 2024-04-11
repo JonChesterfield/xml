@@ -109,6 +109,12 @@
     <!-- open a negative set -->
     <Token name="LSQUARECARET" literal="[^" />
 
+    <!-- open/close a set or'ed with literal hyphen -->
+    <Token name="LSQUAREHYPHEN" literal="[-" />
+    <Token name="HYPHENRSQUARE" literal="-]" />
+
+    <Token name="LSQUARECARETHYPHEN" literal="[^-" />
+
     <Token name="PERIOD" literal="." />
     <Token name="HYPHEN" literal="-" />
 
@@ -117,10 +123,13 @@
     <Token name="PLUS" literal="+" />
     <Token name="QUESTION" literal="?" />
 
-  <!-- Not sure this is doing the right thing, may be matching a \ then a t -->
-  <!-- Should be trailing + but there is an interaction with longest-wins that is being debugged -->
-  <Token name="DISCARDED_WHITESPACE" regex="[\f\n\r\t\v]" />
+<!-- leave ^,$ for now
+    <Token name="DOLLAR" literal="$" />
+-->
 
+    <!-- Not sure this is doing the right thing, may be matching a \ then a t -->
+    <!-- Should be trailing + but there is an interaction with longest-wins that is being debugged -->
+    <Token name="DISCARDED_WHITESPACE" regex="[\f\n\r\t\v]" />
 
   </Tokens>
 
@@ -145,6 +154,13 @@
     <Grouping name="plus" type="ptree" />
     <Grouping name="question" type="ptree" />
     <Grouping name="elementary_RE" type="ptree" />
+    <Grouping name="positive_elementary_RE" type="ptree" />
+    <Grouping name="negative_elementary_RE" type="ptree" />
+
+    <!-- simple sets are mapped directly on to elementary re, ones with - in need more work -->
+    <Grouping name="positive_hyphen_set" type="ptree" />
+    <Grouping name="negative_hyphen_set" type="ptree" />
+
 
     <Grouping name="group" type="ptree" />
 
@@ -156,16 +172,15 @@
     <!-- probably excluding newline -->
     <Grouping name="any_RE" type="ptree" />
 
-    <Grouping name="set" type="ptree" />
-    <Grouping name="positive_set" type="ptree" />
-    <Grouping name="negative_set" type="ptree" />
+    <!-- conceptually checks a single character and rejects it whatever it is -->
+    <Grouping name="failure" type="ptree" />
 
+    <!-- set is matched directly onto positive/negative elementary re -->
     <Grouping name="set_items" type="ptree" />
     <Grouping name="set_item" type="ptree" />
 
     <Grouping name="range" type="ptree" />
 
-    <!-- exist only as transitionary nodes for the specific escapes-->
     <Grouping name="byte_07" type="ptree" />
     <Grouping name="byte_09" type="ptree" />
     <Grouping name="byte_0a" type="ptree" />
@@ -175,9 +190,9 @@
     <Grouping name="byte_1b" type="ptree" />
     <Grouping name="byte_20" type="ptree" />
 
-    <!-- adding these as handling for special characters inside square brackets -->
     <Grouping name="byte_2a" type="ptree" />
     <Grouping name="byte_2b" type="ptree" />
+    <Grouping name="byte_2d" type="ptree" />
     <Grouping name="byte_2e" type="ptree" />    
     <Grouping name="byte_28" type="ptree" />
     <Grouping name="byte_29" type="ptree" />
@@ -259,22 +274,48 @@
       <Token name="QUESTION" />
     </CustomProduction>
 
-    <!-- elementary-RE -->
-    <AssignProduction label="elementary_from_group" grouping="elementary_RE" >
+    <!-- elementary-RE, something that matches a single character -->
+
+    <!-- positive version passes through unchanged -->
+    <AssignProduction label="elementary_RE_from_positive_elementary_RE" grouping="elementary_RE" >
+      <Grouping type="positive_elementary_RE" position="1" />
+    </AssignProduction>
+
+    <!-- negative version gets inverted -->
+    <CustomProduction label="elementary_RE_from_negative_elementary_RE" grouping="elementary_RE" >
+      <Grouping type="negative_elementary_RE" position="1" />
+    </CustomProduction>
+
+    <AssignProduction label="elementary_from_group" grouping="positive_elementary_RE" >
       <Grouping type="group" position="1" />  
     </AssignProduction>
 
-    <AssignProduction label="elementary_from_char" grouping="elementary_RE" >
+    <AssignProduction label="elementary_from_char" grouping="positive_elementary_RE" >
       <Grouping type="char_RE" position="1" />  
     </AssignProduction>
 
-    <AssignProduction label="elementary_from_any" grouping="elementary_RE" >
+    <AssignProduction label="elementary_from_any" grouping="positive_elementary_RE" >
       <Grouping type="any_RE" position="1" />  
     </AssignProduction>
 
-    <AssignProduction label="elementary_from_set" grouping="elementary_RE" >
-      <Grouping type="set" position="1" />  
+    <AssignProduction label="elementary_from_failure" grouping="positive_elementary_RE" >
+      <Grouping type="failure" position="1" />  
     </AssignProduction>
+
+
+
+    <!-- A hyphen outside of a set matches itself
+         Don't make a char_RE out of one - handling hyphen as the limits of
+         a range is messy enough as it is and cannot make a set item out of one
+         Can make it an elementary_re though, and that'll give -? etc.
+    -->
+    <AssignProduction label="elementary_from_hyphen" grouping="positive_elementary_RE" >
+      <Grouping type="byte_2d" position="1" />  
+    </AssignProduction>
+    <ListProduction label="byte_2d_from_hyphen" grouping="byte_2d" >
+        <Token name="HYPHEN" />
+    </ListProduction>
+
 
     <!-- group -->
     <AssignProduction label="group_ctor" grouping="group" >
@@ -288,26 +329,92 @@
       <Token name="PERIOD"/>
     </CustomProduction>
 
+
     <!-- set -->
-    <AssignProduction label="set_from_positive_set" grouping="set" >
-      <Grouping type="positive_set" position="1" />
-    </AssignProduction>
-
-    <CustomProduction label="set_from_negative_set" grouping="set" >
-      <Grouping type="negative_set" position="1" />
-    </CustomProduction>
-
-    <AssignProduction label="positive_set_ctor" grouping="positive_set" >
+    <AssignProduction label="positive_set_ctorA" grouping="positive_elementary_RE" >
       <Token name="LSQUARE"/>
       <Grouping type="set_items" position="1" />
       <Token name="RSQUARE"/>
     </AssignProduction>
 
-    <AssignProduction label="negative_set_ctor" grouping="negative_set" >
+    <!-- uses the same constructor, the inversion is handled by the grouping -->
+    <CustomProduction label="hyphen_set_to_elementary" grouping="positive_elementary_RE" >
+      <Grouping type="positive_hyphen_set" />
+    </CustomProduction>
+    <CustomProduction label="hyphen_set_to_elementary" grouping="negative_elementary_RE" >
+      <Grouping type="negative_hyphen_set" />
+    </CustomProduction>
+
+    <AssignProduction label="positive_hyphen_set_A" grouping="positive_hyphen_set" >
+      <Token name="LSQUAREHYPHEN"/>
+      <Grouping type="set_items" position="1" />
+      <Token name="RSQUARE"/>
+    </AssignProduction>
+
+    <AssignProduction label="positive_hyphen_set_B" grouping="positive_hyphen_set" >
+      <Token name="LSQUARE"/>
+      <Grouping type="set_items" position="1" />
+      <Token name="HYPHENRSQUARE"/>
+    </AssignProduction>
+
+    <AssignProduction label="positive_hyphen_set_C" grouping="positive_hyphen_set" >
+      <Token name="LSQUAREHYPHEN"/>
+      <Grouping type="set_items" position="1" />
+      <Token name="HYPHENRSQUARE"/>
+    </AssignProduction>
+
+
+    <!-- empty cases -->
+    <CustomProduction label="positive_set_failure" grouping="failure" >
+      <Token name="LSQUARE"/>
+      <Token name="RSQUARE"/>
+    </CustomProduction>
+
+    <!-- into byte_2d which turns into a positive elementary re -->
+    <ListProduction label="positive_hyphen_set_B" grouping="byte_2d" >
+      <Token name="LSQUAREHYPHEN"/>
+      <Token name="RSQUARE"/>
+    </ListProduction>
+    <!-- [-] lexes as [- then ], not [ then -] -->
+    <ListProduction label="positive_hyphen_set_C" grouping="byte_2d" >
+      <Token name="LSQUAREHYPHEN"/>
+      <Token name="HYPHENRSQUARE"/>
+    </ListProduction>
+
+    <AssignProduction label="negative_set_ctor" grouping="negative_elementary_RE" >
       <Token name="LSQUARECARET"/>
       <Grouping type="set_items" position="1" />
       <Token name="RSQUARE"/>
     </AssignProduction>
+
+    <!-- -->
+   <AssignProduction label="negative_set_ctorB" grouping="negative_hyphen_set" >
+      <Token name="LSQUARECARETHYPHEN"/>
+      <Grouping type="set_items" position="1" />
+      <Token name="RSQUARE"/>
+    </AssignProduction>
+
+   <AssignProduction label="negative_set_ctorC" grouping="negative_hyphen_set" >
+      <Token name="LSQUARECARETHYPHEN"/>
+      <Grouping type="set_items" position="1" />
+      <Token name="HYPHENRSQUARE"/>
+    </AssignProduction>
+
+    <!-- this should be any, could probably use failure with negative_elementary  -->
+    <CustomProduction label="negative_set_empty" grouping="positive_elementary_RE" >
+      <Token name="LSQUARECARET"/>
+      <Token name="RSQUARE"/>
+    </CustomProduction>
+
+    <!-- these need to turn into byte_2d tagged with negative -->
+    <CustomProduction label="negative_hyphen_set_empty" grouping="negative_elementary_RE" >
+      <Token name="LSQUARECARETHYPHEN"/>
+      <Token name="RSQUARE"/>
+    </CustomProduction>
+    <CustomProduction label="negative_hyphen_set_empty" grouping="negative_elementary_RE" >
+      <Token name="LSQUARECARETHYPHEN"/>
+      <Token name="HYPHENRSQUARE"/>
+    </CustomProduction>
 
     <!-- set-items -->
     <AssignProduction label="set_item_single" grouping="set_items" >

@@ -11,17 +11,16 @@
 // Probably want an ascii.h defining things like the conversion to prefix string
 #include "ascii_interpreter.h"
 
-
 // while debugging
-#include "ascii.lexer.h"
 #include "../tools/lexer.h"
+#include "ascii.lexer.h"
 
 struct pair {
   const char *ascii;
   const char *regex;
 };
 
-bool equivalent(struct pair *cases, size_t N) {
+static bool equivalent_impl(struct pair *cases, size_t N, bool verbose) {
   ptree_context ascii_context = regex_ptree_create_context();
   ptree_context regex_context = regex_ptree_create_context();
 
@@ -33,23 +32,37 @@ bool equivalent(struct pair *cases, size_t N) {
 
     bool failed = ptree_is_failure(ascii) || ptree_is_failure(regex);
 
-    bool differ = !regex_ptree_definitionally_equal(ascii, regex);
+    regex_compare_t defn_equal = regex_ptree_definitionally_equal(ascii, regex);
+    bool differ = defn_equal == regex_compare_not_equal;
+
+    if (verbose) {
+      printf("Case %zu, eq %d\n", i, defn_equal);
+      printf("ascii %s:\n", cases[i].ascii);
+      regex_ptree_as_xml(&stack_libc, stdout, ascii);
+      printf("\n");
+      printf("regex %s:\n", cases[i].regex);
+      regex_ptree_as_xml(&stack_libc, stdout, regex);
+      printf("\n");
+    }
+
     if (differ) {
       equal = false;
     }
 
     if (ptree_is_failure(ascii)) {
-      const char * data = cases[i].ascii;
-       printf("Failed to parse case %zu, %s\n", i, data);
-       
+      const char *data = cases[i].ascii;
+      printf("Failed to parse case %zu, %s\n", i, data);
+
       lexer_t lexer = ascii_lexer_create();
-      if (!ascii_lexer_valid(lexer)) { exit(1); }
+      if (!ascii_lexer_valid(lexer)) {
+        exit(1);
+      }
 
       for (lexer_iterator_t lexer_iterator = lexer_iterator_t_create(data, N);
            !lexer_iterator_t_empty(lexer_iterator);) {
         lexer_token_t lexer_token =
-          ascii_lexer_iterator_step(lexer, &lexer_iterator);
-    
+            ascii_lexer_iterator_step(lexer, &lexer_iterator);
+
         token lemon_token = token_create(ascii_token_names[lexer_token.id],
                                          lexer_token.value, lexer_token.width);
 
@@ -59,8 +72,7 @@ bool equivalent(struct pair *cases, size_t N) {
           break;
         }
 
-        
-        // 0 is the unknown token                                 
+        // 0 is the unknown token
         if (lexer_token.id == 0) {
           printf("token unknown: ");
           token_dump(lemon_token);
@@ -68,15 +80,13 @@ bool equivalent(struct pair *cases, size_t N) {
         }
 
         token_dump(lemon_token);
-      }      
+      }
     }
-    
+
     if (failed || differ) {
-      printf("%s ?= %s. Failed %u %u, differ %u\n", cases[i].ascii, cases[i].regex,
-             ptree_is_failure(ascii),
-             ptree_is_failure(regex),
-             differ
-             );
+      printf("%s ?= %s. Failed %u %u, differ %u\n", cases[i].ascii,
+             cases[i].regex, ptree_is_failure(ascii), ptree_is_failure(regex),
+             differ);
       if (0) {
         // Weird. The malloc'ed pointer prints correctly before it is returned,
         // and valgrind thinks the program is clean, but looking at the string
@@ -111,17 +121,25 @@ bool equivalent(struct pair *cases, size_t N) {
   return equal;
 }
 
+bool equivalent(struct pair *cases, size_t N) {
+  return equivalent_impl(cases, N, false);
+}
+
+bool equivalent_verbose(struct pair *cases, size_t N) {
+  return equivalent_impl(cases, N, true);
+}
+
 MODULE(ascii_regex_consistent) {
 
-  TEST("dump")
-    {
+  TEST("dump") {
+    if (0) {
       printf("Ascii set:\n");
-      for (unsigned i = 0; i < ascii_token_count; i++)
-        {
-          printf("Regex [%u] = %s\n", i, ascii_regexes[i]);
-        }
+      for (unsigned i = 0; i < ascii_token_count; i++) {
+        printf("Regex [%u] = %s\n", i, ascii_regexes[i]);
+      }
     }
-  
+  }
+
   TEST("decimals") {
     static struct pair cases[] = {
         {"0", "30"}, {"1", "31"}, {"2", "32"}, {"3", "33"}, {"4", "34"},
@@ -167,26 +185,24 @@ MODULE(ascii_regex_consistent) {
     // check all 256 single byte escapes
     const char tab[16] = "0123456789abcdef";
 
-    char ascii[5] = {'\\', 'x', 0, 0, '\0'};
+    char ascii[5] = {'\\', 'x', '_', '_', '\0'};
     char regex[3] = {0, 0, '\0'};
     bool ok = true;
-    for (unsigned l = 0; l < 16; l++)
-      {
-        for (unsigned h = 0; h < 16; h++)
-          {
-            ascii[3] = tab[h];
-            ascii[4] = tab[l];
-            regex[0] = tab[h];
-            regex[1] = tab[l];
-            struct pair cases[1] = {
-              {ascii, regex},
-            };
-            ok &= equivalent(cases, 1);
-          }
-      } 
+    for (unsigned l = 0; l < 16; l++) {
+      for (unsigned h = 0; h < 16; h++) {
+        ascii[2] = tab[h];
+        ascii[3] = tab[l];
+        regex[0] = tab[h];
+        regex[1] = tab[l];
+        struct pair cases[1] = {
+            {ascii, regex},
+        };
+        ok &= equivalent(cases, 1);
+      }
+    }
     CHECK(ok);
   }
-  
+
   TEST("escaped non-printing / whitespace") {
     // Double \\ is one for C, one for the regex
     static struct pair cases[] = {
@@ -233,34 +249,33 @@ MODULE(ascii_regex_consistent) {
         {"[+]", "2b"},
         {",", "2c"},
         {"[,]", "2c"},
-        // {"-", "2d"},
-        // {"[-]", "2d"}, // complicated
-        // {".", "2e"},
+        {"-", "2d"},
+        {"[-]", "2d"},
+        {".", "(&.(~0a))"}, // . excludes newline
         {"[.]", "2e"},
-        {"/", "2f"},        
-        {"[/]", "2f"},        
+        {"/", "2f"},
+        {"[/]", "2f"},
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),
     };
     CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
-
   }
 
   TEST("or") {
     static struct pair cases[] = {
-      {
-          "A",
-          "41",
-      },
-      {
-          "A|B",
-          "(|4142)",
-      },
-      {
-          "A|A",
-          "(|4141)",
-      },
+        {
+            "A",
+            "41",
+        },
+        {
+            "A|B",
+            "(|4142)",
+        },
+        {
+            "A|A",
+            "(|4141)",
+        },
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),
@@ -270,26 +285,25 @@ MODULE(ascii_regex_consistent) {
 
   TEST("concat") {
     static struct pair cases[] = {
-      {
-          "A",
-          "41",
-      },
-      {
-          "A|B",
-          "(:4142)",
-      },
-      {
-          "A|A",
-          "(:4141)",
-      },
+        {
+            "A",
+            "41",
+        },
+        {
+            "AB",
+            "(:4142)",
+        },
+        {
+            "AA",
+            "(:4141)",
+        },
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),
     };
     CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
   }
-  
-  
+
   TEST("any") {
     // ascii any excludes newline. Might end up excluding > 127 if
     // that's what other engines do on utf8
@@ -323,50 +337,127 @@ MODULE(ascii_regex_consistent) {
                      "(|62(|63(|6465)))"
                      ")"},
 
-        // Negated charsets are a not of the charset. This is wrong - need to specify that it's a single byte
+        {"[^B]", "(&.(~42))"},
+
+        // Negated charsets are a not of the charset. This is wrong - need to
+        // specify that it's a single byte
+
         {
             "[^A-C]",
-            "(~(|41(|4243)))",
+            "(&.(~(|41(|4243))))",
         },
 
         // C escaped slashes inside the regex
         {
-          "[\\f\\n\\r]*", "(*(|0c(|0a0d)))",
+            "[\\f\\n\\r]*",
+            "(*(|0c(|0a0d)))",
         },
 
         // single whitespace character, exclusive of space, hex escaped in C
         {
-          "[\x5c\x66\x5c\x6e\x5c\x72\x5c\x74\x5c\x76]",
-          "(|0c(|0a(|0d(|090b))))",
+            "[\x5c\x66\x5c\x6e\x5c\x72\x5c\x74\x5c\x76]",
+            "(|0c(|0a(|0d(|090b))))",
         },
+
+        // empty brackets.
+        {
+            "[]",
+            "%", // failure - no single char will match anything in the brackets
+        },
+        {
+            "[^]",
+            ".", // the real any, inclusive of newline
+        },
+
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),
     };
+
     CHECK(equivalent(cases, sizeof(cases) / sizeof(cases[0])));
   }
-  
-#if 0
-  TEST("hyphen")
-    {
+
+#if 1
+  TEST("hyphen") {
     static struct pair cases[] = {
-// Hyphen is tricky
-// https://stackoverflow.com/questions/9589074/regex-should-hyphens-be-escaped
+    // Hyphen is tricky
+    // https://stackoverflow.com/questions/9589074/regex-should-hyphens-be-escaped
 
 #if 0
 > Outside of a character class (that's what the "square brackets" are called) the hyphen
 > has no special meaning, and within a character class, you can place a hyphen as the first
 > or last character in the range (e.g. [-a-z] or [0-9-]), OR escape it (e.g. [a-z\-0-9])
 > in order to add "hyphen" to your class.
-#endif   
-        {
+#endif
+
+// Posix
+// https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_03_05
+#if 0
+
+
+In the POSIX locale, a range expression represents the set of collating elements that fall between two elements in the collation sequence, inclusive. In other locales, a range expression has unspecified behavior: strictly conforming applications shall not rely on whether the range expression is valid, or on the set of collating elements matched. A range expression shall be expressed as the starting point and the ending point separated by a <hyphen-minus> ( '-' ).
+
+In the following, all examples assume the POSIX locale.
+
+The starting range point and the ending range point shall be a collating element or collating symbol. An equivalence class expression used as a starting or ending point of a range expression produces unspecified results. An equivalence class can be used portably within a bracket expression, but only outside the range. If the represented set of collating elements is empty, it is unspecified whether the expression matches nothing, or is treated as invalid.
+
+The interpretation of range expressions where the ending range point is also the starting range point of a subsequent range expression (for example, "[a-m-o]" ) is undefined.
+
+The <hyphen-minus> character shall be treated as itself if it occurs first (after an initial '^', if any) or last in the list, or as an ending range point in a range expression. As examples, the expressions "[-ac]" and "[ac-]" are equivalent and match any of the characters 'a', 'c', or '-'; "[^-ac]" and "[^ac-]" are equivalent and match any characters except 'a', 'c', or '-'; the expression "[%--]" matches any of the characters between '%' and '-' inclusive; the expression "[--@]" matches any of the characters between '-' and '@' inclusive; and the expression "[a--@]" is either invalid or equivalent to '@', because the letter 'a' follows the symbol '-' in the POSIX locale. To use a <hyphen-minus> as the starting range point, it shall either come first in the bracket expression or be specified as a collating symbol; for example, "[][.-.]-0]", which matches either a <right-square-bracket> or any character or collating element that collates between <hyphen-minus> and 0, inclusive.
+
+If a bracket expression specifies both '-' and ']', the ']' shall be placed first (after the '^', if any) and the '-' last within the bracket expression.
+#endif
+
+      {
           "-",
           "2d",
-        },
-        {
+      },
+      {
+          "-*",
+          "(*2d)",
+      },
+      {
           "[-]",
           "2d",
-        },
+      },
+      {
+          "[-]*",
+          "(*2d)",
+      },
+      {
+          "[-B]",
+          "(|2d42)",
+      },
+      {
+          "[B-]",
+          "(|2d42)",
+      },
+      {
+          "[--]",
+          "2d",
+      },
+      {
+          "[-B-]",
+          "(|2d42)",
+      },
+
+      {
+          "[^-]",
+          "(&.(~2d))",
+      },
+      {
+          "[^--]",
+          "(&.(~2d))",
+      },
+      {
+          "[^-B]",
+          "(&.(~(|2d42)))",
+      },
+      {
+          "[^-B-]",
+          "(&.(~(|2d42)))",
+      },
+
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),
@@ -378,38 +469,38 @@ MODULE(ascii_regex_consistent) {
   TEST("suffixes") {
     // todo: are things like A*+ or B+? legal in pcre?
     static struct pair cases[] = {
-      {
-          "A",
-          "41",
-      },
-      {
-          "D*",
-          "(*44)",
-      },
-      {
-          "E+",
-          "(:45(*45))",
-      },
-      {
-          "(F)",
-          "46",
-      },
-      {
-          "(G*)",
-          "(*47)",
-      },
-      {
-          "((G*))",
-          "(*47)",
-      },
-      {
-        "G?",
-        "(|47_)",
-      },
-      {
-        "(G)?",
-        "(|47_)",
-      },
+        {
+            "A",
+            "41",
+        },
+        {
+            "D*",
+            "(*44)",
+        },
+        {
+            "E+",
+            "(:45(*45))",
+        },
+        {
+            "(F)",
+            "46",
+        },
+        {
+            "(G*)",
+            "(*47)",
+        },
+        {
+            "((G*))",
+            "(*47)",
+        },
+        {
+            "G?",
+            "(|47_)",
+        },
+        {
+            "(G)?",
+            "(|47_)",
+        },
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),
@@ -420,18 +511,24 @@ MODULE(ascii_regex_consistent) {
   TEST("arith lang regex") {
     // The regex used by arith.lang.xml at time of writing this test
     static struct pair cases[] = {
-#if 0
+        // simplified from [0-9] to B
         {
-          "[-]?[0-9]+[0-9]*",
-          "42",
+            "[-]?B+B*",
+            "(:(:(|2d_)(:42(*42)))(*42))",
         },
-#endif
-      {
-          // has a + suffix, splitting into two cases here
-          "[ \\f\\n\\r\\t\\v]",
-          "(|20(|0c(|0a(|0d(|090b)))))",
-      },
-      {"[ \\f]+", "(:(|200c)(*(|200c)))"},
+
+        // simplified from [0-9] to [0-2]
+        {
+            "[-]?[0-2]+[0-2]*",
+            "(:(:(|2d_)(:(|30(|3132))(*(|30(|3132)))))(*(|30(|3132))))",
+        },
+
+        {
+            // has a + suffix, splitting into two cases here
+            "[ \\f\\n\\r\\t\\v]",
+            "(|20(|0c(|0a(|0d(|090b)))))",
+        },
+        {"[ \\f]+", "(:(|200c)(*(|200c)))"},
     };
     enum {
       cases_size = sizeof(cases) / sizeof(cases[0]),

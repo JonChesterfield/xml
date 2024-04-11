@@ -48,9 +48,32 @@ ptree ascii_custom_production_from_any(ptree_context ctx, token /*PERIOD*/ x1) {
   return regex_make_and(ctx, any, regex_make_not(ctx, nl));
 }
 
-ptree ascii_custom_production_set_from_negative_set(ptree_context ctx,
-                                                    ptree /*negative_set*/ x1) {
-  return regex_make_not(ctx, x1);
+ptree ascii_custom_production_positive_set_failure(ptree_context ctx, token x1, token x2)
+{
+  return regex_make_empty_set(ctx);
+}
+
+ptree ascii_custom_production_elementary_RE_from_negative_elementary_RE(ptree_context ctx,
+                                                    ptree /*negative_elementary_RE*/ x1) {
+  // Match exactly one character, and none from the elementary_RE
+  // Without the and-any it'll match things like two chars
+  return regex_make_and(ctx, regex_make_any_char(ctx),
+                        regex_make_not(ctx, x1));
+}
+
+ptree ascii_custom_production_hyphen_set_to_elementary(ptree_context ctx ,ptree /*positive_hyphen_set*/ x1)
+{
+ return regex_make_or(ctx, regex_grouping_single_from_byte(ctx, 0x2d), x1);
+}
+
+ptree ascii_custom_production_negative_hyphen_set_empty(ptree_context ctx ,token /*LSQUARECARETHYPHEN*/ x1 ,token /*RSQUARE*/ x2)
+{
+  return regex_grouping_single_from_byte(ctx, 0x2d);
+}
+
+ptree ascii_custom_production_negative_set_empty(ptree_context ctx ,token /*LSQUARECARET*/ x1 ,token /*RSQUARE*/ x2)
+{
+  return regex_make_any_char(ctx);
 }
 
 ptree ascii_custom_production_set_item_multiple(ptree_context ctx,
