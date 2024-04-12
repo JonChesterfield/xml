@@ -22,11 +22,18 @@
 
 typedef struct
 {
+  regex_t reg;
+  const char * hex;
+  bool is_reg;
+} regex_or_hexliteral;
+
+typedef struct
+{
 #ifndef NDEBUG
   enum lexer_engines engine;
 #endif
   size_t size;
-  regex_t pats[];
+  regex_or_hexliteral pats[];
 } posix_lexer;
 
 static void set_engine(posix_lexer* l)
@@ -71,6 +78,54 @@ static posix_lexer* to_posix(lexer_t l)
 
 static lexer_t lexer_t_failed(void) { return from_posix(0); }
 
+
+static inline uint8_t parse_hex(uint8_t x)
+{
+      switch(x)
+        {
+        case '0': return 0;
+        case '1': return 1;
+        case '2': return 2;
+        case '3': return 3;
+        case '4': return 4;
+        case '5': return 5;
+        case '6': return 6;
+        case '7': return 7;
+        case '8': return 8;
+        case '9': return 9;
+        case 'a': return 10;
+        case 'b': return 11;
+        case 'c': return 12;
+        case 'd': return 13;
+        case 'e': return 14;
+        case 'f': return 15;
+        default: return 255;
+        }
+}
+
+static bool ishex(char c)
+{
+  return parse_hex(c) < 16;
+}
+
+
+
+static bool regex_is_hex_literal(const char *regex)
+{
+  size_t N = strlen(regex);
+  if ((N % 4) != 0) {
+    return false;
+  }
+  for (size_t i = 0; i < N; i+=4)
+    {
+      if (regex[0] != '\\') return false;
+      if (regex[1] != 'x') return false;
+      if (!ishex(regex[2])) return false;
+      if (!ishex(regex[3])) return false;     
+    }
+  return true;
+}
+
 lexer_t lexer_posix_create(size_t N, const char** regexes)
 {
   assert(N > 0);
@@ -80,14 +135,14 @@ lexer_t lexer_posix_create(size_t N, const char** regexes)
   // of whar a regex is than the default. This also means [[:space:]] works.
   const int cflags = REG_EXTENDED;
 
-  posix_lexer* lexer = malloc(sizeof(posix_lexer) + sizeof(regex_t) * N);
+  posix_lexer* lexer = malloc(sizeof(posix_lexer) + sizeof(regex_or_hexliteral) * N);
   if (!lexer)
     {
       return lexer_t_failed();
     }
   set_engine(lexer);
   lexer->size = N;
-  regex_t* compiled = &lexer->pats[0];
+  regex_or_hexliteral* compiled = &lexer->pats[0];
 
   for (size_t i = 0; i < N; i++)
     {
@@ -99,25 +154,33 @@ lexer_t lexer_posix_create(size_t N, const char** regexes)
 
   for (size_t i = 0; i < N; i++)
     {
-      int r = regcomp(&compiled[i], regexes[i], cflags);
-      if (r == 0)
-        {
-        }
-      else
-        {
-          char errbuf[64];
-          size_t errbuf_size = sizeof(errbuf);
-          regerror(r, &compiled[i], errbuf, errbuf_size);
-          printf("posix regex compile failed on %s with %s\n", regexes[i],
-                 errbuf);
-
-          for (size_t j = 0; j < i; j++)
-            {
-              regfree(&compiled[i]);
-            }
-          free(lexer);
-          return lexer_t_failed();
-        }
+      bool is_hex = regex_is_hex_literal(regexes[i]);
+      compiled[i].is_reg = !is_hex;
+      
+      if (is_hex) {
+        compiled[i].hex = regexes[i];
+      } else {      
+        int r = regcomp(&compiled[i].reg, regexes[i], cflags);
+        if (r == 0)
+          {
+          }
+        else
+          {
+            char errbuf[64];
+            size_t errbuf_size = sizeof(errbuf);
+            regerror(r, &compiled[i].reg, errbuf, errbuf_size);
+            printf("posix regex compile failed on %s with %s\n", regexes[i],
+                   errbuf);
+            
+            for (size_t j = 0; j < i; j++)
+              {
+                if (compiled[i].is_reg)
+                  regfree(&compiled[i].reg);
+              }
+            free(lexer);
+            return lexer_t_failed();
+          }
+      }
     }
 
   return from_posix(lexer);
@@ -126,11 +189,12 @@ lexer_t lexer_posix_create(size_t N, const char** regexes)
 void lexer_posix_destroy(lexer_t lex)
 {
   posix_lexer* lexer = to_posix(lex);
-  regex_t* compiled = &lexer->pats[0];
+  regex_or_hexliteral* compiled = &lexer->pats[0];
   size_t N = lexer->size;
   for (size_t i = 0; i < N; i++)
     {
-      regfree(&compiled[i]);
+      if (compiled[i].is_reg)
+        regfree(&compiled[i].reg);
     }
   free(lexer);
 }
@@ -142,17 +206,41 @@ static size_t ith_regex_matches_start(posix_lexer* lexer, const char* start,
 {
   (void)end;
 
-  regex_t* re = &lexer->pats[i];
-  const int eflags = 0;
-
-  regmatch_t match[1];
-
-  int status = regexec(re, start, 1, match, eflags);
-  if (status == 0)  // matched
+  regex_or_hexliteral * re_or_hex = &lexer->pats[i];
+  if (!re_or_hex->is_reg)
     {
-      if (match[0].rm_so == 0)  // matched at the start
+      const char * hex = re_or_hex->hex;
+      size_t hexlen = strlen(hex)/4;
+      size_t tarlen = end - start;
+      if (hexlen > tarlen) return 0;
+
+      for (size_t i = 0; i < hexlen; i++)
         {
-          return match[0].rm_eo;
+          unsigned char c = start[i];
+          char h = parse_hex(hex[i*4+2]);
+          char l = parse_hex(hex[i*4+3]);
+          uint8_t byte = (uint8_t)(h * 16) + l;
+
+          if (c != byte) {
+            return 0;
+          }
+        }
+      return hexlen;
+    }
+  else
+    {
+      regex_t * re = &re_or_hex->reg;
+      const int eflags = 0;
+      
+      regmatch_t match[1];
+
+      int status = regexec(re, start, 1, match, eflags);
+      if (status == 0)  // matched
+        {
+          if (match[0].rm_so == 0)  // matched at the start
+            {
+              return match[0].rm_eo;
+            }
         }
     }
 

@@ -5,7 +5,7 @@
     <!-- Currently posix, re2, re2c or multi -->
     <!-- considering lex and the posix from musl -->
     <!-- Multi is set up to run all the engines that lexer.h says are available -->    
-    <Engine value="multi" />
+    <Engine value="posix" />
   </Lexer>
 
 
@@ -53,6 +53,13 @@
 
 
     <Token name="Escaped_meta" regex="[\\][.^$*+?(){}|]" />
+
+    <Token name="Escaped_backslash" hexliteral="5c5c" />
+    <Token name="Escaped_lsquare" hexliteral="5c5b" />
+    <Token name="Escaped_rsquare" hexliteral="5c5d" />
+    <Token name="Escaped_caret" hexliteral="5c5e" />
+    <Token name="Escaped_hyphen" hexliteral="5c2d" />
+
 
     <Token name="Space" regex="[ ]" />
 
@@ -112,30 +119,28 @@
          lot of bytes get passed through unchanged.         
     -->
 
-    <Token name="LSQUARE" literal="[" />
-    <Token name="RSQUARE" literal="]" />
+    <Token name="LSQUARE" hexliteral="5b" />
+    <Token name="RSQUARE" hexliteral="5d" />
+    <Token name="CARET" hexliteral="5e" />
+    <Token name="HYPHEN" hexliteral="2d" />
 
     <!-- open a negative set -->
-    <Token name="LSQUARECARET" literal="[^" />
+    <Token name="LSQUARECARET" hexliteral="5b5e" />
 
     <!-- open/close a set or'ed with literal hyphen -->
-    <Token name="LSQUAREHYPHEN" literal="[-" />
-    <Token name="HYPHENRSQUARE" literal="-]" />
+    <Token name="LSQUAREHYPHEN" hexliteral="5b2d" />
+    <Token name="HYPHENRSQUARE" hexliteral="2d5d" />
 
-    <Token name="LSQUARECARETHYPHEN" literal="[^-" />
+    <Token name="LSQUARECARETHYPHEN" hexliteral="5b5e2d" />
 
     <Token name="PERIOD" regex="[.]" />
-    <Token name="HYPHEN" regex="[-]" />
 
     <Token name="PIPE" regex="[|]" />
     <Token name="STAR" regex="[*]" />
     <Token name="PLUS" regex="[+]" />
     <Token name="QUESTION" regex="[?]" />
 
-    <Token name="CARET" literal="^" />
     <Token name="DOLLAR" regex="[$]" />
-
-    <Token name="ESCAPED_BACKSLASH" regex="[\\][\\]" />
 
     <!-- Not sure this is doing the right thing, may be matching a \ then a t -->
     <!-- it doesn't - the problem is posix ere does not have escaped n like this -->
@@ -215,7 +220,9 @@
     <Grouping name="byte_28" type="ptree" />
     <Grouping name="byte_29" type="ptree" />
     <Grouping name="byte_3f" type="ptree" />
+    <Grouping name="byte_5b" type="ptree" />
     <Grouping name="byte_5c" type="ptree" />
+    <Grouping name="byte_5d" type="ptree" />
     <Grouping name="byte_5e" type="ptree" />
     <Grouping name="byte_7c" type="ptree" />    
   </Groupings>
@@ -337,9 +344,22 @@
         <Token name="HYPHEN" />
     </ListProduction>
 
+    <!-- would like byte_5e to be usable as a char_RE as then it'll splice into sets,
+         but currently running into parsing conflicts trying to make that so -->
+
     <AssignProduction label="elementary_from_caret" grouping="positive_elementary_RE" >
       <Grouping type="byte_5e" position="1" />  
     </AssignProduction>
+
+    <AssignProduction label="set_items_from_caret" grouping="set_items" >
+      <Grouping type="byte_5e" position="1" />  
+    </AssignProduction>
+
+    <AssignProduction label="set_items_from_hyphen" grouping="set_items" >
+      <Grouping type="byte_2d" position="1" />  
+    </AssignProduction>
+
+
     <ListProduction label="byte_5e_from_caret" grouping="byte_5e" >
       <Token name="CARET" />
     </ListProduction>
@@ -457,6 +477,12 @@
     <CustomProduction label="set_item_insert_caret" grouping="set_items" >
       <Grouping type="set_items" />
       <Token name="CARET" />
+    </CustomProduction>
+
+    <!-- same custom production as above, can add a \- into a set -->
+    <CustomProduction label="set_item_insert_caret" grouping="set_items" >
+      <Grouping type="set_items" />
+      <Token name="Escaped_caret" />
     </CustomProduction>
 
     <!-- set-item -->
@@ -587,10 +613,24 @@
         <Token name="Escaped_e" />
     </ListProduction>
     <ListProduction label="list_escaped_backslash" grouping="byte_5c" >
-        <Token name="ESCAPED_BACKSLASH" />
+        <Token name="Escaped_backslash" />
+    </ListProduction>
+    <ListProduction label="list_escaped_lsquare" grouping="byte_5b" >
+        <Token name="Escaped_lsquare" />
+    </ListProduction>
+    <ListProduction label="list_escaped_rsquare" grouping="byte_5d" >
+        <Token name="Escaped_rsquare" />
     </ListProduction>
 
-    <!-- then map the specific byte onto a char_RE -->
+    <!-- escaped caret and escaped hyphen can't be turned directly into char_RE -->
+    <ListProduction label="list_escaped_caret" grouping="byte_5e" >
+      <Token name="Escaped_caret" />
+    </ListProduction>
+    <ListProduction label="list_escaped_hyphen" grouping="byte_2d" >
+      <Token name="Escaped_hyphen" />
+    </ListProduction>
+
+    <!-- then map the specific byte onto a char_RE where possible-->
     <AssignProduction label="byte_07" grouping="char_RE" >
       <Grouping type="byte_07" position="1" />
     </AssignProduction>
@@ -612,12 +652,15 @@
     <AssignProduction label="byte_1b" grouping="char_RE" >
       <Grouping type="byte_1b" position="1" />
     </AssignProduction>
-
+    <AssignProduction label="byte_5b" grouping="char_RE" >
+      <Grouping type="byte_5b" position="1" />
+    </AssignProduction>
     <AssignProduction label="byte_5c" grouping="char_RE" >
       <Grouping type="byte_5c" position="1" />
     </AssignProduction>
-
-
+    <AssignProduction label="byte_5d" grouping="char_RE" >
+      <Grouping type="byte_5d" position="1" />
+    </AssignProduction>
     <AssignProduction label="byte_20" grouping="char_RE" >
       <Grouping type="byte_20" position="1" />
     </AssignProduction>

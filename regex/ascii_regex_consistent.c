@@ -300,12 +300,15 @@ MODULE(ascii_regex_consistent) {
         {"Z", "5a",},
         
         {"\\[", "5b",},
+        {"[\\[]", "5b",},
         // {"[[]", "5b",}, // unimplemented
         {"\\\\", "5c",},
         {"[\\\\]", "5c",}, // A \\ in the character class, with C escapes
         {"\\]", "5d",},
+        {"[\\]]", "5d",},
         // {"[]]", "5d",}, // should work but needs to be special cased
         {"^", "5e",},
+        {"\\^", "5e",},                
         // "[^]" means negated empty bracket, but [k^] is supposed to match the literal ^
         {"[B^]", "(|5e42)",},
         {"_", "5f",},
@@ -494,12 +497,35 @@ If a bracket expression specifies both '-' and ']', the ']' shall be placed firs
           "[-]*",
           "(*2d)",
       },
-#if 0
       {
           "\\-",
           "2d",
       },
-#endif
+      {
+          "[\\-]",
+          "2d",
+      },
+      {
+          "[-\\-]",
+          "(|2d2d)",
+      },
+      {
+          "[\\--]",
+          "(|2d2d)",
+      },
+      {
+          "[-\\--]",
+          "(|2d2d)",
+      },
+      {
+          "[-\\-\\--]",
+          "(|2d2d)",
+      },
+      {
+          "[-\\-B\\--]",
+          "(|2d(|2d42))",
+      },
+      
       {
           "[-B]",
           "(|2d42)",
