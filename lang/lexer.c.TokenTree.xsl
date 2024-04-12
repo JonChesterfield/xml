@@ -418,9 +418,7 @@ lexer_token_t <xsl:value-of select='$LangName' />_lexer_<xsl:value-of select='$v
 <Post value="#endif" />
 <NL hexvalue = "0a" />  
 </LexerInstantiation>
-
 </xsl:template>
-
 
 <xsl:template match="@*">
 <xsl:copy>

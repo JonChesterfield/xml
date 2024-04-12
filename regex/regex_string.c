@@ -203,13 +203,11 @@ int regex_to_char_sequence(arena_module mod, arena_t *arena, ptree val) {
   return r;
 }
 
-ptree regex_from_char_sequence_using_lexer(lexer_t lexer, ptree_context ctx,
-                                           const char *bytes, size_t N) {
+ptree regex_from_char_sequence_using_lexer(
+    lexer_t lexer,
+    lexer_token_t (*lexer_iterator_step)(lexer_t, lexer_iterator_t *),
+    ptree_context ctx, const char *bytes, size_t N) {
   const bool verbose = false;
-
-  if (!regex_lexer_valid(lexer)) {
-    return ptree_failure();
-  }
 
   ptree res = ptree_failure();
 
@@ -218,8 +216,7 @@ ptree regex_from_char_sequence_using_lexer(lexer_t lexer, ptree_context ctx,
 
   for (lexer_iterator_t lexer_iterator = lexer_iterator_t_create(bytes, N);
        !lexer_iterator_t_empty(lexer_iterator);) {
-    lexer_token_t lexer_token =
-        regex_lexer_iterator_step(lexer, &lexer_iterator);
+    lexer_token_t lexer_token = lexer_iterator_step(lexer, &lexer_iterator);
     if (!(lexer_token.id < regex_token_count) ||
         (lexer_token.id == regex_token_UNKNOWN)) {
       if (verbose) {
@@ -262,7 +259,8 @@ ptree regex_from_char_sequence(ptree_context ctx, const char *bytes, size_t N) {
     return ptree_failure();
   }
 
-  ptree res = regex_from_char_sequence_using_lexer(lexer, ctx, bytes, N);
+  ptree res = regex_from_char_sequence_using_lexer(
+      lexer, regex_lexer_iterator_step, ctx, bytes, N);
 
   regex_lexer_destroy(lexer);
 

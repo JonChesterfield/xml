@@ -1,4 +1,5 @@
 #include "regex_to_c_mvp.h"
+#include "regex.lexer.h"
 #include "regex_cache.h"
 
 /*
@@ -8,9 +9,9 @@
  * Start of the generated C is said struct and boolean, then a potentially
  * large number of functions encoding the regex transitions, then a match()
  * function with a predictable name that calls the entry state
- * The generated lexer util is similar in structure - it builds a set of C functions
- * for each regex and dispatches to the requested one
- * This is not the efficient way to build a lexer, hence mvp
+ * The generated lexer util is similar in structure - it builds a set of C
+ * functions for each regex and dispatches to the requested one This is not the
+ * efficient way to build a lexer, hence mvp
  */
 
 typedef struct {
@@ -18,6 +19,8 @@ typedef struct {
   const char *prefix;
   const char *state_type;
   const char *params;
+  lexer_t lexer;
+  lexer_token_t (*lexer_iterator_step)(lexer_t, lexer_iterator_t *);
 } functor_state;
 
 static int regex_to_c_mvp_cache(functor_state data, regex_cache_t *cache,
@@ -30,6 +33,13 @@ int regex_to_c_mvp(const char *lang, const char *prefix, ptree_context context,
     return 1;
   }
 
+  lexer_t lexer = regex_lexer_create();
+  lexer_token_t (*lexer_iterator_step)(lexer_t, lexer_iterator_t *) =
+      regex_lexer_iterator_step;
+  if (!regex_lexer_valid(lexer)) {
+    return 2;
+  }
+
   char *state_type = 0;
   {
     const char *fmt = "struct %s_regex_state";
@@ -37,21 +47,23 @@ int regex_to_c_mvp(const char *lang, const char *prefix, ptree_context context,
     state_type = malloc(size + 1);
     sprintf(state_type, fmt, lang);
   }
-  
+
   char *params = 0;
   {
     const char *fmt = "const char* start, const char *iter, const char* end, "
-      "%s state";
+                      "%s state";
     int size = snprintf(NULL, 0, fmt, state_type);
     params = malloc(size + 1);
     sprintf(params, fmt, state_type);
   }
-    
+
   functor_state data = {
       .lang = lang,
       .prefix = prefix,
       .params = params,
       .state_type = state_type,
+      .lexer = lexer,
+      .lexer_iterator_step = lexer_iterator_step,
   };
 
   int rc = regex_to_c_mvp_cache(data, &cache, context, regex);
@@ -66,8 +78,8 @@ static int declare(regex_cache_t *cache, stringtable_index_t current, void *d) {
   const char *prefix = data->prefix;
   const char *params = data->params;
   const char *state_type = data->state_type;
-  printf("static %s %s_regex_%lu(%s);\n", state_type, prefix,
-         current.value, params);
+  printf("static %s %s_regex_%lu(%s);\n", state_type, prefix, current.value,
+         params);
   return 0;
 }
 
@@ -80,7 +92,7 @@ static int define(regex_cache_t *cache, stringtable_index_t current, void *d) {
   const char *lang = data->lang;
   const char *params = data->params;
   const char *state_type = data->state_type;
-  
+
   const char *regstr = stringtable_lookup(&cache->strtab, current);
   size_t reglen = stringtable_lookup_size(&cache->strtab, current);
 
@@ -113,8 +125,8 @@ static int define(regex_cache_t *cache, stringtable_index_t current, void *d) {
          state_type, prefix, current.value, params, (int)reglen, regstr,
          nullable ? "true" : "false", empty_set ? "true" : "false", lang);
 
-  stringtable_index_t zeroth =
-      regex_cache_calculate_derivative(cache, current, (uint8_t)0);
+  stringtable_index_t zeroth = regex_cache_calculate_derivative_using_lexer(
+      data->lexer, data->lexer_iterator_step, cache, current, (uint8_t)0);
   if (!stringtable_index_valid(zeroth)) {
     return 3;
   }
@@ -122,8 +134,8 @@ static int define(regex_cache_t *cache, stringtable_index_t current, void *d) {
   if (use_all_equal) {
     bool all_equal = true;
     for (size_t i = 1; i < 256; i++) {
-      stringtable_index_t ith =
-          regex_cache_calculate_derivative(cache, current, (uint8_t)i);
+      stringtable_index_t ith = regex_cache_calculate_derivative_using_lexer(
+          data->lexer, data->lexer_iterator_step, cache, current, (uint8_t)i);
       all_equal &= zeroth.value == ith.value;
     }
 
@@ -144,10 +156,11 @@ static int define(regex_cache_t *cache, stringtable_index_t current, void *d) {
     if (use_ranges) {
       size_t range_start = 0;
       for (size_t i = 0; i < 256; i++) {
-        stringtable_index_t ith =
-            regex_cache_calculate_derivative(cache, current, (uint8_t)i);
-        stringtable_index_t next =
-            regex_cache_calculate_derivative(cache, current, (uint8_t)(i + 1));
+        stringtable_index_t ith = regex_cache_calculate_derivative_using_lexer(
+            data->lexer, data->lexer_iterator_step, cache, current, (uint8_t)i);
+        stringtable_index_t next = regex_cache_calculate_derivative_using_lexer(
+            data->lexer, data->lexer_iterator_step, cache, current,
+            (uint8_t)(i + 1));
 
         if (i == 255 || (ith.value != next.value)) {
           if (range_start == i) {
@@ -165,11 +178,12 @@ static int define(regex_cache_t *cache, stringtable_index_t current, void *d) {
     } else {
 
       for (size_t i = 0; i < 256; i++) {
-        stringtable_index_t ith =
-            regex_cache_calculate_derivative(cache, current, (uint8_t)i);
+        stringtable_index_t ith = regex_cache_calculate_derivative_using_lexer(
+            data->lexer, data->lexer_iterator_step, cache, current, (uint8_t)i);
 
-        stringtable_index_t next =
-            regex_cache_calculate_derivative(cache, current, (uint8_t)(i + 1));
+        stringtable_index_t next = regex_cache_calculate_derivative_using_lexer(
+            data->lexer, data->lexer_iterator_step, cache, current,
+            (uint8_t)(i + 1));
 
         if (!stringtable_index_valid(ith)) {
           return 3;
@@ -197,9 +211,8 @@ static int prolog(regex_cache_t *cache, stringtable_index_t current, void *d) {
   const char *prefix = data->prefix;
   const char *params = data->params;
   const char *state_type = data->state_type;
-  
-  printf("static %s %s_regex_match(%s);\n", state_type, prefix,
-         params);
+
+  printf("static %s %s_regex_match(%s);\n", state_type, prefix, params);
   return 0;
 }
 
@@ -235,14 +248,16 @@ static int regex_to_c_mvp_cache(functor_state data, regex_cache_t *cache,
 
   printf("\n");
 
-  rc = regex_cache_traverse(cache, root, declare, &data);
+  rc = regex_cache_traverse_using_lexer(data.lexer, data.lexer_iterator_step,
+                                        cache, root, declare, &data);
   if (rc != 0) {
     return rc;
   }
 
   printf("\n");
 
-  rc = regex_cache_traverse(cache, root, define, &data);
+  rc = regex_cache_traverse_using_lexer(data.lexer, data.lexer_iterator_step,
+                                        cache, root, define, &data);
   if (rc != 0) {
     return rc;
   }

@@ -83,7 +83,7 @@ static uint64_t hashderiv_key_hash(hashtable_user_t user,
   return r;
 }
 
-static bool hashderiv_key_equal(hashtable_user_t user, 
+static bool hashderiv_key_equal(hashtable_user_t user,
                                 const unsigned char *left,
                                 const unsigned char *right) {
   (void)user;
@@ -172,8 +172,7 @@ void regex_cache_destroy(regex_cache_t d) {
 bool regex_cache_valid(regex_cache_t d) {
   return hashtable_valid(hashtable_mod, (hashtable_user_t){0},
                          d.regex_to_derivatives) &&
-    intmap_valid(d.regex_to_properties) &&
-         stringtable_valid(d.strtab);
+         intmap_valid(d.regex_to_properties) && stringtable_valid(d.strtab);
 }
 
 static stringtable_index_t strfail(void) {
@@ -190,62 +189,57 @@ regex_cache_insert_regex_canonical_ptree(regex_cache_t *driver, ptree regex) {
   }
 
   if (intmap_available(driver->regex_to_properties) < 8) {
-    if (!intmap_rehash_double(&driver->regex_to_properties))
-      {
-        return strfail();
-      }    
+    if (!intmap_rehash_double(&driver->regex_to_properties)) {
+      return strfail();
+    }
   }
 
-  // todo, enforce this statically somewhere? maybe have identifier be a smaller type
+  // todo, enforce this statically somewhere? maybe have identifier be a smaller
+  // type
   uint64_t id = regex_ptree_identifier(regex);
   if (id > UINT32_MAX) {
     return strfail();
   }
-  
-  stringtable_index_t res = 
-   regex_insert_into_stringtable(&driver->strtab, regex);
-  
+
+  stringtable_index_t res =
+      regex_insert_into_stringtable(&driver->strtab, regex);
+
   if (stringtable_index_valid(res)) {
     uint64_t prop = 0;
 
-    
     bool is_empty_string = regex_is_empty_string(regex);
     bool is_empty_set = regex_is_empty_set(regex);
     assert(!(is_empty_string && is_empty_set));
 
     if (is_empty_string)
-      prop |= regex_cache_lookup_empty_string;   
-  
+      prop |= regex_cache_lookup_empty_string;
+
     if (is_empty_set)
       prop |= regex_cache_lookup_empty_set;
 
-    if (prop == 0) 
-      prop |= regex_cache_lookup_composite;    
-    
+    if (prop == 0)
+      prop |= regex_cache_lookup_composite;
+
     prop |= regex_nullable_p(regex) ? regex_cache_lookup_nullable : 0;
 
     id = id << 32u;
 
     prop |= id;
-    
-    intmap_insert(&driver->regex_to_properties,
-                  res.value,
-                  prop);
+
+    intmap_insert(&driver->regex_to_properties, res.value, prop);
   }
-  
+
   return res;
 }
 
-enum regex_cache_lookup_properties regex_cache_lookup_properties(regex_cache_t * c,
-                                                                 stringtable_index_t index)
-{
+enum regex_cache_lookup_properties
+regex_cache_lookup_properties(regex_cache_t *c, stringtable_index_t index) {
   uint64_t res = intmap_lookup(c->regex_to_properties, index.value);
   if (res == UINT64_MAX) {
     return regex_cache_lookup_failure;
   }
   return (enum regex_cache_lookup_properties)res;
 }
-
 
 stringtable_index_t regex_cache_insert_regex_ptree(regex_cache_t *c,
                                                    ptree_context ptree_ctx,
@@ -257,11 +251,14 @@ stringtable_index_t regex_cache_insert_regex_ptree(regex_cache_t *c,
   return regex_cache_insert_regex_canonical_ptree(c, regex);
 }
 
-stringtable_index_t
-regex_cache_insert_regex_bytes(regex_cache_t *c, const char *bytes, size_t N) {
+stringtable_index_t regex_cache_insert_regex_bytes_using_lexer(
+    lexer_t lexer,
+    lexer_token_t (*lexer_iterator_step)(lexer_t, lexer_iterator_t *),
+    regex_cache_t *c, const char *bytes, size_t N) {
   ptree_context ptree_ctx = regex_ptree_create_context();
 
-  ptree p = regex_from_char_sequence(ptree_ctx, bytes, N);
+  ptree p = regex_from_char_sequence_using_lexer(lexer, lexer_iterator_step,
+                                                 ptree_ctx, bytes, N);
   if (ptree_is_failure(p)) {
     return strfail();
   }
@@ -282,13 +279,16 @@ static const stringtable_index_t empty_derivatives[256] = {E256()};
 
 static stringtable_index_t
 regex_cache_calculate_derivative_given_hashtable_values(
+    lexer_t lexer,
+    lexer_token_t (*lexer_iterator_step)(lexer_t, lexer_iterator_t *),
     regex_cache_t *driver, stringtable_index_t index, uint8_t ith,
     unsigned char *values) {
 
   // Invalidated by insert_regex at the end of this function so recompute here
   const char *const regex = stringtable_lookup(&driver->strtab, index);
   if (!regex) {
-    // printf("can't calculate derivative of unknown string %lu\n", index.value);
+    // printf("can't calculate derivative of unknown string %lu\n",
+    // index.value);
     return strfail();
   }
 
@@ -306,7 +306,8 @@ regex_cache_calculate_derivative_given_hashtable_values(
   ptree_context ptree_ctx = regex_ptree_create_context();
 
   size_t N = stringtable_lookup_size(&driver->strtab, index);
-  ptree tree = regex_from_char_sequence(ptree_ctx, regex, N);
+  ptree tree = regex_from_char_sequence_using_lexer(lexer, lexer_iterator_step,
+                                                    ptree_ctx, regex, N);
 
   if (ptree_is_failure(tree)) {
     // printf("failed to make a regex from %s, size %lu\n", regex, N);
@@ -357,9 +358,10 @@ insert_missing_empty_table_entry(regex_cache_t *driver,
 }
 
 // Compute ith derivative, record it in the cache
-stringtable_index_t regex_cache_calculate_derivative(regex_cache_t *driver,
-                                                     stringtable_index_t index,
-                                                     uint8_t ith) {
+stringtable_index_t regex_cache_calculate_derivative_using_lexer(
+    lexer_t lexer,
+    lexer_token_t (*lexer_iterator_step)(lexer_t, lexer_iterator_t *),
+    regex_cache_t *driver, stringtable_index_t index, uint8_t ith) {
 
   const char *const regex = stringtable_lookup(&driver->strtab, index);
   if (!regex) {
@@ -377,11 +379,9 @@ stringtable_index_t regex_cache_calculate_derivative(regex_cache_t *driver,
     }
   }
 
-  return regex_cache_calculate_derivative_given_hashtable_values(driver, index,
-                                                                 ith, values);
+  return regex_cache_calculate_derivative_given_hashtable_values(
+      lexer, lexer_iterator_step, driver, index, ith, values);
 }
-
-
 
 static stringtable_index_t regex_cache_lookup_derivative_given_hashtable_values(
     regex_cache_t *driver, stringtable_index_t index, uint8_t ith,
@@ -453,8 +453,10 @@ bool regex_cache_all_derivatives_computed(regex_cache_t *driver,
   return all_computed;
 }
 
-bool regex_cache_calculate_all_derivatives(regex_cache_t *driver,
-                                           stringtable_index_t index) {
+bool regex_cache_calculate_all_derivatives_using_lexer(
+    lexer_t lexer,
+    lexer_token_t (*lexer_iterator_step)(lexer_t, lexer_iterator_t *),
+    regex_cache_t *driver, stringtable_index_t index) {
   const char *const regex = stringtable_lookup(&driver->strtab, index);
   if (!regex) {
     return false;
@@ -474,7 +476,7 @@ bool regex_cache_calculate_all_derivatives(regex_cache_t *driver,
   for (unsigned i = 0; i < 256; i++) {
     stringtable_index_t ith =
         regex_cache_calculate_derivative_given_hashtable_values(
-            driver, index, (uint8_t)i, values);
+            lexer, lexer_iterator_step, driver, index, (uint8_t)i, values);
     if (ith.value == UINT64_MAX) {
       return false;
     }
@@ -482,10 +484,11 @@ bool regex_cache_calculate_all_derivatives(regex_cache_t *driver,
   return true;
 }
 
-int regex_cache_traverse(regex_cache_t *cache, stringtable_index_t root,
-                         int (*functor)(regex_cache_t *, stringtable_index_t,
-                                        void *),
-                         void *data) {
+int regex_cache_traverse_using_lexer(
+    lexer_t lexer,
+    lexer_token_t (*lexer_iterator_step)(lexer_t, lexer_iterator_t *),
+    regex_cache_t *cache, stringtable_index_t root,
+    int (*functor)(regex_cache_t *, stringtable_index_t, void *), void *data) {
   assert(stringtable_index_valid(root));
   stack_module stackmod = &stack_libc;
   intset_t set = intset_create(512);
@@ -524,7 +527,8 @@ int regex_cache_traverse(regex_cache_t *cache, stringtable_index_t root,
     intset_insert(&set, active.value);
 
     // Check the derivatives are available
-    if (!regex_cache_calculate_all_derivatives(cache, active)) {
+    if (!regex_cache_calculate_all_derivatives_using_lexer(
+            lexer, lexer_iterator_step, cache, active)) {
       retval = -1;
       goto done;
     }
@@ -572,4 +576,67 @@ done:;
   stack_destroy(stackmod, stack);
   intset_destroy(set);
   return retval;
+}
+
+// Functions that create the default lexer then call through to the
+// implementation
+
+stringtable_index_t
+regex_cache_insert_regex_bytes(regex_cache_t *c, const char *bytes, size_t N) {
+  lexer_t lexer = regex_lexer_create();
+  if (!regex_lexer_valid(lexer)) {
+    return strfail();
+  }
+
+  stringtable_index_t res = regex_cache_insert_regex_bytes_using_lexer(
+      lexer, regex_lexer_iterator_step, c, bytes, N);
+
+  regex_lexer_destroy(lexer);
+  return res;
+}
+
+stringtable_index_t regex_cache_calculate_derivative(regex_cache_t *driver,
+                                                     stringtable_index_t index,
+                                                     uint8_t ith) {
+  lexer_t lexer = regex_lexer_create();
+  if (!regex_lexer_valid(lexer)) {
+    return strfail();
+  }
+
+  stringtable_index_t res = regex_cache_calculate_derivative_using_lexer(
+      lexer, regex_lexer_iterator_step, driver, index, ith);
+
+  regex_lexer_destroy(lexer);
+  return res;
+}
+
+bool regex_cache_calculate_all_derivatives(regex_cache_t *driver,
+                                           stringtable_index_t index) {
+  lexer_t lexer = regex_lexer_create();
+  if (!regex_lexer_valid(lexer)) {
+    return false;
+  }
+
+  bool res = regex_cache_calculate_all_derivatives_using_lexer(
+      lexer, regex_lexer_iterator_step, driver, index);
+
+  regex_lexer_destroy(lexer);
+  return res;
+}
+
+int regex_cache_traverse(regex_cache_t *cache, stringtable_index_t root,
+                         int (*functor)(regex_cache_t *, stringtable_index_t,
+                                        void *),
+                         void *data) {
+
+  lexer_t lexer = regex_lexer_create();
+  if (!regex_lexer_valid(lexer)) {
+    return false;
+  }
+
+  int res = regex_cache_traverse_using_lexer(lexer, regex_lexer_iterator_step,
+                                             cache, root, functor, data);
+
+  regex_lexer_destroy(lexer);
+  return res;
 }

@@ -117,6 +117,24 @@ static inline bool <xsl:value-of select='$LangName' />_lexer_identifier_valid_to
     <NL hexvalue="0a" />
   </RegexTable>
 
+  <NL hexvalue="0a" />
+  <Comment value="// Available lexer instantiations" />
+
+  <xsl:call-template name="LexerInstantiate">
+    <xsl:with-param name="variant">posix</xsl:with-param>
+  </xsl:call-template>
+  <xsl:call-template name="LexerInstantiate">
+    <xsl:with-param name="variant">re2</xsl:with-param>
+  </xsl:call-template>
+  <xsl:call-template name="LexerInstantiate">
+    <xsl:with-param name="variant">re2c</xsl:with-param>
+  </xsl:call-template>
+  <xsl:call-template name="LexerInstantiate">
+    <xsl:with-param name="variant">interp</xsl:with-param>
+  </xsl:call-template>
+  <xsl:call-template name="LexerInstantiate">
+    <xsl:with-param name="variant">multi</xsl:with-param>
+  </xsl:call-template>
 
   <NL hexvalue="0a0a" />
   <Footer>
@@ -140,6 +158,33 @@ static inline bool <xsl:value-of select='$LangName' />_lexer_identifier_valid_to
     <NL hexvalue = "0a" />
   </Token>
 </xsl:template>
+
+<xsl:template name="LexerInstantiate" >
+  <xsl:param name="variant"/>
+
+  <xsl:variable name="upcase-variant" >
+    <xsl:value-of select="translate($variant,$lowercase,$uppercase)" />
+  </xsl:variable>
+
+<LexerInstantiation>
+  <NL hexvalue = "0a" />  
+  <Pre value="#if LEXER_{$upcase-variant}_ENABLE" />
+
+<Declarations>
+<xsl:attribute name="value">
+lexer_t <xsl:value-of select='$LangName' />_lexer_<xsl:value-of select='$variant' />_create(void);
+void <xsl:value-of select='$LangName' />_lexer_<xsl:value-of select='$variant' />_destroy(lexer_t lex);
+bool <xsl:value-of select='$LangName' />_lexer_<xsl:value-of select='$variant' />_valid(lexer_t lex);
+lexer_token_t <xsl:value-of select='$LangName' />_lexer_<xsl:value-of select='$variant' />_iterator_step(lexer_t lex, lexer_iterator_t *iter);
+</xsl:attribute>
+</Declarations>
+
+<Post value="#endif" />
+<NL hexvalue = "0a" />  
+</LexerInstantiation>
+
+</xsl:template>
+
 
 <xsl:template match="@*">
 <xsl:copy>

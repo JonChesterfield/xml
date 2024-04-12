@@ -36,7 +36,7 @@ REGEX_SOURCE := $(REGEX_SOURCE) ascii.lexer.c ascii.parser_bison.c ascii.parser_
 REGEX_SOURCE := $(REGEX_SOURCE) ascii.production_assign.c ascii.production_custom.c ascii.production_list.c
 REGEX_SOURCE := $(REGEX_SOURCE) regex_match_tests.c
 
-REGEX_PROGRAM_SOURCE := regex.tests.c regex_stdin_to_xml.c ascii_stdin_to_xml.c regex.lexer_mvp.c.c
+REGEX_PROGRAM_SOURCE := regex.tests.c regex_stdin_to_xml.c ascii_stdin_to_xml.c regex.lexer_mvp.data.c
 
 REGEX_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_SOURCE:.c=.o))
 REGEX_PROGRAM_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_PROGRAM_SOURCE:.c=.o))
@@ -125,16 +125,16 @@ bin/ascii_stdin_to_xml:	$(regex_tmp)/ascii_stdin_to_xml.o $(REGEX_OBJECTS) $(REG
 	@mkdir -p "$(dir $@)"
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
-bin/regex.lexer_mvp.c:	$(regex_tmp)/regex.lexer_mvp.c.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
+bin/regex.lexer_mvp.data:	$(regex_tmp)/regex.lexer_mvp.data.o $(REGEX_OBJECTS) $(REGEX_TOOLS_OBJECTS)
 	@mkdir -p "$(dir $@)"
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 
-regex/regex.lexer_mvp.c:	bin/regex.lexer_mvp.c
+regex/regex.lexer_mvp.data:	bin/regex.lexer_mvp.data
 	./$^ > $@
 
 clean::
-	@rm -f regex/regex.lexer_mvp.c
+	@rm -f regex/regex.lexer_mvp.data
 
 
 clean::
