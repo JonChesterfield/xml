@@ -272,7 +272,6 @@ static regex_compare_t regex_canonical_equivalent_with_structures(
   return regex_compare_equal;
 }
 
-// returns "false" on out of memory, might want to change that
 regex_compare_t regex_canonical_equivalent(regex_cache_t *cache,
                                            stringtable_index_t x,
                                            stringtable_index_t y) {
@@ -292,7 +291,7 @@ regex_compare_t regex_canonical_equivalent(regex_cache_t *cache,
     return regex_compare_out_of_memory;
   }
 
-  bool res =
+  regex_compare_t res =
       regex_canonical_equivalent_with_structures(cache, x, y, &stack, &map);
   intstack_destroy(stack);
   intmap_destroy(map);
