@@ -544,10 +544,32 @@ clean::
 
 # Help idea derived from https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 # Prints the help-text from `target: ## help-text`, slightly reformatted and sorted
+
+HELP_PADDING := 30
+
+.PHONY: awkhelp
+awkhelp: ## Write this help using awk
+	@echo "awkhelp:"
+	@awk 'BEGIN {FS = ":.*#+"}; /^[a-zA-Z_*.-]+:.*## .*$$/ {printf "  %-'$(HELP_PADDING)'s %s\n", $$1, $$2}' \
+	$(MAKEFILE_LIST) | \
+	sort
+
+.PHONY: sedhelp
+sedhelp: ## Write this help using sed
+	@echo "sedhelp:"
+	@sed -E \
+	-e '/^([a-zA-Z_*.-]+::?[ ]*)##[ ]*([^#]*)$$/ !d # grep' \
+	-e 's/([a-zA-Z_*.-]+:):?(.*)/  \1\2/ # drop :: and prefix pad' \
+	-e ':again s/^([^#]{1,'$(HELP_PADDING)'})##[ ]*([^#]*)$$/\1 ##\2/ # insert a space' \
+	-e 't again # do it again (termination is via {1, HELP_PADDING})' \
+	-e 's/^([^#]*)##([^#]*)$$/\1\2/ # remove the ##' \
+	$(MAKEFILE_LIST) | \
+	sort
+
+
 .PHONY: help
-help: ## Write this help
-	@echo "XML project help:"
-	@awk 'BEGIN {FS = ":.*#+"}; /^[a-zA-Z_*.-]+:.*## .*$$/ {printf "  %-30s %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+help:  ## Write this help
+help:  sedhelp
 
 # At the end to depend on the included makefiles as well as this one
 .EXTRA_PREREQS+=$(foreach mk, ${MAKEFILE_LIST},$(abspath ${mk}))
