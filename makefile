@@ -1,4 +1,14 @@
-# xslt pipeline handling
+# Fair warning, this is a dubious use of make.
+
+# This makefile is used in an ad hoc framework sort of fashion to provide common
+# infrastructure for projects held in subdirectories. E.g. /Planning or /regex
+# are somewhat self-contained text munging style things that use code factored
+# into this root level makefile.
+
+# The original idea was to build a bunch of code generators on XSLT transforms
+# Since then it has mutated somewhat into building code generators on C. This
+# makefile therefore also compiles a bunch of C into libraries and executables
+# that are used by the subprojects.
 
 .SUFFIXES:
 MAKEFLAGS += -r -j$(shell nproc)
@@ -161,7 +171,7 @@ clean_generated_language_suffixes := parser_lemon.out
 
 # Copy the xml file into lang_tmp and the result back out
 define LANGTEMPLATE
-$(info "Language template for $1, create $(lang_tmp)/$1")
+# $$(info "Language template for $1, create $(lang_tmp)/$1")
 
 $(lang_tmp)/$(dir $1): $(lang_tmp)
 	@mkdir -p "$$@"
@@ -221,7 +231,7 @@ $(lang_tmp)/%:	$(lang_tmp)/%.hex | $(hex_to_binary)
 # in a fashion that updates the other, then use the .rng output for linting
 
 
-# Pretty hacky. "make create_subproject foo bar" will create a directory
+# Hacky. "make create_subproject foo bar" will create a directory
 # foo_to_bar with some initial boilerplate files in it.
 # TODO, some error checking, e.g. that two arguments are passed
 ifeq (create_subproject,$(firstword $(MAKECMDGOALS)))
@@ -456,8 +466,13 @@ include $(SELF_DIR)regex/regex.mk
 
 # Building auxilary tools out of C.
 
+.PHONY: vendored
+vendored:: ## Unpack vendored tools into the source tree
+
 .PHONY: deepclean
+deepclean:: ## Remove vendored source code and clean
 deepclean:: clean
+
 
 include $(SELF_DIR)vendored/vendored.mk
 
@@ -527,17 +542,12 @@ tools:	$(TOOLS_DIR_BIN)/hashtable
 clean::
 	rm -rf $(TOOLS_DIR_BIN) $(TOOLS_DIR_OBJ)
 
-
-# At the end to depend on the included makefiles as well as this one
-.EXTRA_PREREQS+=$(foreach mk, ${MAKEFILE_LIST},$(abspath ${mk}))
-
-
 # Help idea derived from https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 # Prints the help-text from `target: ## help-text`, slightly reformatted and sorted
 .PHONY: help
 help: ## Write this help
-	awk 'BEGIN {FS = ":.*#+"}; /^[a-zA-Z_*.-]+:.*## .*$$/ {printf "%-30s %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+	@echo "XML project help:"
+	@awk 'BEGIN {FS = ":.*#+"}; /^[a-zA-Z_*.-]+:.*## .*$$/ {printf "  %-30s %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 
-
-
-
+# At the end to depend on the included makefiles as well as this one
+.EXTRA_PREREQS+=$(foreach mk, ${MAKEFILE_LIST},$(abspath ${mk}))

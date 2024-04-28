@@ -3,7 +3,6 @@ $(if $(TOOLS_DIR),,$(error vendored.mk requires tools dir))
 # should probably handle tools/cmark here as well
 # maybe produce a tarball for evilunit instead of pulling from github
 
-.PHONY: vendored
 vendored::	vendored_libxml2 vendored_libxslt vendored_evilunit
 #	Clean up some additional unused files
 	@find $(TOOLS_DIR)/libx??? -type f '(' -iname Makefile -o -iname NEWS -o -iname '*.Po' -o -iname '*.Plo' -o -iname '*.in' -o -iname '*.am' -o -iname '*.pl' -o -iname '*.syms' -o -name configure -o -name libtool -o -name ltmain.sh -o -name CMakeLists.txt -o -name INSTALL -o -name missing ')' -delete
