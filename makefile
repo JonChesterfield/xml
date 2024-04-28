@@ -229,7 +229,7 @@ ifeq (create_subproject,$(firstword $(MAKECMDGOALS)))
   CREATE_SUBPROJECT_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(CREATE_SUBPROJECT_ARGS):;@:)
 endif
-create_subproject:
+create_subproject: ## Helper for creating makefile subproject boilerplate
 	$(eval SRC := $(word 1,$(CREATE_SUBPROJECT_ARGS)))
 	$(eval DST := $(word 2,$(CREATE_SUBPROJECT_ARGS)))
 	$(eval TAG := $(SRC)_to_$(DST))
@@ -518,6 +518,7 @@ $(TOOLS_DIR_BIN)/xsltproc:	$(TOOLS_DIR_OBJ)/xsltproc.o $(LIBXSLT_OBJ) $(LIBXML2_
 $(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
 
+tools: ## Create binary tools
 tools:	$(SIMPLE_TOOLS_BIN)
 tools:	$(TOOLS_DIR_BIN)/cmark $(TOOLS_DIR_BIN)/xmllint $(TOOLS_DIR_BIN)/xsltproc
 tools:	$(TOOLS_DIR_BIN)/hashtable
@@ -529,3 +530,14 @@ clean::
 
 # At the end to depend on the included makefiles as well as this one
 .EXTRA_PREREQS+=$(foreach mk, ${MAKEFILE_LIST},$(abspath ${mk}))
+
+
+# Help idea derived from https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
+# Prints the help-text from `target: ## help-text`, slightly reformatted and sorted
+.PHONY: help
+help: ## Write this help
+	awk 'BEGIN {FS = ":.*#+"}; /^[a-zA-Z_*.-]+:.*## .*$$/ {printf "%-30s %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+
+
+
+

@@ -51,7 +51,7 @@ clean::
 
 # Seems to be difficult to rely on a single file containing spaces and easy to depend on all of them
 ALL_SRC_WITH_SPACES := $(subst $(SPACE_ESC),\ ,$(SPACE_ESCAPED_SRC))
-.PHONY: $(WORKDIR_ESCAPED_SRC) # always run these, timestamps not truste don the input
+.PHONY: $(WORKDIR_ESCAPED_SRC) # always run these, timestamps not trusted on the input
 $(WORKDIR_ESCAPED_SRC):	$(WORKDIR)%.md:	$(ALL_SRC_WITH_SPACES) | $(WORKDIR)
 #	Thus retrieve the specific element in ALL_SRC_WITH_SPACES that is of interest
 #	and copy it to the renamed equivalent in workdir iff newer
