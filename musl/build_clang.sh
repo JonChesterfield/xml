@@ -2,6 +2,7 @@
 
 set -x
 set -e
+set -o pipefail
 
 thisdir="`cd "$(dirname "$0")"; pwd`"
 NP=$(nproc)
@@ -18,7 +19,13 @@ musldir="$thisdir/musl"
 
 linuxdir="$thisdir/linuxsrc"
 
+ARCH=x86_64
+LINUXARCH=$ARCH
 
+# ARCH=aarch64
+# LINUXARCH=arm64
+
+TRIPLE="$ARCH-unknown-linux-musl"
 rm -rf "$installdir"
 
 if [[ -d "$linuxdir" ]]
@@ -32,37 +39,40 @@ fi
 
 cd "$linuxdir"
 cd $(find . -mindepth 1 -maxdepth 1 -type d)
-make headers_install ARCH=x86_64 INSTALL_HDR_PATH="$installdir"
+make headers_install ARCH=$LINUXARCH INSTALL_HDR_PATH="$installdir"
 
-if false
+
+boot_dir="$thisdir"/build_bootstrap
+
+if true
 then
 rm -rf "$bootstrapdir" && mkdir "$bootstrapdir"
 
 # Build a clang that targets musl by default. This hacks around it being difficult to
 # persuade cmake to do the right thing in terms of consistently passing flags around
+# It also means we've got a tablegen etc to use later
 
 cd "$thisdir"
-clang_dir=build_clang
-rm -rf $clang_dir && mkdir $clang_dir && cd $clang_dir
+rm -rf $boot_dir && mkdir $boot_dir && cd $boot_dir
 
 # clang doesn't look in sysroot for compiler-rt, try building it a local copy
 # might want LLVM_HOST_TRIPLE instead of default target triple, might need both
-cmake -D CMAKE_BUILD_TYPE=Release                                              \
+cmake -D CMAKE_BUILD_TYPE=Release                                                \
+      -D CMAKE_SYSTEM_NAME=Linux                                               \
       -D CMAKE_C_COMPILER=$CC                                                  \
       -D CMAKE_CXX_COMPILER=$CXX                                               \
       -D CMAKE_ASM_COMPILER=$CC                                                \
-      -D LLVM_ENABLE_ASSERTIONS=On                                             \
       -D CMAKE_INSTALL_LIBDIR=lib                                              \
       -D CMAKE_INSTALL_PREFIX="$bootstrapdir"                                  \
+      -D LLVM_ENABLE_ASSERTIONS=On                                             \
       -D LLVM_ENABLE_PROJECTS="clang;lld"                                      \
-      -D LLVM_TARGET_TRIPLE=x86_64-unknown-linux-musl                          \
-      -D LLVM_DEFAULT_TARGET_TRIPLE=x86_64-unknown-linux-musl                  \
+      -D LLVM_TARGET_TRIPLE=$TRIPLE                          \
+      -D LLVM_DEFAULT_TARGET_TRIPLE=$TRIPLE                  \
       -D LLVM_USE_LINKER=lld                                                   \
       -D LLVM_ENABLE_ZLIB=OFF                                                  \
       -D LLVM_ENABLE_ZSTD=OFF                                                  \
       -D LLVM_ENABLE_TERMINFO=OFF                                              \
       -D DEFAULT_SYSROOT="$installdir"                                         \
-      -D GCC_INSTALL_PREFIX="$installdir"                                      \
       -D CLANG_DEFAULT_LINKER=lld                                              \
       -D CLANG_DEFAULT_CXX_STDLIB=libc++                                       \
       -D CLANG_DEFAULT_RTLIB=compiler-rt                                       \
@@ -71,53 +81,59 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -S $HOME/llvm-project/llvm
 
 ninja -v && ninja -v install
-
+else
+cd $boot_dir
+ninja -v && ninja -v install
 fi
 
-GLOBALFLAGS="-fPIC"
+# This is needed by the build but isn't installed
+cp "$boot_dir"/bin/clang-ast-dump "$bootstrapdir"/bin
 
-CC=$bootstrapdir/bin/clang
-CXX=$bootstrapdir/bin/clang++
+GLOBALFLAGS="-fPIC"
+# GLOBALFLAGS="-fPIC -mllvm -expand-variadics-override=lowering"
+
+
+
+CC="$bootstrapdir"/bin/clang
+CXX="$bootstrapdir"/bin/clang++
+
+
+# There are two paths to resolving the libc/compiler-rt cyclic dependency
+# Ideally, install libc headers, then build compiler-rt, then build libc
+# That lets one build the dynamic loader against compiler-rt
+#
+# In practice, the compiler-rt cmake refuses to build unless there is something
+# providing printf to a configure check, and my patch to remove that ran afoul
+# of an arm build bot.
+#
+# So we can build libc first and hope that manages to pass the printf test
+# without any compiler-rt functions linked in.
+# This is fragile and leaves us with no dynamic loader.
+#
+# Or we can hack the obstructive compiler-rt cmake
+# Or we can build compiler-rt without bothering with the cmake
+# Creating a stub libc.a that only contains printf, though that doesn't get through libcxx
+
+# Clobber the line in compiler-rt that wants printf
+# Not ideal, it's mutating the source tree
+sed -iE 's/file[(]WRITE [$][{]SIMPLE_SOURCE[}].*/file(WRITE ${SIMPLE_SOURCE} "int main(void) { return 0; }\\n")/' "$llvmsrcdir"/compiler-rt/cmake/config-ix.cmake
+
 
 cd "$musldir"
 make clean
 
-CC=$CC LIBCC="$installdir/lib/clang/19/lib/linux/libclang_rt.builtins-x86_64.a" CFLAGS="$GLOBALFLAGS" ./configure --prefix="$installdir" --syslibdir="$installdir"/lib
+# libclang builtins doesn't exist yet but that's fine, only doing install-headers
+CC=$CC LIBCC="$installdir/lib/clang/19/lib/linux/libclang_rt.builtins-$ARCH.a" CFLAGS="$GLOBALFLAGS" ./configure --prefix="$installdir" --syslibdir="$installdir"/lib
 
 make -j $NP install-headers
 
-# Clang depends on Linux headers. e.g. apt-get source linux
-
-
-if true
-then
-mkdir -p "$installdir"/include/linux "$installdir"/include/asm "$installdir"/include/asm-generic "$installdir"/include/x86_64-linux-gnu/asm
-for i in \
-    linux/futex.h \
-        linux/types.h \
-        linux/stddef.h \
-        linux/posix_types.h \
-        asm/types.h \
-        asm/prctl.h \
-        asm/posix_types.h \
-        asm/posix_types_64.h \
-        asm-generic/types.h \
-        asm-generic/posix_types.h \
-        asm-generic/int-ll64.h \
-        asm/bitsperlong.h \
-        asm-generic/bitsperlong.h \
-        x86_64-linux-gnu/asm/unistd_64.h \
-    ; do
-    cp /usr/include/$i  "$installdir"/include/$i
-done
-fi
-
 cd "$thisdir"
-runtimes_dir=build_runtimes
+runtimes_dir="$thisdir"/build_runtimes
 rm -rf $runtimes_dir && mkdir $runtimes_dir && cd $runtimes_dir
 
 # builds static libraries only - they don't need to be linked against a libc or a compiler-rt
 cmake -D CMAKE_BUILD_TYPE=Release                                              \
+      -D CMAKE_SYSTEM_NAME=Linux                                               \
       -D CMAKE_C_COMPILER=$CC                                                  \
       -D CMAKE_CXX_COMPILER=$CXX                                               \
       -D CMAKE_C_FLAGS="$GLOBALFLAGS"                                          \
@@ -133,7 +149,7 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D COMPILER_RT_BUILD_GWP_ASAN=NO                                         \
       -D COMPILER_RT_BUILD_SANITIZERS=NO                                       \
       -D COMPILER_RT_BUILD_XRAY=NO                                             \
-      -D COMPILER_RT_DEFAULT_TARGET_TRIPLE=x86_64-unknown-linux-musl           \
+      -D COMPILER_RT_DEFAULT_TARGET_TRIPLE=$TRIPLE                             \
       -D LIBUNWIND_USE_COMPILER_RT=ON                                          \
       -D LIBCXXABI_USE_COMPILER_RT=ON                                          \
       -D LIBCXX_USE_COMPILER_RT=ON                                             \
@@ -163,12 +179,12 @@ rmdir $installdir/lib/linux
 
 # Build libc now we have a compiler-rt to link against the loader
 cd "$musldir"
-make -j $NP && make -j $NP install
+make -j"$NP" && make -j"$NP" install
 
 
 # Now try to build clang and the llvm tools
 cd "$thisdir"
-clang_dir=build_clang
+clang_dir="$thisdir"/build_clang
 rm -rf $clang_dir && mkdir $clang_dir && cd $clang_dir
 
 
@@ -215,8 +231,10 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_INSTALL_LIBDIR=lib                                              \
       -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
       -D LLVM_ENABLE_PROJECTS="clang;lld"                                      \
+      -D LLVM_NATIVE_TOOL_DIR="$bootstrapdir/bin"                              \
+      -D LLVM_TABLEGEN="$bootstrapdir/bin/llvm-tblgen"                              \
       -D LLVM_ENABLE_ASSERTIONS=On                                             \
-      -D LLVM_DEFAULT_TARGET_TRIPLE=x86_64-unknown-linux-musl                  \
+      -D LLVM_DEFAULT_TARGET_TRIPLE=$TRIPLE                  \
       -D LLVM_BUILD_STATIC=ON                                                  \
       -D LLVM_USE_LINKER=lld                                                   \
       -D LLVM_ENABLE_LIBCXX=ON                                                 \
@@ -227,7 +245,6 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D LLVM_ENABLE_LIBPFM=OFF                                                \
       -D LLVM_ENABLE_TERMINFO=OFF                                              \
       -D DEFAULT_SYSROOT="$installdir"                                         \
-      -D GCC_INSTALL_PREFIX="$installdir"                                      \
       -D CLANG_DEFAULT_LINKER=lld                                              \
       -D CLANG_DEFAULT_CXX_STDLIB=libc++                                       \
       -D CLANG_DEFAULT_RTLIB=compiler-rt                                       \
