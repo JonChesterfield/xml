@@ -486,6 +486,8 @@ CMARK_SRC:= $(wildcard $(TOOLS_DIR)/cmark/*.c)
 LIBXML2_SRC := $(call rwildcard,$(TOOLS_DIR)/libxml2,*.c)
 LIBXSLT_SRC := $(call rwildcard,$(TOOLS_DIR)/libxslt,*.c)
 
+LIBWASM3_SRC:= $(call rwildcard,$(TOOLS_DIR)/wasm3/source,*.c)
+
 # All C, C++ get compiled to object files individually
 TOOLS_C_SRC := $(call rwildcard,$(TOOLS_DIR),*.c)
 TOOLS_CPP_SRC := $(call rwildcard,$(TOOLS_DIR),*.cpp)
@@ -495,7 +497,7 @@ TOOLS_HDR := $(call rwildcard,$(TOOLS_DIR),*.h) $(call rwildcard,$(TOOLS_DIR),*.
 TOOLS_C_OBJ := $(TOOLS_C_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 TOOLS_CPP_OBJ := $(TOOLS_CPP_SRC:$(TOOLS_DIR)/%.cpp=$(TOOLS_DIR_OBJ)/%.o)
 
-$(TOOLS_C_OBJ):	TARGET_CFLAGS := -Wno-covered-switch-default -Wno-unused-function -Wno-unused-const-variable -Wno-null-pointer-arithmetic
+$(TOOLS_C_OBJ):	TARGET_CFLAGS := -Wno-covered-switch-default -Wno-unused-function -Wno-unused-const-variable -Wno-null-pointer-arithmetic -Wno-unused-parameter -Wno-unused-variable
 
 $(TOOLS_C_OBJ):	$(TOOLS_DIR_OBJ)/%.o:	$(TOOLS_DIR)/%.c $(TOOLS_HDR)
 	@mkdir -p "$(dir $@)"
@@ -530,12 +532,19 @@ $(TOOLS_DIR_BIN)/xmllint:	$(TOOLS_DIR_OBJ)/xmllint.o $(LIBXML2_OBJ) | $(TOOLS_DI
 $(TOOLS_DIR_BIN)/xsltproc:	$(TOOLS_DIR_OBJ)/xsltproc.o $(LIBXSLT_OBJ) $(LIBXML2_OBJ) | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -lm
 
+
+LIBWASM3_OBJ := $(LIBWASM3_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
+$(TOOLS_DIR_BIN)/wasm3:	$(TOOLS_DIR_OBJ)/wasm3.o $(LIBWASM3_OBJ) | $(TOOLS_DIR_BIN)
+	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -lm
+
+
 $(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
 
 tools: ## Create binary tools
 tools:	$(SIMPLE_TOOLS_BIN)
 tools:	$(TOOLS_DIR_BIN)/cmark $(TOOLS_DIR_BIN)/xmllint $(TOOLS_DIR_BIN)/xsltproc
+tools:	$(TOOLS_DIR_BIN)/wasm3
 tools:	$(TOOLS_DIR_BIN)/hashtable
 
 

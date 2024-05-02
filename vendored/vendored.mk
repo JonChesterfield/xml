@@ -3,7 +3,11 @@ $(if $(TOOLS_DIR),,$(error vendored.mk requires tools dir))
 # should probably handle tools/cmark here as well
 # maybe produce a tarball for evilunit instead of pulling from github
 
-vendored::	vendored_libxml2 vendored_libxslt vendored_evilunit
+vendored::	vendored_evilunit
+vendored::	vendored_libxml2 vendored_libxslt
+vendored::	vendored_wasm3
+
+vendored::
 #	Clean up some additional unused files
 	@find $(TOOLS_DIR)/libx??? -type f '(' -iname Makefile -o -iname NEWS -o -iname '*.Po' -o -iname '*.Plo' -o -iname '*.in' -o -iname '*.am' -o -iname '*.pl' -o -iname '*.syms' -o -name configure -o -name libtool -o -name ltmain.sh -o -name CMakeLists.txt -o -name INSTALL -o -name missing ')' -delete
 	@find $(TOOLS_DIR)/libx??? -type d -iname .deps -delete
@@ -13,7 +17,15 @@ deepclean::
 	rm -rf $(TOOLS_DIR)/libxml2
 	rm -rf $(TOOLS_DIR)/libxslt
 	rm -f $(TOOLS_DIR)/xmllint.c $(TOOLS_DIR)/xsltproc.c
+	rm -rf $(TOOLS_DIR)/wasm3 $(TOOLS_DIR)/wasm3.c
+
 	rm -rf $(TOOLS_DIR)/EvilUnit
+
+
+.PHONY: vendored_evilunit
+vendored_evilunit:	deepclean
+	git clone https://github.com/JonChesterfield/EvilUnit.git $(TOOLS_DIR)/EvilUnit
+
 
 # considering this caching approach instead of fetch.sh, but want the tar checked in
 #vendored/libxml2-2.12.0.tar.xz:
@@ -86,6 +98,21 @@ vendored_libxslt:	deepclean
 	sed -i 's_<libxslt/\(.*\)>_"libxslt/libxslt/\1"_g' $(TOOLS_DIR)/xsltproc.c
 	sed -i 's_<libexslt/\(.*\)>_"libxslt/libexslt/\1"_g' $(TOOLS_DIR)/xsltproc.c
 
-.PHONY: vendored_evilunit
-vendored_evilunit:	deepclean
-	git clone https://github.com/JonChesterfield/EvilUnit.git $(TOOLS_DIR)/EvilUnit
+
+.PHONY: vendored_wasm3
+vendored_wasm3:	deepclean
+	rm -rf -- vendored/wasm3tmp && mkdir -p vendored/wasm3tmp
+	unzip vendored/v0.5.0.zip -d vendored/wasm3tmp
+	mv vendored/wasm3tmp/wasm3-0.5.0 $(TOOLS_DIR)/wasm3
+	rmdir vendored/wasm3tmp
+# Move the main executable to the top level for consistency with other tools
+	mv $(TOOLS_DIR)/wasm3/platforms/app/main.c $(TOOLS_DIR)/wasm3.c
+
+#	Hack source instead of requiring -Isource
+	sed -i -E 's$$#include "(.+[.]h)"$$#include "wasm3/source/\1"$$' $(TOOLS_DIR)/wasm3.c
+	mv $(TOOLS_DIR)/wasm3/source/extensions/* $(TOOLS_DIR)/wasm3/source/ && rmdir $(TOOLS_DIR)/wasm3/source/extensions
+#	Hack source instead of requiring -Dd_m3HasWASI, only edits the files that use the macro for now
+	for F in $(TOOLS_DIR)/wasm3.c $(TOOLS_DIR)/wasm3/source/m3_api_wasi.c ; do mv $$F tmp ; echo "#define d_m3HasWASI 1" >> $$F; cat tmp >> $$F; rm tmp ; done
+
+#	Clean up
+	cd $(TOOLS_DIR)/wasm3 && rm -r test docs extra platforms .github .gitignore .codespellrc CMakeLists.txt source/CMakeLists.txt
