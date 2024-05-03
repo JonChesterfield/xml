@@ -44,7 +44,7 @@ fi
 CC=$HOME/llvm-install/bin/clang
 CXX=$HOME/llvm-install/bin/clang++
 
-if true
+if false
 then
 
 rm -rf "$installdir"
@@ -155,11 +155,11 @@ make -C "$thisdir"/wasi-sdk/src/wasi-libc \
      BUILTINS_LIB="$installdir/lib/clang/19/lib/linux/libclang_rt.builtins-something.a" \
      -j"$NP" install
 
-# This changes to the normal layout
+# This changes to the normal layout, which compiler-rt likes but clang does not
 for d in include lib share ;
 do
     cp -r $installdir/$TRIPLE/$d/wasm32-wasi/* $installdir/$TRIPLE/$d/
-    rm -rf -- $installdir/$TRIPLE/$d/wasm32-wasi
+#    rm -rf -- $installdir/$TRIPLE/$d/wasm32-wasi
 done 
 
 done

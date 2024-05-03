@@ -15,7 +15,7 @@ MAKEFLAGS += -r -j$(shell nproc)
 .SECONDARY:
 # .DELETE_ON_ERROR:
 
-# SHELL = sh -xv
+SHELL = sh -xv
 
 # Design notes.
 # Slowly moving towards a more framework layout. This file can define
@@ -51,6 +51,7 @@ CXX := clang++
 C_OR_CXX_FLAGS := -Wall -Wextra -Wcovered-switch-default -g -gdwarf-4
 CFLAGS := -std=c11 $(C_OR_CXX_FLAGS) -O1
 CXXFLAGS := -std=c++14 -Wno-c99-designator $(C_OR_CXX_FLAGS)
+LDFLAGS := -lm
 
 # Runs fine under statically linked musl
 # CC=$(MAKEFILE_DIR)/musl/install/bin/clang
@@ -70,10 +71,17 @@ CC=$(MAKEFILE_DIR)/wasm/install/bin/clang
 CXX=$(MAKEFILE_DIR)/wasm/install/bin/clang++
 CFLAGS := $(CTARGET) $(CFLAGS) 
 CXXFLAGS := $(CTARGET) $(CXXFLAGS)
-LDFLAGS := -static
+LDFLAGS := -static #-Wl,--sysroot=$(MAKEFILE_DIR)/wasm/install/$(TRIPLE)
 
 # native doesn't use one, running aarch64 on x64 could use qemu,
 # wasm needs one. In this case, built against x64 musl then copied to top level dir
+# Error: missing imported function ('wasi_snapshot_preview1.path_filestat_get')
+# Probably available via libuv
+# Involves cloning
+# https://github.com/vshymanskyy/uvwasi and
+# https://github.com/libuv/libuv.git
+# probably specific commits / branches of them, and splicing them into wasm3
+# Maybe build libuv as a general dependency, lua uses the same lib
 INTERPRETER := $(MAKEFILE_DIR)/wasm3
 
 TARGET_CFLAGS :=
@@ -81,16 +89,16 @@ TARGET_CFLAGS :=
 
 
 # Considering a single source single file approach to tools
-file_to_cdata := bin/file_to_cdata
-hex_to_binary := bin/hex_to_binary
-lemon := bin/lemon
-makeheaders := bin/makeheaders
+file_to_cdata := $(INTERPRETER) bin/file_to_cdata
+hex_to_binary := $(INTERPRETER) bin/hex_to_binary
+lemon := $(INTERPRETER) bin/lemon
+makeheaders := $(INTERPRETER) bin/makeheaders
 
 # These aren't very single source but are still compilable
-xmllint := bin/xmllint
-xsltproc := bin/xsltproc
+xmllint := $(INTERPRETER) bin/xmllint
+xsltproc := $(INTERPRETER) bin/xsltproc
 
-cmark := bin/cmark
+cmark := $(INTERPRETER) bin/cmark
 
 # Source under TOOLS_DIR used to make binaries under TOOLS_DIR_BIN
 TOOLS_DIR := tools
@@ -549,15 +557,15 @@ LIBXML2_OBJ := $(LIBXML2_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 LIBXSLT_OBJ := $(LIBXSLT_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 
 $(TOOLS_DIR_BIN)/xmllint:	$(TOOLS_DIR_OBJ)/xmllint.o $(LIBXML2_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -lm
+	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 $(TOOLS_DIR_BIN)/xsltproc:	$(TOOLS_DIR_OBJ)/xsltproc.o $(LIBXSLT_OBJ) $(LIBXML2_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -lm
+	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 
 LIBWASM3_OBJ := $(LIBWASM3_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 $(TOOLS_DIR_BIN)/wasm3:	$(TOOLS_DIR_OBJ)/wasm3.o $(LIBWASM3_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -lm
+	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 
 $(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o | $(TOOLS_DIR_BIN)

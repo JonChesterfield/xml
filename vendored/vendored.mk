@@ -36,7 +36,7 @@ vendored_libxml2:	deepclean
 #	extract the tar
 	mkdir $(TOOLS_DIR)/libxml2
 	tar xf vendored/libxml2-2.12.0.tar.xz -C $(TOOLS_DIR)/libxml2 --strip-components=1
-	cd $(TOOLS_DIR)/libxml2 && ./configure --without-iconv --without-icu --without-lzma --without-iso8859x --without-http --without-zlib --without-python # --without-threads # may want no threads
+	cd $(TOOLS_DIR)/libxml2 && ./configure --without-iconv --without-icu --without-lzma --without-iso8859x --without-http --without-zlib --without-python --without-threads
 #	delete docs, tests, python
 	cd $(TOOLS_DIR)/libxml2 && rm -r doc test result python fuzz example *.py
 #	delete some dead architectures
@@ -62,6 +62,20 @@ vendored_libxml2:	deepclean
 #	triostr.c uses strcasecmp which is in strings.h on linux, but doesn't include that
 	sed -i 's_#include <string.h>_#include <string.h>\n#include <strings.h>_g' $(TOOLS_DIR)/libxml2/triostr.c
 
+#	config.h probably decided mmap was available. Disable it for wasm
+	@echo "#ifdef __wasi__" >> $(TOOLS_DIR)/libxml2/config.h
+	@echo "#undef HAVE_MMAP" >> $(TOOLS_DIR)/libxml2/config.h
+	@echo "#undef HAVE_MUNMAP" >> $(TOOLS_DIR)/libxml2/config.h
+	@echo "#undef HAVE_SYS_MMAN_H" >> $(TOOLS_DIR)/libxml2/config.h
+	@echo "#endif" >> $(TOOLS_DIR)/libxml2/config.h
+
+#	wasi behaves a fair amount like a unix, cygwin is a reasonable place to insert the check
+	sed -i 's$$#elif defined(__CYGWIN__)$$#elif defined(__wasi__)\n# define TRIO_PLATFORM_UNIX\n&$$' $(TOOLS_DIR)/libxml2/triodef.h
+
+#	dubious hack, compromising the claim to be unix stops this file trying to use signals
+	sed -i 's$$#include "triodef.h"$$&\n#ifdef __wasi__\n#undef TRIO_PLATFORM_UNIX\n#endif\n$$' $(TOOLS_DIR)/libxml2/trionan.c
+
+	sed -i 's$$#[ ]*include <signal.h>$$// &$$' $(TOOLS_DIR)/libxml2/trio.c
 #	probably don't want to trust the config script
 	rm $(TOOLS_DIR)/libxml2/xml2-config*
 
