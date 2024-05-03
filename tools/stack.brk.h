@@ -1,15 +1,14 @@
 #ifndef STACK_BRK_H_INCLUDED
 #define STACK_BRK_H_INCLUDED
 
-#include "syscall.h"
-
+#include "linux_syscall.h"
+#include "minilibc.h"
 #include "stack.common.h"
 
 static void *brk(void *addr) {
   uint64_t x;
   __builtin_memcpy(&x, &addr, 8);
-  uint64_t n = 12;
-  uint64_t r = syscall1(n, x);
+  uint64_t r = minilibc_brk(x);
   __builtin_memcpy(&addr, &r, 8);
   return addr;
 }

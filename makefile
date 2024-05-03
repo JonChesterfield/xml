@@ -438,6 +438,8 @@ $(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,html,$(call get_
 
 LEXER_OBJECTS := $(addprefix $(TOOLS_DIR_OBJ)/,lexer.posix.o lexer.re2.o lexer.re2c.o lexer.interp.o)
 
+MISC_TOOLS_OBJECTS := $(addprefix $(TOOLS_DIR_OBJ)/,stringtable.o intset.o intstack.o intmap.o minilibc/linux.o)
+
 # TODO: automatically detect this
 # apt install libre2-dev puts it here under debian
 # set to the empty string to disable

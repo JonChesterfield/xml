@@ -5,23 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "syscall.h"
-
-// Possibly dubious to assume __NR_write etc are consistent across architectures
-#if defined(__x86_64__)
-#if __has_include(<x86_64-linux-gnu/asm/unistd_64.h>)
-#include <x86_64-linux-gnu/asm/unistd_64.h>
-#elif __has_include(<asm/unistd_64.h>)
-#include <asm/unistd_64.h>
-#else
-#error "On x64, missing unistd_64.h"
-#endif
-#endif
-
-#if defined(__aarch64__)
-// Might have the include path wrong for this
-#include <asm-generic/unistd.h>
-#endif
+#include "minilibc.h"
 
 #include "EvilUnit/EvilUnit_contract.h"
 
@@ -79,7 +63,7 @@ static inline void contract_write(bool expr, const char *message,
     int64_t r;
     // if write returns 0, give up instead of loop
     do {
-      r = syscall3(__NR_write, 2, (uint64_t)message, message_length);
+      r = minilibc_write(2, (uint64_t)message, message_length);
       message = &message[r];
       message_length -= r;
     } while ((r > 0) && ((uint64_t)r < message_length));
@@ -90,7 +74,7 @@ static inline void contract_write(bool expr, const char *message,
 static inline void contract_exit(bool expr, const char *message,
                                  size_t message_length) {
   if (!expr) {
-    syscall1(__NR_exit_group, 1);
+    minilibc_exit();
   }
   contract_discard(expr, message, message_length);
 }

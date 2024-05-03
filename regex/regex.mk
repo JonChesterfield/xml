@@ -41,8 +41,7 @@ REGEX_PROGRAM_SOURCE := regex.tests.c regex_stdin_to_xml.c ascii_stdin_to_xml.c 
 REGEX_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_SOURCE:.c=.o))
 REGEX_PROGRAM_OBJECTS := $(addprefix $(regex_tmp)/,$(REGEX_PROGRAM_SOURCE:.c=.o))
 
-REGEX_TOOLS_OBJECTS := $(LEXER_OBJECTS) $(addprefix $(TOOLS_DIR_OBJ)/,stringtable.o intset.o intstack.o intmap.o)
-
+REGEX_TOOLS_OBJECTS := $(LEXER_OBJECTS) $(MISC_TOOLS_OBJECTS)
 
 # Lemon either overwrites the .h file, or if passed -m includes its guess at where
 # the mkheaders result would be, neither of which is helpful behaviour here

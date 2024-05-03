@@ -1,43 +1,17 @@
-#ifndef SYSCALL_H_INCLUDED
-#define SYSCALL_H_INCLUDED
+#ifndef LINUX_SYSCALL_H_INCLUDED
+#define LINUX_SYSCALL_H_INCLUDED
 
 #ifndef __STDC_VERSION__
-#define SYSCALL_INLINE
+#define LINUX_SYSCALL_INLINE
 #else
 #if __STDC_VERSION__ == 199409L
-#define SYSCALL_INLINE
+#define LINUX_SYSCALL_INLINE
 #else
-#define SYSCALL_INLINE inline
+#define LINUX_SYSCALL_INLINE inline
 #endif
 #endif
 
-#define SYSCALL_ATTRIBUTE static __attribute__((unused)) SYSCALL_INLINE
-
-#if __x86_64__
-
-/* _Static_assert(sizeof(unsigned long) == 8, ""); */
-
-// todo, not a good place to define these
-enum {
-  syscall_read = 0,
-  syscall_write = 1,
-  syscall_open = 2,
-  syscall_close = 3,
-  syscall_mmap = 9,
-  syscall_munmap = 11,
-  syscall_brk = 12,
-  syscall_exit_group = 231,
-
-
-  syscall_final_trailing_comma
-};
-
-#endif
-
-SYSCALL_ATTRIBUTE unsigned long syscall6(unsigned long n, unsigned long a0,
-                                     unsigned long a1, unsigned long a2,
-                                     unsigned long a3, unsigned long a4,
-                                     unsigned long a5);
+#define LINUX_SYSCALL_ATTRIBUTE static __attribute__((unused)) LINUX_SYSCALL_INLINE
 
 #if 0
 /*
@@ -51,27 +25,32 @@ SYSCALL_ATTRIBUTE unsigned long syscall6(unsigned long n, unsigned long a0,
 #endif
 #endif
 
-SYSCALL_ATTRIBUTE unsigned long syscall0(unsigned long n) {
+LINUX_SYSCALL_ATTRIBUTE unsigned long linux_syscall6(unsigned long n, unsigned long a0,
+                                     unsigned long a1, unsigned long a2,
+                                     unsigned long a3, unsigned long a4,
+                                     unsigned long a5);
+
+LINUX_SYSCALL_ATTRIBUTE unsigned long linux_syscall0(unsigned long n) {
   unsigned long u;
 #ifdef __clang__
   u = *(&u);
 #else
   u = 0;
 #endif
-  return syscall6(n, u, u, u, u, u, u);
+  return linux_syscall6(n, u, u, u, u, u, u);
 }
 
-SYSCALL_ATTRIBUTE unsigned long syscall1(unsigned long n, unsigned long a0) {
+LINUX_SYSCALL_ATTRIBUTE unsigned long linux_syscall1(unsigned long n, unsigned long a0) {
   unsigned long u;
 #ifdef __clang__
   u = *(&u);
 #else
   u = 0;
 #endif
-  return syscall6(n, a0, u, u, u, u, u);
+  return linux_syscall6(n, a0, u, u, u, u, u);
 }
 
-SYSCALL_ATTRIBUTE unsigned long syscall2(unsigned long n, unsigned long a0,
+LINUX_SYSCALL_ATTRIBUTE unsigned long linux_syscall2(unsigned long n, unsigned long a0,
                                      unsigned long a1) {
   unsigned long u;
 #ifdef __clang__
@@ -79,10 +58,10 @@ SYSCALL_ATTRIBUTE unsigned long syscall2(unsigned long n, unsigned long a0,
 #else
   u = 0;
 #endif
-  return syscall6(n, a0, a1, u, u, u, u);
+  return linux_syscall6(n, a0, a1, u, u, u, u);
 }
 
-SYSCALL_ATTRIBUTE unsigned long syscall3(unsigned long n, unsigned long a0,
+LINUX_SYSCALL_ATTRIBUTE unsigned long linux_syscall3(unsigned long n, unsigned long a0,
                                      unsigned long a1, unsigned long a2) {
   unsigned long u;
 #ifdef __clang__
@@ -90,10 +69,10 @@ SYSCALL_ATTRIBUTE unsigned long syscall3(unsigned long n, unsigned long a0,
 #else
   u = 0;
 #endif
-  return syscall6(n, a0, a1, a2, u, u, u);
+  return linux_syscall6(n, a0, a1, a2, u, u, u);
 }
 
-SYSCALL_ATTRIBUTE unsigned long syscall4(unsigned long n, unsigned long a0,
+LINUX_SYSCALL_ATTRIBUTE unsigned long linux_syscall4(unsigned long n, unsigned long a0,
                                      unsigned long a1, unsigned long a2,
                                      unsigned long a3) {
   unsigned long u;
@@ -102,10 +81,10 @@ SYSCALL_ATTRIBUTE unsigned long syscall4(unsigned long n, unsigned long a0,
 #else
   u = 0;
 #endif
-  return syscall6(n, a0, a1, a2, a3, u, u);
+  return linux_syscall6(n, a0, a1, a2, a3, u, u);
 }
 
-SYSCALL_ATTRIBUTE unsigned long syscall5(unsigned long n, unsigned long a0,
+LINUX_SYSCALL_ATTRIBUTE unsigned long linux_syscall5(unsigned long n, unsigned long a0,
                                      unsigned long a1, unsigned long a2,
                                      unsigned long a3, unsigned long a4) {
   unsigned long u;
@@ -114,13 +93,12 @@ SYSCALL_ATTRIBUTE unsigned long syscall5(unsigned long n, unsigned long a0,
 #else
   u = 0;
 #endif
-  return syscall6(n, a0, a1, a2, a3, a4, u);
+  return linux_syscall6(n, a0, a1, a2, a3, a4, u);
 }
 
-
 #if __x86_64__
-
-SYSCALL_ATTRIBUTE unsigned long syscall6(unsigned long n, unsigned long a0,
+ _Static_assert(sizeof(unsigned long) == 8, "");
+LINUX_SYSCALL_ATTRIBUTE unsigned long linux_syscall6(unsigned long n, unsigned long a0,
                                      unsigned long a1, unsigned long a2,
                                      unsigned long a3, unsigned long a4,
                                      unsigned long a5) {
@@ -139,7 +117,8 @@ SYSCALL_ATTRIBUTE unsigned long syscall6(unsigned long n, unsigned long a0,
 }
 
 #elif __aarch64__
-SYSCALL_ATTRIBUTE unsigned long syscall6(unsigned long n, unsigned long a0,
+ _Static_assert(sizeof(unsigned long) == 8, "");
+LINUX_SYSCALL_ATTRIBUTE unsigned long linux_syscall6(unsigned long n, unsigned long a0,
                                      unsigned long a1, unsigned long a2,
                                      unsigned long a3, unsigned long a4,
                                      unsigned long a5) {
@@ -170,7 +149,7 @@ SYSCALL_ATTRIBUTE unsigned long syscall6(unsigned long n, unsigned long a0,
 }
 #else
 
-#error "Unimplemented architecture"
+#error "Linux syscall unimplemented for this architecture"
 
 #endif
 
