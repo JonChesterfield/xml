@@ -36,7 +36,7 @@ vendored_libxml2:	deepclean
 #	extract the tar
 	mkdir $(TOOLS_DIR)/libxml2
 	tar xf vendored/libxml2-2.12.0.tar.xz -C $(TOOLS_DIR)/libxml2 --strip-components=1
-	cd $(TOOLS_DIR)/libxml2 && ./configure --without-iconv --without-icu --without-lzma --without-iso8859x --without-http --without-zlib --without-python
+	cd $(TOOLS_DIR)/libxml2 && ./configure --without-iconv --without-icu --without-lzma --without-iso8859x --without-http --without-zlib --without-python # --without-threads # may want no threads
 #	delete docs, tests, python
 	cd $(TOOLS_DIR)/libxml2 && rm -r doc test result python fuzz example *.py
 #	delete some dead architectures

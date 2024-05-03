@@ -9,7 +9,13 @@
 
 // Possibly dubious to assume __NR_write etc are consistent across architectures
 #if defined(__x86_64__)
+#if __has_include(<x86_64-linux-gnu/asm/unistd_64.h>)
 #include <x86_64-linux-gnu/asm/unistd_64.h>
+#elif __has_include(<asm/unistd_64.h>)
+#include <asm/unistd_64.h>
+#else
+#error "On x64, missing unistd_64.h"
+#endif
 #endif
 
 #if defined(__aarch64__)

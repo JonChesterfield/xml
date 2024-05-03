@@ -57,7 +57,27 @@ CXXFLAGS := -std=c++14 -Wno-c99-designator $(C_OR_CXX_FLAGS)
 # CXX=$(MAKEFILE_DIR)/musl/install/bin/clang++
 # LDFLAGS := -static
 
+# Make is not presently invalidating everything when this file changes
+TRIPLE := x86_64-unknown-linux-musl
+#TRIPLE := aarch64-unknown-linux-musl
+#TRIPLE := wasm32-unknown-wasi
+CTARGET := --target=$(TRIPLE) --sysroot=$(MAKEFILE_DIR)/wasm/install/$(TRIPLE)
+
+
+# wasi needs -mllvm -wasm-enable-sjlj for longjmp
+
+CC=$(MAKEFILE_DIR)/wasm/install/bin/clang
+CXX=$(MAKEFILE_DIR)/wasm/install/bin/clang++
+CFLAGS := $(CTARGET) $(CFLAGS) 
+CXXFLAGS := $(CTARGET) $(CXXFLAGS)
+LDFLAGS := -static
+
+# native doesn't use one, running aarch64 on x64 could use qemu,
+# wasm needs one. In this case, built against x64 musl then copied to top level dir
+INTERPRETER := $(MAKEFILE_DIR)/wasm3
+
 TARGET_CFLAGS :=
+
 
 
 # Considering a single source single file approach to tools
@@ -111,7 +131,7 @@ include $(SELF_DIR)common/common.mk
 # When xsltproc output is empty it fails to create an empty output file
 %.hex:	%.RawBinary.xml validate/subtransforms
 	@touch "$@"
-	xsltproc $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
+	$(xsltproc) $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
 
 # Not very pretty but doesn't matter much if bison is run twice
 # better is probably to build the header directly from the xml
@@ -155,7 +175,7 @@ lang_transforms := $(lang_transforms) lexer_re2c_iterator.data.re2c.TokenTree.xs
 
 define LANGTRANSFORMS
 $(lang_tmp)/%.$(basename $1).xml:	lang/$1 $(lang_tmp)/%.lang.xml
-	xsltproc $(XSLTPROCOPTS) --output $$@ $$^
+	$(xsltproc) $(XSLTPROCOPTS) --output $$@ $$^
 endef
 $(foreach xform,$(lang_transforms),$(eval $(call LANGTRANSFORMS,$(xform))))
 #$(foreach xform,$(lang_transforms),$(info $(call LANGTRANSFORMS,$(xform))))
