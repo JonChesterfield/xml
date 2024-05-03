@@ -13,6 +13,7 @@ installdir="$thisdir"/install
 
 musldir="$thisdir/../musl/musl"
 linuxdir="$thisdir/linuxsrc"
+wabtdir="$thisdir/wabt"
 
 NP=$(nproc)
 
@@ -26,6 +27,16 @@ else
     mkdir -p "$linuxdir" && cd "$linuxdir"
     apt-get source linux # debian specific, not sure how much an exact version match matters
 fi
+
+if [[ -d "$wabtdir" ]]
+then
+    echo "Wabt dir already present"
+else
+    git clone --recursive https://github.com/WebAssembly/wabt "$wabtdir"
+    cd "$wabtdir"
+    git submodule update --init
+fi
+
 
 if true
 then
@@ -62,6 +73,19 @@ ninja -v && ninja -v install
 
 # This is needed by the cross build but isn't installed
 cp "$builddir"/bin/clang-ast-dump "$installdir"/bin
+
+cd "$wabtdir"
+builddir="$thisdir"/build-wabt
+rm -rf $builddir && mkdir -p $builddir && cd $builddir
+
+cmake -D CMAKE_BUILD_TYPE=Release                                              \
+      -D CMAKE_C_COMPILER=$CC                                                  \
+      -D CMAKE_CXX_COMPILER=$CXX                                               \
+      -D CMAKE_INSTALL_LIBDIR=lib                                              \
+      -D CMAKE_INSTALL_PREFIX="$installdir"                                    \
+      -G Ninja                                                                 \
+      -S "$wabtdir"
+ninja -v && ninja -v install
 
 fi
 
