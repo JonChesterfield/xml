@@ -5,7 +5,7 @@ $(if $(TOOLS_DIR),,$(error vendored.mk requires tools dir))
 
 vendored::	vendored_evilunit
 vendored::	vendored_libxml2 vendored_libxslt
-vendored::	vendored_wasm3
+vendored::	vendored_wasm3 vendored_libuv vendored_uvwasi
 
 vendored::
 #	Clean up some additional unused files
@@ -18,7 +18,8 @@ deepclean::
 	rm -rf $(TOOLS_DIR)/libxslt
 	rm -f $(TOOLS_DIR)/xmllint.c $(TOOLS_DIR)/xsltproc.c
 	rm -rf $(TOOLS_DIR)/wasm3 $(TOOLS_DIR)/wasm3.c
-
+	rm -rf $(TOOLS_DIR)/libuv
+	rm -rf $(TOOLS_DIR)/uvwasi
 	rm -rf $(TOOLS_DIR)/EvilUnit
 
 
@@ -130,3 +131,21 @@ vendored_wasm3:	deepclean
 
 #	Clean up
 	cd $(TOOLS_DIR)/wasm3 && rm -r test docs extra platforms .github .gitignore .codespellrc CMakeLists.txt source/CMakeLists.txt
+
+.PHONY: vendored_libuv
+vendored_libuv:	deepclean
+	rm -rf -- vendored/libuv && mkdir -p vendored/libuv
+	unzip vendored/libuv.zip -d vendored/libuv
+	mv vendored/libuv/libuv-1.40.0 $(TOOLS_DIR)/libuv
+
+.PHONY: vendored_uvwasi
+vendored_uvwasi:	deepclean
+	rm -rf -- vendored/uvwasi && mkdir -p vendored/uvwasi
+	unzip vendored/uvwasi.zip -d vendored/uvwasi
+	mv vendored/uvwasi/uvwasi-b063d686848c32a26119513056874f051c74258a $(TOOLS_DIR)/uvwasi
+	rmdir vendored/uvwasi
+	for hdr in wasi_types wasi_serdes uvwasi ; do \
+	sed -i -E \
+	-e 's$$#include "('$$hdr')[.]h"$$#include "../include/\1.h"$$' \
+	$(TOOLS_DIR)/uvwasi/src/*.[hc] ; done
+	cd $(TOOLS_DIR)/uvwasi && rm -r test

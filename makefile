@@ -59,19 +59,19 @@ LDFLAGS := -lm
 # LDFLAGS := -static
 
 # Make is not presently invalidating everything when this file changes
-TRIPLE := x86_64-unknown-linux-musl
+#TRIPLE := x86_64-unknown-linux-musl
 #TRIPLE := aarch64-unknown-linux-musl
 #TRIPLE := wasm32-unknown-wasi
-CTARGET := --target=$(TRIPLE) --sysroot=$(MAKEFILE_DIR)/wasm/install/$(TRIPLE)
+#CTARGET := --target=$(TRIPLE) --sysroot=$(MAKEFILE_DIR)/wasm/install/$(TRIPLE)
 
 
 # wasi needs -mllvm -wasm-enable-sjlj for longjmp
 
-CC=$(MAKEFILE_DIR)/wasm/install/bin/clang
-CXX=$(MAKEFILE_DIR)/wasm/install/bin/clang++
-CFLAGS := $(CTARGET) $(CFLAGS) 
-CXXFLAGS := $(CTARGET) $(CXXFLAGS)
-LDFLAGS := -static #-Wl,--sysroot=$(MAKEFILE_DIR)/wasm/install/$(TRIPLE)
+#CC=$(MAKEFILE_DIR)/wasm/install/bin/clang
+#CXX=$(MAKEFILE_DIR)/wasm/install/bin/clang++
+#CFLAGS := $(CTARGET) $(CFLAGS) 
+#CXXFLAGS := $(CTARGET) $(CXXFLAGS)
+#LDFLAGS := -static #-Wl,--sysroot=$(MAKEFILE_DIR)/wasm/install/$(TRIPLE)
 
 # native doesn't use one, running aarch64 on x64 could use qemu,
 # wasm needs one. In this case, built against x64 musl then copied to top level dir
@@ -516,7 +516,7 @@ CMARK_SRC:= $(wildcard $(TOOLS_DIR)/cmark/*.c)
 LIBXML2_SRC := $(call rwildcard,$(TOOLS_DIR)/libxml2,*.c)
 LIBXSLT_SRC := $(call rwildcard,$(TOOLS_DIR)/libxslt,*.c)
 
-LIBWASM3_SRC:= $(call rwildcard,$(TOOLS_DIR)/wasm3/source,*.c)
+LIBWASM3_SRC := $(call rwildcard,$(TOOLS_DIR)/wasm3/source,*.c) # $(call rwildcard,$(TOOLS_DIR)/uvwasi/src,*.c)
 
 # All C, C++ get compiled to object files individually
 TOOLS_C_SRC := $(call rwildcard,$(TOOLS_DIR),*.c)
