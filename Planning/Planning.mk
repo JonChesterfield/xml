@@ -93,7 +93,7 @@ PROJECT_HTML := $(addprefix $(WORKDIR)/,$(addsuffix .html,$(project_names)))
 PUBLISH_HTML := $(addprefix ${output_dir}/,$(addsuffix .html,$(project_names)))
 
 $(PROJECT_HTML):	%.html:	%.cards.xml card_to_html.xsl | $(xsltproc)
-	@$(xsltproc) $(XSLTPROCOPTS) --output "$@" card_to_html.xsl "$<"
+	@$(INTERPRETER)$(xsltproc) $(XSLTPROCOPTS) --output "$@" card_to_html.xsl "$<"
 
 # Only copies changed files to not retrigger obsidian sync
 .PHONY:	$(PUBLISH_HTML)

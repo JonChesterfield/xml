@@ -59,19 +59,25 @@ LDFLAGS := -lm
 # LDFLAGS := -static
 
 # Make is not presently invalidating everything when this file changes
-#TRIPLE := x86_64-unknown-linux-musl
+TRIPLE := x86_64-unknown-linux-musl
 #TRIPLE := aarch64-unknown-linux-musl
-#TRIPLE := wasm32-unknown-wasi
-#CTARGET := --target=$(TRIPLE) --sysroot=$(MAKEFILE_DIR)/wasm/install/$(TRIPLE)
+# TRIPLE := wasm32-unknown-wasi
+CTARGET := --target=$(TRIPLE) --sysroot=$(MAKEFILE_DIR)/wasm/install/$(TRIPLE)
 
+INTERPRETER :=
 
 # wasi needs -mllvm -wasm-enable-sjlj for longjmp
 
-#CC=$(MAKEFILE_DIR)/wasm/install/bin/clang
-#CXX=$(MAKEFILE_DIR)/wasm/install/bin/clang++
-#CFLAGS := $(CTARGET) $(CFLAGS) 
-#CXXFLAGS := $(CTARGET) $(CXXFLAGS)
-#LDFLAGS := -static #-Wl,--sysroot=$(MAKEFILE_DIR)/wasm/install/$(TRIPLE)
+CC=$(MAKEFILE_DIR)/wasm/install/bin/clang
+CXX=$(MAKEFILE_DIR)/wasm/install/bin/clang++
+CFLAGS := $(CTARGET) $(CFLAGS) 
+CXXFLAGS := $(CTARGET) $(CXXFLAGS)
+LDFLAGS := -static #-z stack-size=65536 -Wl,--initial-memory=16777216
+
+NS :=
+SPACE := $(NS) $(NS)
+#INTERPRETER := $(MAKEFILE_DIR)/wasm3 --stack-size 1000000 $(SPACE)
+
 
 # native doesn't use one, running aarch64 on x64 could use qemu,
 # wasm needs one. In this case, built against x64 musl then copied to top level dir
@@ -82,23 +88,23 @@ LDFLAGS := -lm
 # https://github.com/libuv/libuv.git
 # probably specific commits / branches of them, and splicing them into wasm3
 # Maybe build libuv as a general dependency, lua uses the same lib
-INTERPRETER := $(MAKEFILE_DIR)/wasm3
+
 
 TARGET_CFLAGS :=
 
 
 
 # Considering a single source single file approach to tools
-file_to_cdata := $(INTERPRETER) bin/file_to_cdata
-hex_to_binary := $(INTERPRETER) bin/hex_to_binary
-lemon := $(INTERPRETER) bin/lemon
-makeheaders := $(INTERPRETER) bin/makeheaders
+file_to_cdata := bin/file_to_cdata
+hex_to_binary := bin/hex_to_binary
+lemon := bin/lemon
+makeheaders := bin/makeheaders
 
 # These aren't very single source but are still compilable
-xmllint := $(INTERPRETER) bin/xmllint
-xsltproc := $(INTERPRETER) bin/xsltproc
+xmllint := bin/xmllint
+xsltproc := bin/xsltproc
 
-cmark := $(INTERPRETER) bin/cmark
+cmark := bin/cmark
 
 # Source under TOOLS_DIR used to make binaries under TOOLS_DIR_BIN
 TOOLS_DIR := tools
@@ -125,10 +131,10 @@ RE2COPTS := --no-debug-info -W -Wno-useless-escape --no-generation-date
 
 # Any .md file to commonmark xml or html
 %.cmark.xml:	%.md | $(cmark)
-	@./$(cmark) --to xml $^ > $@
+	@$(INTERPRETER)$(cmark) --to xml $^ > $@
 
 %.cmark.html:	%.md | $(cmark)
-	@./$(cmark) --to html $^ > $@
+	@$(INTERPRETER)$(cmark) --to html $^ > $@
 
 # In any directory:
 # %.TokenTree.xml -> %.TokenList.xml
@@ -152,7 +158,7 @@ include $(SELF_DIR)common/common.mk
 
 # Lemon writes a header file by default, the local version is hacked to not do that
 %.parser_lemon.c:	%.parser_lemon.y | $(lemon)
-	$(lemon) -l -Ttools/lempar.data $^ -d$(dir $^)
+	$(INTERPRETER)$(lemon) -l -Ttools/lempar.data $^ -d$(dir $^)
 
 %.parser_lemon.h:	scripts/lemon_header.lua
 	lua $^ "$(basename $(basename $(notdir $@)))" > $@
@@ -183,7 +189,7 @@ lang_transforms := $(lang_transforms) lexer_re2c_iterator.data.re2c.TokenTree.xs
 
 define LANGTRANSFORMS
 $(lang_tmp)/%.$(basename $1).xml:	lang/$1 $(lang_tmp)/%.lang.xml
-	$(xsltproc) $(XSLTPROCOPTS) --output $$@ $$^
+	$(INTERPRETER)$(xsltproc) $(XSLTPROCOPTS) --output $$@ $$^
 endef
 $(foreach xform,$(lang_transforms),$(eval $(call LANGTRANSFORMS,$(xform))))
 #$(foreach xform,$(lang_transforms),$(info $(call LANGTRANSFORMS,$(xform))))
@@ -247,7 +253,7 @@ $(lang_tmp)/%:	$(lang_tmp)/%.re2c
 
 # Drop the final .hex
 $(lang_tmp)/%:	$(lang_tmp)/%.hex | $(hex_to_binary)
-	./$(hex_to_binary) < "$<" > "$@"
+	$(INTERPRETER)$(hex_to_binary) < "$<" > "$@"
 
 
 
@@ -302,7 +308,7 @@ SUBTRANSFORMS := $(wildcard subtransforms/*.xsl)
 define subtransform_template
 .PHONY: validate/$1
 validate/$1:	$1  | $(xmllint)
-	@$(xmllint) --relaxng xslt.rng "$$<" $$(XMLLINTOPTS) --quiet
+	@$(INTERPRETER)$(xmllint) --relaxng xslt.rng "$$<" $$(XMLLINTOPTS) --quiet
 endef
 $(foreach t,$(SUBTRANSFORMS), $(eval $(call subtransform_template,$(t))))
 .PHONY: validate/subtransforms
@@ -327,27 +333,27 @@ define XML_Pipeline_Template_Precise
 # Would be better to use a single rule for any schema validation
 .PHONY: validateA/$1/$4
 validateA/$1/$4:	$4  | $(xmllint)
-	@$(xmllint) --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
+	@$(INTERPRETER)$(xmllint) --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
 
 .PHONY: validateB/$1/$5
 validateB/$1/$5:	$5  | $(xmllint)
-	@$(xmllint) --relaxng xslt.rng "$$<" $(XMLLINTOPTS) --quiet
+	@$(INTERPRETER)$(xmllint) --relaxng xslt.rng "$$<" $(XMLLINTOPTS) --quiet
 
 .PHONY: validateC/$1/$6
 validateC/$1/$6:	$6 | $(xmllint)
-	@$(xmllint) --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
+	@$(INTERPRETER)$(xmllint) --relaxng relaxng.rng "$$<" $(XMLLINTOPTS) --quiet
 
 $1/%.$3.prelint.xml:	$1/%.$2.xml $4 $5 $6 validateA/$1/$4 validateB/$1/$5 validateC/$1/$6 validate/subtransforms  | $(xmllint) $(xsltproc)
 	@mkdir -p "$$(dir $$@)"
-	@$(xmllint) --relaxng $4 "$$<" $(XMLLINTOPTS) --quiet
-	@$(xsltproc) $(XSLTPROCOPTS) --output "$$@" $5 "$$<"
+	@$(INTERPRETER)$(xmllint) --relaxng $4 "$$<" $(XMLLINTOPTS) --quiet
+	@$(INTERPRETER)$(xsltproc) $(XSLTPROCOPTS) --output "$$@" $5 "$$<"
 
 # This transform seems to be prone to stack overflows
 $1/%.$3.pretty.xml:	$1/%.$3.prelint.xml | $(xsltproc)
-	@$(xsltproc) $(XSLTPROCOPTS) --output "$$@" subtransforms/pretty.xsl "$$<" || cp "$$<" "$$@"
+	@$(INTERPRETER)$(xsltproc) $(XSLTPROCOPTS) --output "$$@" subtransforms/pretty.xsl "$$<" || cp "$$<" "$$@"
 
 $1/%.$3.xml:	$1/%.$3.pretty.xml | $(xmllint)
-	@$(xmllint) --relaxng $6 "$$<" $(XMLLINTOPTS) --quiet
+	@$(INTERPRETER)$(xmllint) --relaxng $6 "$$<" $(XMLLINTOPTS) --quiet
 	@cp "$$<" "$$@"
 endef
 
@@ -378,8 +384,8 @@ include $(SELF_DIR)raw_sexpr_to_expressions/raw_sexpr_to_expressions.mk
 # Create the input file
 $(XMLPipelineWorkDir)/raw_sexpr_to_expressions/%.raw_sexpr.xml: Lisp/%.scm | $(file_to_cdata) $(xmllint)
 	@mkdir -p "$(dir $@)"
-	@$(file_to_cdata) < "$<" > "$@"
-	@$(xmllint) --relaxng $(call get_schema_name, %raw_sexpr_to_expressions/raw_sexpr.rng) "$@" $(XMLLINTOPTS) --quiet
+	@$(INTERPRETER)$(file_to_cdata) < "$<" > "$@"
+	@$(INTERPRETER)$(xmllint) --relaxng $(call get_schema_name, %raw_sexpr_to_expressions/raw_sexpr.rng) "$@" $(XMLLINTOPTS) --quiet
 
 
 # Copy the output file out
@@ -399,8 +405,8 @@ $(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.expressions.xml: LispExpression
 # Extract the sexpr
 LispChecked/%.scm:	$(XMLPipelineWorkDir)/expressions_to_raw_sexpr/%.raw_sexpr.xml validate/subtransforms | $(xmllint) $(xsltproc)
 	@mkdir -p "$(dir $@)"
-	@$(xmllint) --relaxng $(call get_schema_name, %expressions_to_raw_sexpr/raw_sexpr.rng) "$<" $(XMLLINTOPTS) --quiet
-	@$(xsltproc) $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
+	@$(INTERPRETER)$(xmllint) --relaxng $(call get_schema_name, %expressions_to_raw_sexpr/raw_sexpr.rng) "$<" $(XMLLINTOPTS) --quiet
+	@$(INTERPRETER)$(xsltproc) $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
 
 
 include $(SELF_DIR)ctree_to_csyntax/ctree_to_csyntax.mk
@@ -419,8 +425,8 @@ $(XMLPipelineWorkDir)/ctree_to_csyntax/%.ctree.xml: CTree/%.xml $(foreach f,$(EX
 
 $(CSYNTAX):	CSyntax/%.c:	$(XMLPipelineWorkDir)/ctree_to_csyntax/%.csyntax.xml validate/subtransforms | $(xmllint) $(xsltproc)
 	@mkdir -p "$(dir $@)"
-	@$(xmllint) --relaxng $(call get_schema_name, %ctree_to_csyntax/csyntax.rng) "$<" $(XMLLINTOPTS) --quiet
-	@$(xsltproc) $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
+	@$(INTERPRETER)$(xmllint) --relaxng $(call get_schema_name, %ctree_to_csyntax/csyntax.rng) "$<" $(XMLLINTOPTS) --quiet
+	@$(INTERPRETER)$(xsltproc) $(XSLTPROCOPTS) --output "$@" subtransforms/drop_outer_element.xsl "$<"
 
 clean::
 	rm -rf CSyntax
@@ -441,8 +447,8 @@ $(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,md,$(call get_sc
 $(eval $(call XML_Pipeline_Template_Precise,.Planning/tmp,cmark,html,$(call get_schema_name, %common/cmark.rng),common/cmark_to_html.xsl,$(call get_schema_name, %common/html.rng)))
 
 %.html:	%.html.xml | $(xmllint) $(xsltproc)
-	@$(xmllint) --relaxng $(call get_schema_name, %common/html.rng) "$<" $(XMLLINTOPTS) --quiet
-	@$(xsltproc) $(XSLTPROCOPTS) --output "$@" xml_to_html.xsl "$<"
+	@$(INTERPRETER)$(xmllint) --relaxng $(call get_schema_name, %common/html.rng) "$<" $(XMLLINTOPTS) --quiet
+	@$(INTERPRETER)$(xsltproc) $(XSLTPROCOPTS) --output "$@" xml_to_html.xsl "$<"
 
 LEXER_OBJECTS := $(addprefix $(TOOLS_DIR_OBJ)/,lexer.posix.o lexer.re2.o lexer.re2c.o lexer.interp.o)
 
@@ -478,12 +484,12 @@ $(arith_tmp)/arith.prelint.xml:	arith.lexer $(call get_schema_name, %common/Toke
 	echo "1 + 2 / 1 * (7 % 3)" | ./arith.lexer > $@
 
 $(arith_tmp)/arith.xml:	$(arith_tmp)/arith.prelint.xml
-	xmllint --relaxng $(call get_schema_name, %common/TokenList.rng) "$<"
+	$(INTERPRETER)$(xmllint) --relaxng $(call get_schema_name, %common/TokenList.rng) "$<"
 	@cp "$<" "$@"
 
 # Don't want to be using this xsl
 arith.txt:	TokenList_to_bytes.xsl $(arith_tmp)/arith.xml
-	xsltproc --output $@ $^
+	$(INTERPRETER)$(xsltproc) --output $@ $^
 
 clean::
 	rm -f arith.txt
