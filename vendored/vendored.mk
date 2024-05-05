@@ -119,18 +119,41 @@ vendored_wasm3:	deepclean
 	rm -rf -- vendored/wasm3tmp && mkdir -p vendored/wasm3tmp
 	unzip vendored/v0.5.0.zip -d vendored/wasm3tmp
 	mv vendored/wasm3tmp/wasm3-0.5.0 $(TOOLS_DIR)/wasm3
-	rmdir vendored/wasm3tmp
 # Move the main executable to the top level for consistency with other tools
 	mv $(TOOLS_DIR)/wasm3/platforms/app/main.c $(TOOLS_DIR)/wasm3.c
 
 #	Hack source instead of requiring -Isource
 	sed -i -E 's$$#include "(.+[.]h)"$$#include "wasm3/source/\1"$$' $(TOOLS_DIR)/wasm3.c
 	mv $(TOOLS_DIR)/wasm3/source/extensions/* $(TOOLS_DIR)/wasm3/source/ && rmdir $(TOOLS_DIR)/wasm3/source/extensions
-#	Hack source instead of requiring -Dd_m3HasWASI, only edits the files that use the macro for now
-	for F in $(TOOLS_DIR)/wasm3.c $(TOOLS_DIR)/wasm3/source/m3_api_wasi.c ; do mv $$F tmp ; echo "#define d_m3HasWASI 1" >> $$F; cat tmp >> $$F; rm tmp ; done
+
+	sed -i -E 's$$#include "(uvwasi[.]h)"$$#include "../../uvwasi/include/\1"$$' $(TOOLS_DIR)/wasm3/source/m3_api_uvwasi.c
+
+#	Slightly neater to specify as a dedicated header
+	echo "#ifndef WASM3_API_MACRO_INCLUDED_H" > vendored/wasm3tmp/tmp
+	echo "#define WASM3_API_MACRO_INCLUDED_H" >> vendored/wasm3tmp/tmp
+	echo "// Tests are on defined(), not on 1 vs 0" >> vendored/wasm3tmp/tmp
+	echo "// #define d_m3HasWASI 0" >> vendored/wasm3tmp/tmp
+	echo "#define d_m3HasUVWASI 1" >> vendored/wasm3tmp/tmp
+	echo "// #define d_m3HasMetaWASI 0" >> vendored/wasm3tmp/tmp
+	echo "#endif" >> vendored/wasm3tmp/tmp
+	mv vendored/wasm3tmp/tmp $(TOOLS_DIR)/wasm3/source/m3_api_macro.h
+
+	mv $(TOOLS_DIR)/wasm3.c vendored/wasm3tmp/tmp
+	echo '#include "wasm3/source/m3_api_macro.h"' > $(TOOLS_DIR)/wasm3.c
+	cat vendored/wasm3tmp/tmp >> $(TOOLS_DIR)/wasm3.c
+
+	for F in \
+	$(TOOLS_DIR)/wasm3/source/m3_api_wasi.c \
+	$(TOOLS_DIR)/wasm3/source/m3_api_uvwasi.c \
+	$(TOOLS_DIR)/wasm3//source/m3_api_meta_wasi.c \
+	; do mv $$F vendored/wasm3tmp/tmp ; \
+	echo '#include "m3_api_macro.h"' > $$F; \
+	cat vendored/wasm3tmp/tmp >> $$F;\
+	done
 
 #	Clean up
-	cd $(TOOLS_DIR)/wasm3 && rm -r test docs extra platforms .github .gitignore .codespellrc CMakeLists.txt source/CMakeLists.txt
+	rm vendored/wasm3tmp/tmp
+#	cd $(TOOLS_DIR)/wasm3 && rm -r test docs extra platforms .github .gitignore .codespellrc CMakeLists.txt source/CMakeLists.txt
 
 .PHONY: vendored_libuv
 vendored_libuv:	deepclean
@@ -138,14 +161,77 @@ vendored_libuv:	deepclean
 	unzip vendored/libuv.zip -d vendored/libuv
 	mv vendored/libuv/libuv-1.40.0 $(TOOLS_DIR)/libuv
 
+	for f in $(TOOLS_DIR)/libuv/include/uv.h  $$(find $(TOOLS_DIR)/libuv -type f -iname '*.c'); \
+	do mv $$f vendored/libuv/tmp; \
+	echo '#include "posix_config.h"' > $$f; \
+	cat vendored/libuv/tmp >> $$f; \
+	done
+
+#	libuv uses rwlock_t but doens't set XOPEN_SOURCE, work around that
+#	see https://github.com/libuv/libuv/issues/1160
+#	it also uses futimens on linux which needs 700
+	echo '#ifndef UV_POSIX_CONFIG_H_INCLUDED' > vendored/libuv/tmp
+	echo '#define UV_POSIX_CONFIG_H_INCLUDED' >> vendored/libuv/tmp
+	echo '#define _GNU_SOURCE' >> vendored/libuv/tmp
+	echo '#ifndef _XOPEN_SOURCE' >> vendored/libuv/tmp
+	echo '#define _XOPEN_SOURCE 700' >> vendored/libuv/tmp
+	echo '#endif' >> vendored/libuv/tmp
+	echo '#if _XOPEN_SOURCE < 700' >> vendored/libuv/tmp
+	echo '#undef _XOPEN_SOURCE' >> vendored/libuv/tmp
+	echo '#define _XOPEN_SOURCE 700' >> vendored/libuv/tmp
+	echo '#endif' >> vendored/libuv/tmp
+	echo '#endif' >> vendored/libuv/tmp
+	mv vendored/libuv/tmp $(TOOLS_DIR)/libuv/include/posix_config.h
+
+	sed -i -E 's$$(#[ ]*)(include) "uv/(.*)[.]h"$$\1\2 "\3.h"$$' $(TOOLS_DIR)/libuv/include/uv/unix.h
+
+	for hdr in uv posix_config 'uv/tree' ; do \
+	sed -i -E 's$$#include "('$$hdr')[.]h"$$#include "../include/\1.h"$$' $(TOOLS_DIR)/libuv/src/*.[hc] ; \
+	sed -i -E 's$$#include "('$$hdr')[.]h"$$#include "../../include/\1.h"$$' $(TOOLS_DIR)/libuv/src/*/*.[hc] ;\
+	done
+
+	for hdr in uv-common heap-inl idna queue strscpy; do \
+	sed -i -E 's$$#include "('$$hdr'[.]h)"$$#include "../\1"$$' $(TOOLS_DIR)/libuv/src/*/*.[hc] ;\
+	done
+
+#	Delete windows subdir
+	rm -r -- $(TOOLS_DIR)/libuv/src/win
+#	Delete the source for non-linux unix like systems
+	for del in \
+	aix.c aix-common.c android-ifaddrs.c \
+	freebsd.c netbsd.c openbsd.c \
+	posix-hrtime.c bsd-proctitle.c bsd-ifaddrs.c kqueue.c \
+	random-getentropy.c \
+	darwin.c darwin-proctitle.c fsevents.c \
+	pthread-fixes.c os390.c os390-syscalls.c \
+	ibmi.c no-fsevents.c posix-poll.c \
+	no-proctitle.c sunos.c \
+	haiku.c bsd-ifaddrs.c no-proctitle.c posix-hrtime.c \
+	posix-hrtime.c posix-poll.c qnx.c bsd-ifaddrs.c \
+	cygwin.c sysinfo-memory.c sysinfo-loadavg.c \
+	; do rm -f -- $(TOOLS_DIR)/libuv/src/unix/"$$del"; done
+
+	cd $(TOOLS_DIR)/libuv && rm -r docs test img m4 ChangeLog
+#	cd $(TOOLS_DIR)/libuv && rm Makefile.am CMakeLists.txt
+
 .PHONY: vendored_uvwasi
 vendored_uvwasi:	deepclean
 	rm -rf -- vendored/uvwasi && mkdir -p vendored/uvwasi
 	unzip vendored/uvwasi.zip -d vendored/uvwasi
 	mv vendored/uvwasi/uvwasi-b063d686848c32a26119513056874f051c74258a $(TOOLS_DIR)/uvwasi
-	rmdir vendored/uvwasi
 	for hdr in wasi_types wasi_serdes uvwasi ; do \
 	sed -i -E \
 	-e 's$$#include "('$$hdr')[.]h"$$#include "../include/\1.h"$$' \
 	$(TOOLS_DIR)/uvwasi/src/*.[hc] ; done
+
+	for f in $$(find $(TOOLS_DIR)/uvwasi/src -type f -iname '*.[ch]'); \
+	do mv $$f vendored/uvwasi/tmp; \
+	echo '#include "posix_config.h"' > $$f; \
+	cat vendored/uvwasi/tmp >> $$f; \
+	done
+	rm vendored/uvwasi/tmp
+
+	for hdr in uv posix_config  ; do \
+	sed -i -E 's$$#include "'$$hdr'[.]h"$$#include "../../libuv/include/'$$hdr'.h"$$' $(TOOLS_DIR)/uvwasi/src/*.[hc]; done
+
 	cd $(TOOLS_DIR)/uvwasi && rm -r test

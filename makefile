@@ -516,7 +516,12 @@ CMARK_SRC:= $(wildcard $(TOOLS_DIR)/cmark/*.c)
 LIBXML2_SRC := $(call rwildcard,$(TOOLS_DIR)/libxml2,*.c)
 LIBXSLT_SRC := $(call rwildcard,$(TOOLS_DIR)/libxslt,*.c)
 
-LIBWASM3_SRC := $(call rwildcard,$(TOOLS_DIR)/wasm3/source,*.c) # $(call rwildcard,$(TOOLS_DIR)/uvwasi/src,*.c)
+# wasm3 with libuv
+LIBUV_SRC := $(call rwildcard,$(TOOLS_DIR)/libuv,*.c)
+LIBUVWASI_SRC := $(call rwildcard,$(TOOLS_DIR)/uvwasi/src,*.c)
+LIBWASM3_SRC := $(call rwildcard,$(TOOLS_DIR)/wasm3/source,*.c)
+
+WASM3_SRC := $(LIBUV_SRC) $(LIBUVWASI_SRC) $(LIBWASM3_SRC)
 
 # All C, C++ get compiled to object files individually
 TOOLS_C_SRC := $(call rwildcard,$(TOOLS_DIR),*.c)
@@ -563,8 +568,8 @@ $(TOOLS_DIR_BIN)/xsltproc:	$(TOOLS_DIR_OBJ)/xsltproc.o $(LIBXSLT_OBJ) $(LIBXML2_
 	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 
-LIBWASM3_OBJ := $(LIBWASM3_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
-$(TOOLS_DIR_BIN)/wasm3:	$(TOOLS_DIR_OBJ)/wasm3.o $(LIBWASM3_OBJ) | $(TOOLS_DIR_BIN)
+WASM3_OBJ := $(WASM3_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
+$(TOOLS_DIR_BIN)/wasm3:	$(TOOLS_DIR_OBJ)/wasm3.o $(WASM3_OBJ) | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 
