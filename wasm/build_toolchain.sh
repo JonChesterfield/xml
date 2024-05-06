@@ -44,7 +44,7 @@ fi
 CC=$HOME/llvm-install/bin/clang
 CXX=$HOME/llvm-install/bin/clang++
 
-if false
+if true
 then
 
 rm -rf "$installdir"
@@ -178,16 +178,19 @@ for TRIPLE in wasm32-unknown-wasi x86_64-unknown-linux-musl aarch64-unknown-linu
         # No exceptions, no libunwind
 
         CMAKE_OPTIONS=""
-        CMAKE_OPTIONS+=" -D LIBCXX_HAS_EXTERNAL_THREAD_API:BOOL=OFF "
-        CMAKE_OPTIONS+=" -D LIBCXX_BUILD_EXTERNAL_THREAD_LIBRARY:BOOL=OFF "
-        CMAKE_OPTIONS+=" -D LIBCXX_HAS_WIN32_THREAD_API:BOOL=OFF "
-        CMAKE_OPTIONS+=" -D LIBCXX_ENABLE_EXCEPTIONS:BOOL=OFF "
-        CMAKE_OPTIONS+=" -D LIBCXX_ENABLE_ABI_LINKER_SCRIPT:BOOL=OFF "
-        CMAKE_OPTIONS+=" -D LIBCXXABI_ENABLE_EXCEPTIONS:BOOL=OFF "
-        CMAKE_OPTIONS+=" -D LIBCXXABI_HAS_PTHREAD_API:BOOL=OFF "
-        CMAKE_OPTIONS+=" -D LIBCXXABI_HAS_EXTERNAL_THREAD_API:BOOL=OFF "
-        CMAKE_OPTIONS+=" -D LIBCXXABI_BUILD_EXTERNAL_THREAD_LIBRARY:BOOL=OFF "
-        CMAKE_OPTIONS+=" -D LIBCXXABI_HAS_WIN32_THREAD_API:BOOL=OFF "
+        CMAKE_OPTIONS+=" -D LIBCXX_HAS_EXTERNAL_THREAD_API=OFF "
+        CMAKE_OPTIONS+=" -D LIBCXX_BUILD_EXTERNAL_THREAD_LIBRARY=OFF "
+        CMAKE_OPTIONS+=" -D LIBCXX_HAS_WIN32_THREAD_API=OFF "
+        CMAKE_OPTIONS+=" -D LIBCXX_ENABLE_EXCEPTIONS=OFF "
+        CMAKE_OPTIONS+=" -D LIBCXX_ENABLE_ABI_LINKER_SCRIPT=OFF "
+        CMAKE_OPTIONS+=" -D LIBCXXABI_ENABLE_EXCEPTIONS=OFF "
+        CMAKE_OPTIONS+=" -D LIBCXXABI_HAS_PTHREAD_API=OFF "
+        CMAKE_OPTIONS+=" -D LIBCXXABI_HAS_EXTERNAL_THREAD_API=OFF "
+        CMAKE_OPTIONS+=" -D LIBCXXABI_BUILD_EXTERNAL_THREAD_LIBRARY=OFF "
+        CMAKE_OPTIONS+=" -D LIBCXX_ENABLE_THREADS=FALSE "
+        CMAKE_OPTIONS+=" -D LIBCXXABI_ENABLE_THREADS=FALSE "
+        CMAKE_OPTIONS+=" -D LIBCXXABI_HAS_WIN32_THREAD_API=OFF "
+        CMAKE_OPTIONS+=" -D LIBCXX_ENABLE_TIME_ZONE_DATABASE=OFF "
         CMAKE_OPTIONS+=" -D LIBCXXABI_USE_LLVM_UNWINDER=OFF "
         
     else
@@ -197,9 +200,9 @@ for TRIPLE in wasm32-unknown-wasi x86_64-unknown-linux-musl aarch64-unknown-linu
         COMPILER_RT_OPTIONS="-DCOMPILER_RT_BUILD_CRT=TRUE"
         # Can do exceptions (though might choose not to), build libunwind
         CMAKE_OPTIONS=""
-        CMAKE_OPTIONS+=" -D LIBCXX_ENABLE_EXCEPTIONS:BOOL=ON "
-        CMAKE_OPTIONS+=" -D LIBCXX_ENABLE_ABI_LINKER_SCRIPT:BOOL=OFF "
-        CMAKE_OPTIONS+=" -D LIBCXXABI_ENABLE_EXCEPTIONS:BOOL=ON "
+        CMAKE_OPTIONS+=" -D LIBCXX_ENABLE_EXCEPTIONS=ON "
+        CMAKE_OPTIONS+=" -D LIBCXX_ENABLE_ABI_LINKER_SCRIPT=OFF "
+        CMAKE_OPTIONS+=" -D LIBCXXABI_ENABLE_EXCEPTIONS=ON "
         CMAKE_OPTIONS+=" -D LIBUNWIND_USE_COMPILER_RT=ON "
         CMAKE_OPTIONS+=" -D LIBUNWIND_ENABLE_SHARED=OFF "
         CMAKE_OPTIONS+=" -D LIBCXXABI_USE_LLVM_UNWINDER=ON "
@@ -272,6 +275,18 @@ rm -rf $builddir && mkdir -p $builddir && cd $builddir
 # or under the resource dir
 # -D CMAKE_INSTALL_PREFIX=$($CC -print-resource-dir)
 #
+# Key function is probably addLibCxxIncludePaths
+#
+# WebAssembly is willing to find libc++ relative to sysroot (not relative to clang) at
+# install/wasm32-unknown-wasi/include/wasm32-wasi/c++/v1
+# or
+# install/wasm32-unknown-wasi/include/c++/v1
+# provided the directory install/wasm32-unknown-wasi/include/c++/v1 exists (can be empty)
+#
+# wasm will find the headers at $installdir/wasm32-unknown-wasi/include/c++/v1
+# musl will find them at $/installdir/$TRIPLE/usr/include/c++/v1
+# raised issue https://github.com/llvm/llvm-project/issues/91227 asking if wasm
+# should look next to clang or not
 
 cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_C_COMPILER_WORKS=1                                              \
