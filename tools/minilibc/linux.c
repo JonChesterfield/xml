@@ -39,9 +39,9 @@ uint64_t minilibc_brk(uint64_t x)
   return linux_syscall1(__NR_brk, x);
 }
 
-void minilibc_exit(void)
+void minilibc_exit(uint64_t status)
 {
-  linux_syscall1(__NR_exit_group, 1);
+  linux_syscall1(__NR_exit_group, status);
 }
 
 #endif

@@ -74,7 +74,7 @@ static inline void contract_write(bool expr, const char *message,
 static inline void contract_exit(bool expr, const char *message,
                                  size_t message_length) {
   if (!expr) {
-    minilibc_exit();
+    minilibc_exit(1u);
   }
   contract_discard(expr, message, message_length);
 }
