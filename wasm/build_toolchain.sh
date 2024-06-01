@@ -23,6 +23,11 @@ wabtdir="$thisdir/wabt"
 
 NP=$(nproc)
 
+# Start from some working compiler
+CC=$(which gcc)
+CXX=$(which g++)
+
+
 if [[ -d "$linuxdir" ]]
 then
     echo "Linux dir already present"
@@ -41,13 +46,11 @@ else
 fi
 
 
-CC=$HOME/llvm-install/bin/clang
-CXX=$HOME/llvm-install/bin/clang++
 
 if true
 then
 
-rm -rf "$installdir"
+# rm -rf "$installdir"
 
 cd "$thisdir"
 builddir="$thisdir"/build-clang
@@ -56,6 +59,7 @@ rm -rf $builddir && mkdir -p $builddir && cd $builddir
 ## Build clang, tablegen etc running on the native system.
 # DCMAKE_REQUIRED_FLAGS is important for cross compilation. Space separated,
 # gets used for various does-the-compiler-work style tests in cmake.
+
 
 cmake -D CMAKE_BUILD_TYPE=Release                                              \
       -D CMAKE_C_COMPILER_WORKS=1                                              \
@@ -85,7 +89,9 @@ cmake -D CMAKE_BUILD_TYPE=Release                                              \
 ninja -v && ninja -v install
 
 # This is needed by the cross build but isn't installed
-cp "$builddir"/bin/clang-ast-dump "$installdir"/bin
+# it isn't building at present, maybe naming problem with clang-diff
+# clang-tools-extra on the projects list doesn't help
+# cp "$builddir"/bin/clang-ast-dump "$installdir"/bin
 
 cd "$wabtdir"
 builddir="$thisdir"/build-wabt
