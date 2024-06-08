@@ -557,12 +557,6 @@ CMARK_OBJ := $(CMARK_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 $(cmark):	$(CMARK_OBJ) | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
-# Runs unit tests for hashtable
-HASHTABLE_SRC := $(addprefix $(TOOLS_DIR)/,hashtable.c intset.c intmap.c stringtable.c intstack.c)
-HASHTABLE_OBJ := $(HASHTABLE_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
-$(TOOLS_DIR_BIN)/hashtable:	$(HASHTABLE_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
-
 
 # Doesnt construct a library, directly links against the objects
 LIBXML2_OBJ := $(LIBXML2_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
@@ -580,14 +574,28 @@ $(TOOLS_DIR_BIN)/wasm3:	$(TOOLS_DIR_OBJ)/wasm3.o $(WASM3_OBJ) | $(TOOLS_DIR_BIN)
 	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 
-$(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
+$(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o $(MISC_TOOLS_OBJECTS) | $(TOOLS_DIR_BIN)
+	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 tools: ## Create binary tools
 tools:	$(SIMPLE_TOOLS_BIN)
 tools:	$(TOOLS_DIR_BIN)/cmark $(TOOLS_DIR_BIN)/xmllint $(TOOLS_DIR_BIN)/xsltproc
 tools:	$(TOOLS_DIR_BIN)/wasm3
-tools:	$(TOOLS_DIR_BIN)/hashtable
+
+
+# Todo, a bit too copy/paste
+
+test/hashtable: ## Runs unit tests for hashtable
+test/hashtable:	$(TOOLS_DIR_BIN)/hashtable
+	@./$<
+
+test/stack: ## Runs unit tests for stack
+test/stack:	$(TOOLS_DIR_BIN)/stack
+	@./$<
+
+test/arena: ## Runs unit tests for arena
+test/arena:	$(TOOLS_DIR_BIN)/arena
+	@./$<
 
 
 clean::
@@ -601,16 +609,17 @@ HELP_PADDING := 30
 .PHONY: awkhelp
 awkhelp: # Write this help using awk
 	@echo "awkhelp:"
-	@awk 'BEGIN {FS = ":.*#+"}; /^[a-zA-Z_/*.-]+:.*## .*$$/ {printf "  %-'$(HELP_PADDING)'s %s\n", $$1, $$2}' \
+	@awk 'BEGIN {FS = ":.*#+"}; /^[a-zA-Z_/$$()*.-]+:.*## .*$$/ {printf "  %-'$(HELP_PADDING)'s %s\n", $$1, $$2}' \
 	$(MAKEFILE_LIST) | \
 	sort
 
 .PHONY: sedhelp
 sedhelp: # Write this help using sed
 	@echo "sedhelp:"
-	@sed -E \
-	-e '/^([a-zA-Z_/*.-]+::?[ ]*)##[ ]*([^#]*)$$/ !d # grep' \
-	-e 's/([a-zA-Z_/*.-]+:):?(.*)/  \1\2/ # drop :: and prefix pad' \
+	sed -E \
+	-e '/^([a-zA-Z_/$$()*.-]+::?[ ]*)##[ ]*([^#]*)$$/ !d # grep' \
+	-e 's/[$$][(]TOOLS_DIR_BIN[)]/$(TOOLS_DIR_BIN)/g' \
+	-e 's/([a-zA-Z_/$$()*.-]+:):?(.*)/  \1\2/ # drop :: and prefix pad' \
 	-e ':again s/^([^#]{1,'$(HELP_PADDING)'})##[ ]*([^#]*)$$/\1 ##\2/ # insert a space' \
 	-e 't again # do it again (termination is via {1, HELP_PADDING})' \
 	-e 's/^([^#]*)##([^#]*)$$/\1\2/ # remove the ##' \
