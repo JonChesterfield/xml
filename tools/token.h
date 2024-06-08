@@ -54,6 +54,7 @@ static inline token token_create_novalue(const char *name)
 }
 
 static inline size_t token_width(token s) { return s.width; }
+static inline const char * token_value(token s) { return s.value; }
 
 static inline bool token_empty(token s) { return token_width(s) == 0; }
 

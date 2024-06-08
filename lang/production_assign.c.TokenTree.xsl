@@ -71,7 +71,7 @@
 <xsl:template match="Token" mode="AssignProductionArg">
   <xsl:choose>
     <xsl:when test="@position">
-      <P value="  ptree R = parser_{$LangName}_ptree_from_token(ctx, {$LangName}_token_{@name}, x{position()});" />
+      <P value="  ptree R = {$LangName}_ptree_from_token(ctx, {$LangName}_token_{@name}, token_value(x{position()}), token_width(x{position()}));" />
     </xsl:when>
     <xsl:otherwise>
       <P value="  (void)x{position()};" />

@@ -85,7 +85,7 @@
 <xsl:template match="Token" mode="ListProductionArg">
   <xsl:choose>
     <xsl:when test="@position">
-      <T value = "  ptree tmp{position()} = parser_{$LangName}_ptree_from_token({$LangName}_ptree_context, {$LangName}_token_{@name}, x{position()});" />
+      <T value = "  ptree tmp{position()} = {$LangName}_ptree_from_token(ctx, {$LangName}_token_{@name}, token_value(x{position()}), token_width(x{position()}));" />
       <NL hexvalue="0a" />
       <P value="  {$LangName}_ptree_expression_initialise_element(R, {@position}-1, tmp{position()});" />
     </xsl:when>

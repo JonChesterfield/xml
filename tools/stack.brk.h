@@ -1,7 +1,7 @@
 #ifndef STACK_BRK_H_INCLUDED
 #define STACK_BRK_H_INCLUDED
 
-#include "linux_syscall.h"
+#include "minilibc/linux_syscall.h"
 #include "minilibc.h"
 #include "stack.common.h"
 

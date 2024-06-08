@@ -1,4 +1,7 @@
 #include "lexer.interp.h"
+
+#if LEXER_INTERP_ENABLE
+
 #include "../regex/regex_interpreter.h"
 #include "../regex/ascii.parser_lemon.h"
 
@@ -184,3 +187,5 @@ lexer_token_t lexer_interp_iterator_step(lexer_t lex, lexer_iterator_t* iter)
   iter->cursor += result.width;
   return result;
 }
+
+#endif
