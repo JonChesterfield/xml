@@ -170,6 +170,7 @@ include $(SELF_DIR)common/common.mk
 rwildcard = $(foreach d,$(wildcard $(1)*),$(call rwildcard,$(d)/,$(2)) $(filter $(subst *,%,$(2)),$(d)))
 
 # sequence of dir/name.lang.xml. Names need to be unique, don't need to match dir.
+# e.g. make ascii will build files corresponding to regex/ascii
 languages := regex/regex.lang.xml arith/arith.lang.xml regex/ascii.lang.xml langtest/test.lang.xml
 
 lang_tmp := .lang.O
@@ -554,13 +555,13 @@ $(TOOLS_DIR_BIN):
 
 CMARK_OBJ := $(CMARK_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 $(cmark):	$(CMARK_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 # Runs unit tests for hashtable
 HASHTABLE_SRC := $(addprefix $(TOOLS_DIR)/,hashtable.c intset.c intmap.c stringtable.c intstack.c)
 HASHTABLE_OBJ := $(HASHTABLE_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 $(TOOLS_DIR_BIN)/hashtable:	$(HASHTABLE_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 
 # Doesnt construct a library, directly links against the objects
@@ -568,15 +569,15 @@ LIBXML2_OBJ := $(LIBXML2_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 LIBXSLT_OBJ := $(LIBXSLT_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 
 $(TOOLS_DIR_BIN)/xmllint:	$(TOOLS_DIR_OBJ)/xmllint.o $(LIBXML2_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 $(TOOLS_DIR_BIN)/xsltproc:	$(TOOLS_DIR_OBJ)/xsltproc.o $(LIBXSLT_OBJ) $(LIBXML2_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 
 WASM3_OBJ := $(WASM3_SRC:$(TOOLS_DIR)/%.c=$(TOOLS_DIR_OBJ)/%.o)
 $(TOOLS_DIR_BIN)/wasm3:	$(TOOLS_DIR_OBJ)/wasm3.o $(WASM3_OBJ) | $(TOOLS_DIR_BIN)
-	@$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 
 $(SIMPLE_TOOLS_BIN):	$(TOOLS_DIR_BIN)/%:	$(TOOLS_DIR_OBJ)/%.o | $(TOOLS_DIR_BIN)
